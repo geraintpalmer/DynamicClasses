@@ -38,8 +38,9 @@ class MarkovChain:
         if delta.count(0) == self.k - 1:
             if delta.count(-1) == 1:
                 leaving_clss = delta.index(-1)
-                if all([state1[clss] == 0 for clss in range(leaving_clss)]):
-                    return self.ms[leaving_clss] * min(state1[leaving_clss], self.c)
+                if sum([state1[clss] for clss in range(leaving_clss)]) < self.c:
+                    number_in_service = min(self.c - min(self.c, sum(state1[:leaving_clss])), state1[leaving_clss])
+                    return self.ms[leaving_clss] * number_in_service
             elif delta.count(1) == 1:
                 arriving_clss = delta.index(1)
                 return self.ls[arriving_clss]
@@ -90,7 +91,7 @@ class Simulation:
     """
     A class to hold the Simulation for a multi-class dynamic classes priority MMc queue
     """
-    def __init__(self, number_of_servers, arrival_rates, service_rates, class_change_rate_matrix, max_simulation_time, warmup):
+    def __init__(self, number_of_servers, arrival_rates, service_rates, class_change_rate_matrix, preempt, max_simulation_time, warmup):
         self.max_simulation_time = max_simulation_time
         self.warmup = warmup
         self.obs_period = (self.warmup, self.max_simulation_time - self.warmup)
@@ -100,7 +101,7 @@ class Simulation:
             service_distributions={'Class ' + str(c): [dists.Exponential(service_rates[c])] for c in range(k)},
             number_of_servers=[number_of_servers],
             class_change_time_distributions=[[dists.Exponential(rate) if rate is not None else None for rate in row] for row in class_change_rate_matrix],
-            priority_classes={'Class ' + str(c): c for c in range(k)}
+            priority_classes=({'Class ' + str(c): c for c in range(k)}, [preempt])
         )
         self.run()
         self.aggregate_states()
@@ -111,7 +112,7 @@ class Simulation:
         """
         ciw.seed(0)
         self.Q = ciw.Simulation(self.N, tracker=trackers.NodeClassMatrix())
-        self.Q.simulate_until_max_time(self.max_simulation_time)
+        self.Q.simulate_until_max_time(self.max_simulation_time, progress_bar=True)
         self.probs = self.Q.statetracker.state_probabilities(observation_period=self.obs_period)
 
     def aggregate_states(self):
@@ -120,7 +121,7 @@ class Simulation:
         """
         self.aggregate_probs = {}
         for state in self.probs.keys():
-            agg_state = sum(s[0] for s in state)
+            agg_state = sum(state[0])
             if agg_state in self.aggregate_probs:
                 self.aggregate_probs[agg_state] += self.probs[state]
             else:

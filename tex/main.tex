@@ -59,16 +59,16 @@ where $\underline{\mathbf{\delta}} = \underline{\mathbf{s}}_t - \underline{\math
 q_{\underline{\mathbf{s}}_t, \underline{\mathbf{s}}_{t+1}} = 
 \begin{cases}
 \lambda_k & \text{if } \delta_k = 1 \text{ and } \delta_i = 0 \; \forall \; i \neq k \\
-\min(s_kt, c) \mu_k & \text{if } \delta_k = 1 \text{ and } \delta_i = 0 \; \forall \; i \neq k \text{ and } s_{it} = 0 \; \forall \; i < k \\
-W_{kt} \theta_{k_0k_1} & \text{if } \delta_{k_0} = -1 \text{ and } \delta_{k_1} = 1 \text{ and } \delta_i = 0 \; \forall \; i \notin (k_0, k_1)
+B_{kt} \mu_k & \text{if } \delta_k = 1 \text{ and } \delta_i = 0 \; \forall \; i \neq k \text{ and } \sum_{i < k} s_{it} < c \\
+(s_k - B_{kt}) \theta_{k_0k_1} & \text{if } \delta_{k_0} = -1 \text{ and } \delta_{k_1} = 1 \text{ and } \delta_i = 0 \; \forall \; i \notin (k_0, k_1)
 \end{cases}
 \end{equation}
 
-and $W_{kt}$, representing the number of customers present but not in service at
+and $B_{kt}$, representing the number of customers of class $k$ currently in service at
 time step $t$, is given by Equation~\ref{eqn:waiting}.
 
 \begin{equation}\label{eqn:waiting}
-W_{kt} = s_{kt} - \min\left(c - \sum_{i < k} s_{it}, s_{kt}\right)
+B_{kt} =\min\left(c - \min\left(\sum_{i < k} s_{it}, c\right), s_{kt}\right)
 \end{equation}
 
 
