@@ -29,6 +29,7 @@ class MarkovChain:
         self.discretise_transition_matrix()
         self.solve()
         self.aggregate_states()
+        self.aggregate_states_by_class()
 
     def find_transition_rates(self, state1, state2):
         """
@@ -85,6 +86,18 @@ class MarkovChain:
                 agg_probs[agg_state] = self.probs[state]
         self.aggregate_probs = agg_probs
 
+    def aggregate_states_by_class(self):
+        """
+        Aggregates from individual states to overall numbers of customers of each class
+        """
+        self.aggregate_probs_by_class = {clss: {} for clss in range(self.k)}
+        for clss in range(self.k):
+            for state in self.probs.keys():
+                agg_state = state[clss]
+                if agg_state in self.aggregate_probs_by_class[clss]:
+                    self.aggregate_probs_by_class[clss][agg_state] += self.probs[state]
+                else:
+                    self.aggregate_probs_by_class[clss][agg_state] = self.probs[state]
 
 
 class Simulation:
@@ -95,16 +108,17 @@ class Simulation:
         self.max_simulation_time = max_simulation_time
         self.warmup = warmup
         self.obs_period = (self.warmup, self.max_simulation_time - self.warmup)
-        k = len(arrival_rates)
+        self.k = len(arrival_rates)
         self.N = ciw.create_network(
-            arrival_distributions={'Class ' + str(c): [dists.Exponential(arrival_rates[c])] for c in range(k)},
-            service_distributions={'Class ' + str(c): [dists.Exponential(service_rates[c])] for c in range(k)},
+            arrival_distributions={'Class ' + str(c): [dists.Exponential(arrival_rates[c])] for c in range(self.k)},
+            service_distributions={'Class ' + str(c): [dists.Exponential(service_rates[c])] for c in range(self.k)},
             number_of_servers=[number_of_servers],
             class_change_time_distributions=[[dists.Exponential(rate) if rate is not None else None for rate in row] for row in class_change_rate_matrix],
-            priority_classes=({'Class ' + str(c): c for c in range(k)}, [preempt])
+            priority_classes=({'Class ' + str(c): c for c in range(self.k)}, [preempt])
         )
         self.run()
         self.aggregate_states()
+        self.aggregate_states_by_class()
     
     def run(self):
         """
@@ -126,3 +140,16 @@ class Simulation:
                 self.aggregate_probs[agg_state] += self.probs[state]
             else:
                 self.aggregate_probs[agg_state] = self.probs[state]
+
+    def aggregate_states_by_class(self):
+        """
+        Aggregates from individual states to overall numbers of customers of each class
+        """
+        self.aggregate_probs_by_class = {clss: {} for clss in range(self.k)}
+        for clss in range(self.k):
+            for state in self.probs.keys():
+                agg_state = state[0][clss]
+                if agg_state in self.aggregate_probs_by_class[clss]:
+                    self.aggregate_probs_by_class[clss][agg_state] += self.probs[state]
+                else:
+                    self.aggregate_probs_by_class[clss][agg_state] = self.probs[state]
