@@ -109,7 +109,7 @@ class MarkovChain:
         self.mean_sojourn_times_by_class = {}
         for clss in range(self.k):
             arriving_states = [s for s in self.SojournTime_MC.mean_steps_to_absorbtion if s[-1]==clss and s[-2] == 0]
-            self.mean_sojourn_times_by_class[clss] = sum([self.probs[state[:2]] * self.SojournTime_MC.mean_sojourn_time[state] for state in arriving_states])
+            self.mean_sojourn_times_by_class[clss] = sum([self.probs[state[:-2]] * self.SojournTime_MC.mean_sojourn_time[state] for state in arriving_states])
 
 
 class MarkovChain_SoujournTime:
@@ -152,34 +152,42 @@ class MarkovChain_SoujournTime:
                     number_in_service = min(self.c - min(self.c, sum(state1[:leaving_clss])), state1[leaving_clss])
                     return self.ms[leaving_clss] * number_in_service
                 if leaving_clss > n and leaving_clss < self.k: # Someone behind me finishes service and leaves
-                    number_in_service = min(self.c - min(self.c, sum(state1[:leaving_clss]) + 1), state1[leaving_clss])
+                    number_in_service = min(self.c - min(self.c, sum(state1[:leaving_clss]) + 1 + state1[self.k]), state1[leaving_clss])
                     return self.ms[leaving_clss] * number_in_service
+                if leaving_clss == self.k: # Someone of my class behind me finishes service and leaves
+                    number_in_service = min(self.c - min(self.c, sum(state1[:n+1]) + 1), state1[self.k])
+                    return self.ms[n] * number_in_service
             if delta.count(1) == 1:
                 arriving_clss = delta.index(1)
                 if arriving_clss != n and arriving_clss < self.k: # Customer not of my class arrives
                     return self.ls[arriving_clss]
                 if arriving_clss == self.k: # Customer of my class arrives
                     return self.ls[n]
-            if delta.count(0) == self.k and delta.count(1) == 1 and delta.count(-1) == 1:
-                leaving_clss = delta.index(-1)
-                arriving_clss = delta.index(1)
-                if leaving_clss <= n and arriving_clss not in [n, self.k, self.k+1]: # Customer before me changing class not to my class
-                    number_waiting = state1[leaving_clss] - min(self.c - min(self.c, sum(state1[:leaving_clss])), state1[leaving_clss])
-                    return number_waiting * self.thetas[leaving_clss][arriving_clss]
-                if leaving_clss > n and leaving_clss < k and arriving_clss not in [n, self.k, self.k+1]: # Customer behind me (not my class) changing class not to my class
-                    number_waiting = state1[leaving_clss] - min(self.c - min(self.c, sum(state1[:leaving_clss]) + 1), state1[leaving_clss])
-                    return number_waiting * self.thetas[leaving_clss][arriving_clss]
-                if leaving_clss == self.k and arriving_clss not in [n, self.k, self.k+1]: # Customer behind me (of my class) changing class not to my class
-                    number_waiting = state1[leaving_clss] - min(self.c - min(self.c, sum(state1[:n]) + 1 + state1[k]), state1[n] + 1 + state1[k])
-                    return number_waiting * self.thetas[n][arriving_clss]
-                if leaving_clss < n  and arriving_clss == k: # Customer before me changing class to my class
-                    number_waiting = state1[leaving_clss] - min(self.c - min(self.c, sum(state1[:leaving_clss])), state1[leaving_clss])
-                    return number_waiting * self.thetas[leaving_clss][n]
-                if leaving_clss > n and leaving_clss < k and arriving_clss == k: # Customer behind me changing class to my class
-                    number_waiting = state1[leaving_clss] - min(self.c - min(self.c, sum(state1[:leaving_clss]) + 1), state1[leaving_clss])
-                    return number_waiting * self.thetas[leaving_clss][n]
-            if delta.count(0) == self.k - 1 and delta[n] == state1[k] and delta[k] == -state[k] and delta[k+1] != 0: # I change class
-                new_n = state2[k+1]
+        if delta.count(0) == self.k and delta.count(1) == 1 and delta.count(-1) == 1:
+            leaving_clss = delta.index(-1)
+            arriving_clss = delta.index(1)
+            if leaving_clss <= n and arriving_clss not in [n, self.k, self.k+1]: # Customer before me changing class not to my class
+                number_waiting = state1[leaving_clss] - min(self.c - min(self.c, sum(state1[:leaving_clss])), state1[leaving_clss])
+                return number_waiting * self.thetas[leaving_clss][arriving_clss]
+            if leaving_clss > n and leaving_clss < self.k and arriving_clss not in [n, self.k, self.k+1]: # Customer behind me (not my class) changing class not to my class
+                number_waiting = state1[leaving_clss] - min(self.c - min(self.c, sum(state1[:leaving_clss]) + 1 + state1[self.k]), state1[leaving_clss])
+                return number_waiting * self.thetas[leaving_clss][arriving_clss]
+            if leaving_clss == self.k and arriving_clss not in [n, self.k, self.k+1]: # Customer behind me (of my class) changing class not to my class
+                number_waiting = state1[leaving_clss] - min(self.c - min(self.c, sum(state1[:n+1]) + 1), state1[leaving_clss])
+                return number_waiting * self.thetas[n][arriving_clss]
+            if leaving_clss < n  and arriving_clss == self.k: # Customer before me changing class to my class
+                number_waiting = state1[leaving_clss] - min(self.c - min(self.c, sum(state1[:leaving_clss])), state1[leaving_clss])
+                return number_waiting * self.thetas[leaving_clss][n]
+            if leaving_clss > n and leaving_clss < self.k and arriving_clss == self.k: # Customer behind me (not my class) changing class to my class
+                number_waiting = state1[leaving_clss] - min(self.c - min(self.c, sum(state1[:leaving_clss]) + 1 + state1[self.k]), state1[leaving_clss])
+                return number_waiting * self.thetas[leaving_clss][n]
+        if delta.count(0) == self.k - 1 and state1[self.k] != 0 and delta[n] == state1[self.k] and delta[self.k] == -state1[self.k] and delta[-1] != 0: # I change class, there are people of my class behind me
+            if sum(state1[:n+1]) >= self.c: # I'm currently not in service
+                new_n = state2[-1]
+                return self.thetas[n][new_n]
+        if all(d == 0  for d in delta[:-1]) and state1[self.k] == 0 and delta[-1] != 0: # I change class, no people of my class behind me
+            if sum(state1[:n+1]) >= self.c: # I'm currently not in service
+                new_n = state2[-1]
                 return self.thetas[n][new_n]
         return 0
 
