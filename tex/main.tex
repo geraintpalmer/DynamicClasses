@@ -23,15 +23,15 @@
 
 \section{The Model}
 Here we consider an $M/M/c$ queue with $K$ classes of customer.
-Order and label the customer classes $0, 1, 2, \dots, k$, with customer classes
-with lower labels having priority over customer classes of higher labels.
-The index $k$ will be used to represent customer classes.
+Order and label the customer classes $0, 1, 2, \dots, K-1$, with customer
+classes with lower labels having priority over customer classes of higher
+labels. The index $k$ will be used to represent customer classes.
 Let:
 
 \begin{itemize}
   \item $\lambda_k$ be the arrival rate of customers of class $k$,
   \item $\mu_k$ be the service rate of customers of class $k$,
-  \item $\theta_{k_ik_j}$ be the rate at which customers of class $k_i$ change
+  \item $\theta_{k_i,k_j}$ be the rate at which customers of class $k_i$ change
   to customers of class $k_j$.
 \end{itemize}
 
@@ -46,10 +46,11 @@ Figure~\ref{fig:twoclass_example} shows an example with two classes of customer.
 \end{figure}
 
 
-\section{Markov Chain Formulation}
-Let $\underline{\mathbf{s}}_t = (s_0t, s_1t, \dots, s_Kt) \in \mathbb{R}^K$
-represent the state of the system at time step $t$, where $s_kt$ represents the
-number of customers of class $k$ present at time step $t$.
+\section{State Markov Chain Formulation}
+Let
+$\underline{\mathbf{s}}_t = (s_{0,t}, s_{1,t}, \dots, s_{K-1,t}) \in \mathbb{R}^K$
+represent the state of the system at time step $t$, where $s_{k,t}$ represents
+the number of customers of class $k$ present at time step $t$.
 
 Then the rates of change between $\underline{\mathbf{s}}_t$ and
 $\underline{\mathbf{s}}_{t+1}$ are given by Equation~\ref{eqn:transitions},
@@ -59,22 +60,78 @@ where $\underline{\mathbf{\delta}} = \underline{\mathbf{s}}_t - \underline{\math
 q_{\underline{\mathbf{s}}_t, \underline{\mathbf{s}}_{t+1}} = 
 \begin{cases}
 \lambda_k & \text{if } \delta_k = 1 \text{ and } \delta_i = 0 \; \forall \; i \neq k \\
-B_{kt} \mu_k & \text{if } \delta_k = 1 \text{ and } \delta_i = 0 \; \forall \; i \neq k \text{ and } \sum_{i < k} s_{it} < c \\
-(s_k - B_{kt}) \theta_{k_0k_1} & \text{if } \delta_{k_0} = -1 \text{ and } \delta_{k_1} = 1 \text{ and } \delta_i = 0 \; \forall \; i \notin (k_0, k_1)
+B_{k,t} \mu_k & \text{if } \delta_k = 1 \text{ and } \delta_i = 0 \; \forall \; i \neq k \text{ and } \sum_{i < k} s_{i,t} < c \\
+(s_{k,t} - B_{k,t}) \theta_{k_0,k_1} & \text{if } \delta_{k_0} = -1 \text{ and } \delta_{k_1} = 1 \text{ and } \delta_i = 0 \; \forall \; i \neq k_0, k_1 \\
+0 & \text{otherwise.}
 \end{cases}
 \end{equation}
 
-and $B_{kt}$, representing the number of customers of class $k$ currently in service at
-time step $t$, is given by Equation~\ref{eqn:waiting}.
+and $B_{k,t}$, representing the number of customers of class $k$ currently in
+service at time step $t$, is given by Equation~\ref{eqn:inservice}.
 
-\begin{equation}\label{eqn:waiting}
-B_{kt} =\min\left(c - \min\left(\sum_{i < k} s_{it}, c\right), s_{kt}\right)
+\begin{equation}\label{eqn:inservice}
+B_{k,t} =\min\left(c - \min\left(\sum_{i < k} s_{i,t}, c\right), s_{k,t}\right)
 \end{equation}
 
 
+\section{Sojourn Time Markov Chain Formulation}
+Let $\underline{\mathbf{z}}_t = (z_{0,t}, z_{1,t}, \dots, z_{n,t} \dots, z_{K-1,t}, b_t, n_t) \in \mathbb{R}^{K+2}$
+represent the state of a particular customer time step $t$, where $n_t$
+represents that customer's class at time $t$; $z_{k,t} \; \forall \; k < n$
+represents the number of customers of class $k$ in front of the customer in the
+queue at time $t$; $z_{k,t} \; \forall \; n < k < K$ represents the number of
+customers of class $k$ behind the customer in the queue at time $t$; and $b_t$
+represent the number of customers of class $n_t$ behind the customer in the
+queue at time $t$.
+Also let $\star$ represent an absorbing state, representing the state where that
+customer has finished service and left the system.
+
+Then the rates of change between $\underline{\mathbf{z}}_t$ and
+$\underline{\mathbf{z}}_{t+1}$ are given by Equation~\ref{eqn:transitions_sojourn},
+where $\underline{\mathbf{\delta}} = \underline{\mathbf{z}}_t - \underline{\mathbf{z}}_{t+1}$,
+
+\begin{equation}\label{eqn:transitions_sojourn}
+\resizebox{\textwidth}{!}{%
+$q_{\underline{\mathbf{z}}_t, \underline{\mathbf{z}}_{t+1}} = 
+\begin{cases}
+\mu_n & \text{if } z_{t+1} = \star \text{ and } \sum_{k \leq n} z_{k, t} < c \\
+\lambda_n & \text{if } \delta_K = 1 \text{ and } \delta_i = 0 \; \forall \; i \neq K \\
+\lambda_k & \text{if } \delta_k = 1 \text{ and } \delta_i = 0 \; \forall \; i \neq k \text{ and } k \neq n\\
+A_{k,n,t} \mu_k & \text{if } \delta_k = -1 \text{ and } \delta_i = 0 \; \forall \; i \neq k \text{ and } k < K\\
+\tilde{A}_{n,t} \mu_n & \text{if } \delta_K = -1 \text{ and } \delta_i = 0 \; \forall \; i \neq K\\
+(z_{k_0,t} - A_{k_0,n,t}) \theta_{k_0,k_1} & \text{if } \delta_{k_0} = -1 \text{ and } \delta_{k_1} = 1 \text{ and } \delta_i = 0 \; \forall \; i \neq k_0, k_1 \text{ and } k_0 < K \text{ and } k_1 \neq n, K, K+1 \\
+(z_{K,t} - \tilde{A}_{n,t}) \theta_{n,k} & \text{if } \delta_K = -1 \text{ and } \delta_{k} = 1 \text{ and } \delta_i = 0 \; \forall \; i \neq k, n \text{ and } k < K \\
+(z_{k,t} - A_{k,n,t}) \theta_{k,n} & \text{if } \delta_k = -1 \text{ and } \delta_K = 1 \text{ and } \delta_i = 0 \; \forall \; i \neq k, K \\
+\theta_{n, k} & \text{if } \delta_n = z_{K,t} \text{ and } \delta_K = -z_{K,t} \text{ and } \delta_{K+1} = n - k \text{ and } \delta_i = 0 \text{ otherwise, and } \sum_{k \leq n} z_{k, t} < c \\
+0 & \text{otherwise.}
+\end{cases}$%
+}
+\end{equation}
+
+and $A_{k,n,t}$ and $\tilde{A}_{n, t}$ are given by
+Equations~\ref{eqn:inservice_adapt} and~\ref{eqn:inservice_adapt_tilde}.
+
+\begin{equation}\label{eqn:inservice_adapt}
+A_{k,n,t} =
+\begin{cases}
+\min\left(c - \min\left(\sum_{i < k} z_{i,t}, c\right), z_{k,t}\right) & \text{if } k \leq n \\
+\min\left(c - \min\left(1 + \sum_{i < k} z_{i,t}, c\right), z_{k,t}\right) & \text{if } n < k < K
+\end{cases}
+\end{equation}
+
+\begin{equation}\label{eqn:inservice_adapt_tilde}
+\tilde{A}_{n,t} =
+\min\left(c - \min\left(1 + \sum_{i \leq n} z_{i,t}, c\right), z_{K,t}\right) \\
+\end{equation}
+
+The expected time to absorption can be calculated from each state.
+Customers arrive in all states where $z_{K,t} = 0$, and their class can be
+determined by $n$. Combining these times to absorption with the state
+probabilities found in the previous section, the sojourn times for each customer
+class can be found.
+
 \bibliographystyle{plain}
 \bibliography{refs}
-
 
 
 \end{document}
