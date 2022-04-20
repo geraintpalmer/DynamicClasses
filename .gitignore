@@ -8,3 +8,5 @@ slides/*
 *.out
 *.xdv
 *.log
+*.bbl
+*.blg
