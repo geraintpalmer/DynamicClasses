@@ -63,7 +63,7 @@ Figure~\ref{fig:twoclass_example} shows an example with two classes of customer.
 
 \section{State Markov Chain Formulation}
 Let
-$\underline{\mathbf{s}}_t = (s_{0,t}, s_{1,t}, \dots, s_{K-1,t}) \in \mathbb{R}^K$
+$\underline{\mathbf{s}}_t = (s_{0,t}, s_{1,t}, \dots, s_{K-1,t}) \in \mathbb{N}^K$
 represent the state of the system at time step $t$, where $s_{k,t}$ represents
 the number of customers of class $k$ present at time step $t$.
 
@@ -92,8 +92,8 @@ B_{k,t} =\min\left(c - \min\left(\sum_{i < k} s_{i,t}, c\right), s_{k,t}\right)
 
 
 \section{Sojourn Time Markov Chain Formulation}
-Let $\underline{\mathbf{z}}_t = (z_{0,t}, z_{1,t}, \dots, z_{n,t} \dots, z_{K-1,t}, b_t, n_t) \in \mathbb{R}^{K+2}$
-represent the state of a particular customer time step $t$, where $n_t$
+Let $\underline{\mathbf{z}}_t = (z_{0,t}, z_{1,t}, \dots, z_{n,t} \dots, z_{K-1,t}, b_t, n_t) \in \mathbb{N}^{K+2}$
+represent the state of a particular customer at time step $t$, where $n_t$
 represents that customer's class at time $t$; $z_{k,t} \; \forall \; k < n$
 represents the number of customers of class $k$ in front of the customer in the
 queue at time $t$; $z_{k,t} \; \forall \; n < k < K$ represents the number of
