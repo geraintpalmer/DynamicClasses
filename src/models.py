@@ -1,12 +1,6 @@
 import numpy as np
 import itertools
-
-# Import Ciw from source - required features not merged yet.
-import sys
-sys.path.append("../../")
-import CiwPython.Ciw.ciw as ciw
-import CiwPython.Ciw.ciw.dists as dists
-import CiwPython.Ciw.ciw.trackers as trackers
+import ciw
 
 
 class MarkovChain:
@@ -231,10 +225,10 @@ class Simulation:
         self.obs_period = (self.warmup, self.max_simulation_time - self.warmup)
         self.k = len(arrival_rates)
         self.N = ciw.create_network(
-            arrival_distributions={'Class ' + str(c): [dists.Exponential(arrival_rates[c])] for c in range(self.k)},
-            service_distributions={'Class ' + str(c): [dists.Exponential(service_rates[c])] for c in range(self.k)},
+            arrival_distributions={'Class ' + str(c): [ciw.dists.Exponential(arrival_rates[c])] for c in range(self.k)},
+            service_distributions={'Class ' + str(c): [ciw.dists.Exponential(service_rates[c])] for c in range(self.k)},
             number_of_servers=[number_of_servers],
-            class_change_time_distributions=[[dists.Exponential(rate) if rate is not None else None for rate in row] for row in class_change_rate_matrix],
+            class_change_time_distributions=[[ciw.dists.Exponential(rate) if rate is not None else None for rate in row] for row in class_change_rate_matrix],
             priority_classes=({'Class ' + str(c): c for c in range(self.k)}, [preempt])
         )
         self.run()
@@ -247,7 +241,7 @@ class Simulation:
         Runs the simulation and finds the state probabilities
         """
         ciw.seed(0)
-        self.Q = ciw.Simulation(self.N, tracker=trackers.NodeClassMatrix())
+        self.Q = ciw.Simulation(self.N, tracker=ciw.trackers.NodeClassMatrix())
         self.Q.simulate_until_max_time(self.max_simulation_time, progress_bar=True)
         self.probs = self.Q.statetracker.state_probabilities(observation_period=self.obs_period)
 
