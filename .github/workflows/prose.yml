@@ -1,0 +1,21 @@
+name: Prose
+
+
+# This job installs dependencies, build the site, and pushes it to `gh-pages``
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    - name: Install LaTeX
+      run: |
+        sudo apt-get update
+        #LaTeX packages
+        sudo apt-get install -y texlive-latex-extra
+        sudo apt-get install -y texlive-xetex
+        sudo apt-get install texlive-bibtex-extra biber
+        sudo apt-get install -y texlive-lang-greek
+        sudo apt-get install -y latexmk
+        sudo apt-get install lmodern
+        sudo apt-get install texlive-fonts-extra
+    - name: Check LaTeX compiles
+      run: |
+        xelatex -shell-escape tex/main.tex
