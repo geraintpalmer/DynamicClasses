@@ -4,8 +4,9 @@ on: [push, pull_request]
 
 # This job installs dependencies, build the site, and pushes it to `gh-pages``
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
+    steps:
     - name: Install LaTeX
       run: |
         sudo apt-get update
