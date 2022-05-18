@@ -1,5 +1,6 @@
 name: Prose
 
+on: [push, pull_request]
 
 # This job installs dependencies, build the site, and pushes it to `gh-pages``
 jobs:
