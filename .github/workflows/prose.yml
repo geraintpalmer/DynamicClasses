@@ -1,5 +1,6 @@
 name: Prose
 
+<<<<<<< HEAD
 on: [push, pull_request]
 
 jobs:
