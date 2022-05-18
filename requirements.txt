@@ -2,4 +2,4 @@ ciw==2.3.0
 numpy==1.21.2
 matplotlib==3.4.3
 pytest==5.4.3
-black==22.1.0
+black[jupyter]==22.3.0
