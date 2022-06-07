@@ -1,444 +1,540 @@
 import numpy as np
 import itertools
 import ciw
+import matplotlib.pyplot as plt
+plt.style.use("seaborn-whitegrid")
 
-
-class MarkovChain:
+def get_state_probabilities(num_classes, num_servers, arrival_rates, service_rates, thetas, infty):
     """
-    A class to hold the Markov chain object for a multi-class dynamic classes priority MMc queue
+    Get's the system's state probabilities
     """
+    State_Space = write_state_space_for_states(
+        num_classes=num_classes,
+        infty=infty
+    )
+    transition_matrix = write_transition_matrix(
+        State_Space=State_Space,
+        transition_function=find_transition_rates_for_states,
+        num_servers=num_servers,
+        arrival_rates=arrival_rates,
+        service_rates=service_rates,
+        thetas=thetas
+    )
+    time_step = get_time_step(transition_matrix=transition_matrix)
+    discrete_transition_matrix = discretise_transition_matrix(
+        transition_matrix=transition_matrix,
+        time_step=time_step
+    )
+    probs = solve_probabilities(
+        State_Space=State_Space,
+        discrete_transition_matrix=discrete_transition_matrix
+    )
+    return probs
 
-    def __init__(
-        self,
-        number_of_servers,
-        arrival_rates,
-        service_rates,
-        class_change_rate_matrix,
-        inf,
-        sojourn=False,
-    ):
-        """
-        Initialises the Markov Chain object
-        """
-        self.c = number_of_servers
-        self.ls = arrival_rates
-        self.ms = service_rates
-        self.thetas = class_change_rate_matrix
-        self.inf = inf
-        self.k = len(arrival_rates)
-        self.State_Space = list(
-            itertools.product(*[range(self.inf) for _ in range(self.k)])
-        )
-        self.lenmat = len(self.State_Space)
-        self.write_transition_matrix()
-        self.discretise_transition_matrix()
-        self.solve()
-        self.aggregate_states()
-        self.aggregate_states_by_class()
-        if sojourn:
-            self.SojournTime_MC = MarkovChain_SoujournTime(
-                number_of_servers,
-                arrival_rates,
-                service_rates,
-                class_change_rate_matrix,
-                inf,
+
+def get_mean_sojourn_times(num_classes, num_servers, arrival_rates, service_rates, thetas, infty, probs):
+    State_Space = write_state_space_for_sojourn(
+        num_classes=num_classes,
+        infty=infty
+    )
+    transition_matrix = write_transition_matrix(
+        State_Space=State_Space,
+        transition_function=find_transition_rates_for_sojourn_time,
+        num_servers=num_servers,
+        arrival_rates=arrival_rates,
+        service_rates=service_rates,
+        thetas=thetas
+    )
+    time_step = get_time_step(transition_matrix=transition_matrix)
+    discrete_transition_matrix = discretise_transition_matrix(
+        transition_matrix=transition_matrix,
+        time_step=time_step
+    )
+    mean_sojourn_times = solve_time_to_absorbtion(
+        State_Space=State_Space,
+        discrete_transition_matrix=discrete_transition_matrix,
+        time_step=time_step
+    )
+    mean_sojourn_times_by_class = find_mean_sojourn_time_by_class(
+        num_classes=num_classes,
+        mean_sojourn_times=mean_sojourn_times,
+        probs=probs
+    )
+    return mean_sojourn_times_by_class
+
+
+def write_state_space_for_states(num_classes, infty):
+    """
+    Write the states for the state probability model
+    """
+    State_Space = list(
+        itertools.product(*[range(infty) for _ in range(num_classes)])
+    )
+    return State_Space
+
+
+def write_state_space_for_sojourn(num_classes, infty):
+    """
+    Write the states for the sojourn time model
+    """
+    State_Space = list(
+        itertools.product(
+            *(
+                [range(infty) for _ in range(num_classes)]
+                + [range(infty)]
+                + [range(num_classes)]
             )
-            self.find_mean_sojourn_time_by_class()
+        )
+    ) + ["*"]
+    return State_Space
 
-    def find_transition_rates(self, state1, state2):
-        """
-        Finds the transition rates for given state transition
-        """
-        delta = tuple(state2[i] - state1[i] for i in range(self.k))
-        if delta.count(0) == self.k - 1:
-            if delta.count(-1) == 1:
-                leaving_clss = delta.index(-1)
-                if sum([state1[clss] for clss in range(leaving_clss)]) < self.c:
-                    number_in_service = min(
-                        self.c - min(self.c, sum(state1[:leaving_clss])),
-                        state1[leaving_clss],
-                    )
-                    return self.ms[leaving_clss] * number_in_service
-            elif delta.count(1) == 1:
-                arriving_clss = delta.index(1)
-                return self.ls[arriving_clss]
-        elif (
-            delta.count(0) == self.k - 2
-            and delta.count(1) == 1
-            and delta.count(-1) == 1
-        ):
+
+def find_transition_rates_for_states(state1, state2, num_servers, arrival_rates, service_rates, thetas):
+    """
+    Finds the transition rates for given state transition
+    """
+    num_classes = len(arrival_rates)
+    delta = tuple(state2[i] - state1[i] for i in range(num_classes))
+    if delta.count(0) == num_classes - 1:
+        if delta.count(-1) == 1:
             leaving_clss = delta.index(-1)
+            if sum([state1[clss] for clss in range(leaving_clss)]) < num_servers:
+                number_in_service = min(
+                    num_servers - min(num_servers, sum(state1[:leaving_clss])),
+                    state1[leaving_clss],
+                )
+                return service_rates[leaving_clss] * number_in_service
+        elif delta.count(1) == 1:
             arriving_clss = delta.index(1)
-            number_waiting = state1[leaving_clss] - min(
-                self.c - min(self.c, sum(state1[:leaving_clss])), state1[leaving_clss]
-            )
-            return number_waiting * self.thetas[leaving_clss][arriving_clss]
-        return 0.0
-
-    def write_transition_matrix(self):
-        """
-        Writes the transition matrix for the markov chain
-        """
-        transition_matrix = np.array(
-            [
-                [self.find_transition_rates(s1, s2) for s2 in self.State_Space]
-                for s1 in self.State_Space
-            ]
-        )
-        row_sums = np.sum(transition_matrix, axis=1)
-        self.time_step = 1 / np.max(row_sums)
-        self.transition_matrix = transition_matrix - np.multiply(
-            np.identity(self.lenmat), row_sums
-        )
-
-    def discretise_transition_matrix(self):
-        """
-        Disctetises the transition matrix
-        """
-        self.discrete_transition_matrix = (
-            self.transition_matrix * self.time_step + np.identity(self.lenmat)
-        )
-
-    def solve(self):
-        A = np.append(
-            np.transpose(self.discrete_transition_matrix) - np.identity(self.lenmat),
-            [[1 for _ in range(self.lenmat)]],
-            axis=0,
-        )
-        b = np.transpose(np.array([0 for _ in range(self.lenmat)] + [1]))
-        sol = np.linalg.solve(np.transpose(A).dot(A), np.transpose(A).dot(b))
-        self.probs = {self.State_Space[i]: sol[i] for i in range(self.lenmat)}
-
-    def aggregate_states(self):
-        """
-        Aggregates from individual states to overall numbers of customers
-        """
-        agg_probs = {}
-        for state in self.probs.keys():
-            agg_state = sum(state)
-            if agg_state in agg_probs:
-                agg_probs[agg_state] += self.probs[state]
-            else:
-                agg_probs[agg_state] = self.probs[state]
-        self.aggregate_probs = agg_probs
-
-    def aggregate_states_by_class(self):
-        """
-        Aggregates from individual states to overall numbers of customers of each class
-        """
-        self.aggregate_probs_by_class = {clss: {} for clss in range(self.k)}
-        for clss in range(self.k):
-            for state in self.probs.keys():
-                agg_state = state[clss]
-                if agg_state in self.aggregate_probs_by_class[clss]:
-                    self.aggregate_probs_by_class[clss][agg_state] += self.probs[state]
-                else:
-                    self.aggregate_probs_by_class[clss][agg_state] = self.probs[state]
-
-    def find_mean_sojourn_time_by_class(self):
-        """
-        Finds the mean sojourn time by customer class.
-        """
-        self.mean_sojourn_times_by_class = {}
-        for clss in range(self.k):
-            arriving_states = [
-                s
-                for s in self.SojournTime_MC.mean_steps_to_absorbtion
-                if s[-1] == clss and s[-2] == 0
-            ]
-            self.mean_sojourn_times_by_class[clss] = sum(
-                [
-                    self.probs[state[:-2]]
-                    * self.SojournTime_MC.mean_sojourn_time[state]
-                    for state in arriving_states
-                ]
-            )
-
-
-class MarkovChain_SoujournTime:
-    """
-    A class to hold the abosprbin Markov chain object to find the sojourn time for a multi-class dynamic classes priority MMc queue
-    """
-
-    def __init__(
-        self,
-        number_of_servers,
-        arrival_rates,
-        service_rates,
-        class_change_rate_matrix,
-        inf,
+            return arrival_rates[arriving_clss]
+    elif (
+        delta.count(0) == num_classes - 2
+        and delta.count(1) == 1
+        and delta.count(-1) == 1
     ):
-        """
-        Initialises the Markov Chain object
-        """
-        self.c = number_of_servers
-        self.ls = arrival_rates
-        self.ms = service_rates
-        self.thetas = class_change_rate_matrix
-        self.inf = inf
-        self.k = len(arrival_rates)
-        self.State_Space = list(
-            itertools.product(
-                *(
-                    [range(self.inf) for _ in range(self.k)]
-                    + [range(self.inf)]
-                    + [range(self.k)]
-                )
-            )
-        ) + ["*"]
-        self.lenmat = len(self.State_Space)
-        self.write_transition_matrix()
-        self.discretise_transition_matrix()
-        self.solve()
+        leaving_clss = delta.index(-1)
+        arriving_clss = delta.index(1)
+        number_waiting = state1[leaving_clss] - min(
+            num_servers - min(num_servers, sum(state1[:leaving_clss])), state1[leaving_clss]
+        )
+        return number_waiting * thetas[leaving_clss][arriving_clss]
+    return 0.0
 
-    def find_transition_rates(self, state1, state2):
-        """
-        Finds the transition rates for given state transition
-        """
-        if state1 == "*":
-            return 0
-        n = state1[-1]
-        if state2 == "*":
-            if (
-                sum(state1[: n + 1]) < self.c
-            ):  # I'm currently in service, when will I end service?
-                return self.ms[n]
-            else:
-                return 0
-        delta = tuple(state2[i] - state1[i] for i in range(self.k + 2))
-        if delta.count(0) == self.k + 1:
-            if delta.count(-1) == 1:
-                leaving_clss = delta.index(-1)
-                if (
-                    leaving_clss <= n
-                ):  # Someone in front of me finishes service and leaves
-                    number_in_service = min(
-                        self.c - min(self.c, sum(state1[:leaving_clss])),
-                        state1[leaving_clss],
-                    )
-                    return self.ms[leaving_clss] * number_in_service
-                if (
-                    leaving_clss > n and leaving_clss < self.k
-                ):  # Someone behind me finishes service and leaves
-                    number_in_service = min(
-                        self.c
-                        - min(self.c, sum(state1[:leaving_clss]) + 1 + state1[self.k]),
-                        state1[leaving_clss],
-                    )
-                    return self.ms[leaving_clss] * number_in_service
-                if (
-                    leaving_clss == self.k
-                ):  # Someone of my class behind me finishes service and leaves
-                    number_in_service = min(
-                        self.c - min(self.c, sum(state1[: n + 1]) + 1), state1[self.k]
-                    )
-                    return self.ms[n] * number_in_service
-            if delta.count(1) == 1:
-                arriving_clss = delta.index(1)
-                if (
-                    arriving_clss != n and arriving_clss < self.k
-                ):  # Customer not of my class arrives
-                    return self.ls[arriving_clss]
-                if arriving_clss == self.k:  # Customer of my class arrives
-                    return self.ls[n]
-        if delta.count(0) == self.k and delta.count(1) == 1 and delta.count(-1) == 1:
-            leaving_clss = delta.index(-1)
-            arriving_clss = delta.index(1)
-            if leaving_clss <= n and arriving_clss not in [
-                n,
-                self.k,
-                self.k + 1,
-            ]:  # Customer before me changing class not to my class
-                number_waiting = state1[leaving_clss] - min(
-                    self.c - min(self.c, sum(state1[:leaving_clss])),
-                    state1[leaving_clss],
-                )
-                return number_waiting * self.thetas[leaving_clss][arriving_clss]
-            if (
-                leaving_clss > n
-                and leaving_clss < self.k
-                and arriving_clss not in [n, self.k, self.k + 1]
-            ):  # Customer behind me (not my class) changing class not to my class
-                number_waiting = state1[leaving_clss] - min(
-                    self.c
-                    - min(self.c, sum(state1[:leaving_clss]) + 1 + state1[self.k]),
-                    state1[leaving_clss],
-                )
-                return number_waiting * self.thetas[leaving_clss][arriving_clss]
-            if leaving_clss == self.k and arriving_clss not in [
-                n,
-                self.k,
-                self.k + 1,
-            ]:  # Customer behind me (of my class) changing class not to my class
-                number_waiting = state1[leaving_clss] - min(
-                    self.c - min(self.c, sum(state1[: n + 1]) + 1), state1[leaving_clss]
-                )
-                return number_waiting * self.thetas[n][arriving_clss]
-            if (
-                leaving_clss < n and arriving_clss == self.k
-            ):  # Customer before me changing class to my class
-                number_waiting = state1[leaving_clss] - min(
-                    self.c - min(self.c, sum(state1[:leaving_clss])),
-                    state1[leaving_clss],
-                )
-                return number_waiting * self.thetas[leaving_clss][n]
-            if (
-                leaving_clss > n and leaving_clss < self.k and arriving_clss == self.k
-            ):  # Customer behind me (not my class) changing class to my class
-                number_waiting = state1[leaving_clss] - min(
-                    self.c
-                    - min(self.c, sum(state1[:leaving_clss]) + 1 + state1[self.k]),
-                    state1[leaving_clss],
-                )
-                return number_waiting * self.thetas[leaving_clss][n]
-        if (
-            delta.count(0) == self.k - 1
-            and state1[self.k] != 0
-            and delta[n] == state1[self.k]
-            and delta[self.k] == -state1[self.k]
-            and delta[-1] != 0
-        ):  # I change class, there are people of my class behind me
-            if sum(state1[: n + 1]) >= self.c:  # I'm currently not in service
-                new_n = state2[-1]
-                return self.thetas[n][new_n]
-        if (
-            all(d == 0 for d in delta[:-1]) and state1[self.k] == 0 and delta[-1] != 0
-        ):  # I change class, no people of my class behind me
-            if sum(state1[: n + 1]) >= self.c:  # I'm currently not in service
-                new_n = state2[-1]
-                return self.thetas[n][new_n]
+
+def find_transition_rates_for_sojourn_time(state1, state2, num_servers, arrival_rates, service_rates, thetas):
+    """
+    Finds the transition rates for given state transition
+    """
+    num_classes = len(arrival_rates)
+    if state1 == "*":
         return 0
+    n = state1[-1]
+    if state2 == "*":
+        if (
+            sum(state1[: n + 1]) < num_servers
+        ):  # I'm currently in service, when will I end service?
+            return service_rates[n]
+        else:
+            return 0
+    delta = tuple(state2[i] - state1[i] for i in range(num_classes + 2))
+    if delta.count(0) == num_classes + 1:
+        if delta.count(-1) == 1:
+            leaving_clss = delta.index(-1)
+            if (
+                leaving_clss <= n
+            ):  # Someone in front of me finishes service and leaves
+                number_in_service = min(
+                    num_servers - min(num_servers, sum(state1[:leaving_clss])),
+                    state1[leaving_clss],
+                )
+                return service_rates[leaving_clss] * number_in_service
+            if (
+                leaving_clss > n and leaving_clss < num_classes
+            ):  # Someone behind me finishes service and leaves
+                number_in_service = min(
+                    num_servers
+                    - min(num_servers, sum(state1[:leaving_clss]) + 1 + state1[num_classes]),
+                    state1[leaving_clss],
+                )
+                return service_rates[leaving_clss] * number_in_service
+            if (
+                leaving_clss == num_classes
+            ):  # Someone of my class behind me finishes service and leaves
+                number_in_service = min(
+                    num_servers - min(num_servers, sum(state1[: n + 1]) + 1), state1[num_classes]
+                )
+                return service_rates[n] * number_in_service
+        if delta.count(1) == 1:
+            arriving_clss = delta.index(1)
+            if (
+                arriving_clss != n and arriving_clss < num_classes
+            ):  # Customer not of my class arrives
+                return arrival_rates[arriving_clss]
+            if arriving_clss == num_classes:  # Customer of my class arrives
+                return arrival_rates[n]
+    if delta.count(0) == num_classes and delta.count(1) == 1 and delta.count(-1) == 1:
+        leaving_clss = delta.index(-1)
+        arriving_clss = delta.index(1)
+        if leaving_clss <= n and arriving_clss not in [
+            n,
+            num_classes,
+            num_classes + 1,
+        ]:  # Customer before me changing class not to my class
+            number_waiting = state1[leaving_clss] - min(
+                num_servers - min(num_servers, sum(state1[:leaving_clss])),
+                state1[leaving_clss],
+            )
+            return number_waiting * thetas[leaving_clss][arriving_clss]
+        if (
+            leaving_clss > n
+            and leaving_clss < num_classes
+            and arriving_clss not in [n, num_classes, num_classes + 1]
+        ):  # Customer behind me (not my class) changing class not to my class
+            number_waiting = state1[leaving_clss] - min(
+                num_servers
+                - min(num_servers, sum(state1[:leaving_clss]) + 1 + state1[num_classes]),
+                state1[leaving_clss],
+            )
+            return number_waiting * thetas[leaving_clss][arriving_clss]
+        if leaving_clss == num_classes and arriving_clss not in [
+            n,
+            num_classes,
+            num_classes + 1,
+        ]:  # Customer behind me (of my class) changing class not to my class
+            number_waiting = state1[leaving_clss] - min(
+                num_servers - min(num_servers, sum(state1[: n + 1]) + 1), state1[leaving_clss]
+            )
+            return number_waiting * thetas[n][arriving_clss]
+        if (
+            leaving_clss < n and arriving_clss == num_classes
+        ):  # Customer before me changing class to my class
+            number_waiting = state1[leaving_clss] - min(
+                num_servers - min(num_servers, sum(state1[:leaving_clss])),
+                state1[leaving_clss],
+            )
+            return number_waiting * thetas[leaving_clss][n]
+        if (
+            leaving_clss > n and leaving_clss < num_classes and arriving_clss == num_classes
+        ):  # Customer behind me (not my class) changing class to my class
+            number_waiting = state1[leaving_clss] - min(
+                num_servers
+                - min(num_servers, sum(state1[:leaving_clss]) + 1 + state1[num_classes]),
+                state1[leaving_clss],
+            )
+            return number_waiting * thetas[leaving_clss][n]
+    if (
+        delta.count(0) == num_classes - 1
+        and state1[num_classes] != 0
+        and delta[n] == state1[num_classes]
+        and delta[num_classes] == -state1[num_classes]
+        and delta[-1] != 0
+    ):  # I change class, there are people of my class behind me
+        if sum(state1[: n + 1]) >= num_servers:  # I'm currently not in service
+            new_n = state2[-1]
+            return thetas[n][new_n]
+    if (
+        all(d == 0 for d in delta[:-1]) and state1[num_classes] == 0 and delta[-1] != 0
+    ):  # I change class, no people of my class behind me
+        if sum(state1[: n + 1]) >= num_servers:  # I'm currently not in service
+            new_n = state2[-1]
+            return thetas[n][new_n]
+    return 0
 
-    def write_transition_matrix(self):
-        """
-        Writes the transition matrix for the markov chain
-        """
-        transition_matrix = np.array(
+
+def write_transition_matrix(State_Space, transition_function, num_servers, arrival_rates, service_rates, thetas):
+    """
+    Writes the transition matrix for the markov chain
+    """
+    transition_matrix = np.array(
+        [
             [
-                [self.find_transition_rates(s1, s2) for s2 in self.State_Space]
-                for s1 in self.State_Space
+                transition_function(s1, s2, num_servers, arrival_rates, service_rates, thetas)
+                for s2 in State_Space
+            ] for s1 in State_Space
+        ]
+    )
+    row_sums = np.sum(transition_matrix, axis=1)
+    transition_matrix = transition_matrix - np.multiply(
+        np.identity(len(State_Space)), row_sums
+    )
+    return transition_matrix
+
+
+def get_time_step(transition_matrix):
+    """
+    Finds the time step for the discrete transition amtrix
+    """
+    diagonal = np.diagonal(-transition_matrix)
+    time_step = 1 / np.max(diagonal)
+    return time_step
+
+
+def discretise_transition_matrix(transition_matrix, time_step):
+    """
+    Disctetises the transition matrix
+    """
+    time_step = get_time_step(transition_matrix)
+    lenmat = len(transition_matrix)
+    discrete_transition_matrix = (
+        transition_matrix * time_step + np.identity(lenmat)
+    )
+    return discrete_transition_matrix
+
+
+def solve_probabilities(State_Space, discrete_transition_matrix):
+    lenmat = len(discrete_transition_matrix)
+    A = np.append(
+        np.transpose(discrete_transition_matrix) - np.identity(lenmat),
+        [[1 for _ in range(lenmat)]],
+        axis=0,
+    )
+    b = np.transpose(np.array([0 for _ in range(lenmat)] + [1]))
+    sol = np.linalg.solve(np.transpose(A).dot(A), np.transpose(A).dot(b))
+    probs = {State_Space[i]: sol[i] for i in range(lenmat)}
+    return probs
+
+
+def find_mean_sojourn_time_by_class(num_classes, mean_sojourn_times, probs):
+    """
+    Finds the mean sojourn time by customer class.
+    """
+    mean_sojourn_times_by_class = {}
+    for clss in range(num_classes):
+        arriving_states = [
+            s
+            for s in mean_sojourn_times
+            if s[-1] == clss and s[-2] == 0
+        ]
+        mean_sojourn_times_by_class[clss] = sum(
+            [
+                probs[state[:-2]]
+                * mean_sojourn_times[state]
+                for state in arriving_states
             ]
         )
-        row_sums = np.sum(transition_matrix, axis=1)
-        self.time_step = 1 / np.max(row_sums)
-        self.transition_matrix = transition_matrix - np.multiply(
-            np.identity(self.lenmat), row_sums
-        )
-
-    def discretise_transition_matrix(self):
-        """
-        Disctetises the transition matrix
-        """
-        self.discrete_transition_matrix = (
-            self.transition_matrix * self.time_step + np.identity(self.lenmat)
-        )
-
-    def solve(self):
-        """
-        Finds the mean time to absorbtion for discretised transition matrix.
-        """
-        T = self.discrete_transition_matrix[:-1, :-1]
-        S = np.linalg.inv(np.identity(len(T)) - T)
-        steps2absorb = [sum([S[i, j] for j in range(len(S))]) for i in range(len(S))]
-        time2absorb = [s * self.time_step for s in steps2absorb]
-        self.mean_steps_to_absorbtion = {
-            self.State_Space[i]: steps2absorb[i] for i in range(len(steps2absorb))
-        }
-        self.mean_sojourn_time = {
-            self.State_Space[i]: float(time2absorb[i]) for i in range(len(time2absorb))
-        }
+    return [mean_sojourn_times_by_class[clss] for clss in range(num_classes)]
 
 
-class Simulation:
+def solve_time_to_absorbtion(State_Space, discrete_transition_matrix, time_step):
     """
-    A class to hold the Simulation for a multi-class dynamic classes priority MMc queue
+    Finds the mean time to absorbtion for discretised transition matrix.
     """
+    T = discrete_transition_matrix[:-1, :-1]
+    S = np.linalg.inv(np.identity(len(T)) - T)
+    steps2absorb = [sum([S[i, j] for j in range(len(S))]) for i in range(len(S))]
+    time2absorb = [s * time_step for s in steps2absorb]
+    mean_steps_to_absorbtion = {
+        State_Space[i]: steps2absorb[i] for i in range(len(steps2absorb))
+    }
+    mean_sojourn_time = {
+        State_Space[i]: float(time2absorb[i]) for i in range(len(time2absorb))
+    }
+    return mean_sojourn_time
 
-    def __init__(
-        self,
-        number_of_servers,
-        arrival_rates,
-        service_rates,
-        class_change_rate_matrix,
-        preempt,
-        max_simulation_time,
-        warmup,
-    ):
-        self.max_simulation_time = max_simulation_time
-        self.warmup = warmup
-        self.obs_period = (self.warmup, self.max_simulation_time - self.warmup)
-        self.k = len(arrival_rates)
-        self.N = ciw.create_network(
-            arrival_distributions={
-                "Class " + str(c): [ciw.dists.Exponential(arrival_rates[c])]
-                for c in range(self.k)
-            },
-            service_distributions={
-                "Class " + str(c): [ciw.dists.Exponential(service_rates[c])]
-                for c in range(self.k)
-            },
-            number_of_servers=[number_of_servers],
-            class_change_time_distributions=[
-                [
-                    ciw.dists.Exponential(rate) if rate is not None else None
-                    for rate in row
-                ]
-                for row in class_change_rate_matrix
-            ],
-            priority_classes=({"Class " + str(c): c for c in range(self.k)}, [preempt]),
-        )
-        self.run()
-        self.aggregate_states()
-        self.aggregate_states_by_class()
-        self.find_mean_sojourn_time_by_class()
 
-    def run(self):
-        """
-        Runs the simulation and finds the state probabilities
-        """
-        ciw.seed(0)
-        self.Q = ciw.Simulation(self.N, tracker=ciw.trackers.NodeClassMatrix())
-        self.Q.simulate_until_max_time(self.max_simulation_time, progress_bar=True)
-        self.probs = self.Q.statetracker.state_probabilities(
-            observation_period=self.obs_period
-        )
+def aggregate_mc_states(probs):
+    """
+    Aggregates from individual states to overall numbers of customers
+    """
+    agg_probs = {}
+    for state in probs.keys():
+        agg_state = sum(state)
+        if agg_state in agg_probs:
+            agg_probs[agg_state] += probs[state]
+        else:
+            agg_probs[agg_state] = probs[state]
+    return agg_probs
 
-    def aggregate_states(self):
-        """
-        Aggregates from individual states to overall numbers of customers
-        """
-        self.aggregate_probs = {}
-        for state in self.probs.keys():
-            agg_state = sum(state[0])
-            if agg_state in self.aggregate_probs:
-                self.aggregate_probs[agg_state] += self.probs[state]
+
+def aggregate_mc_states_by_class(probs, num_classes):
+    """
+    Aggregates from individual states to overall numbers of customers of each class
+    """
+    aggregate_probs_by_class = {clss: {} for clss in range(num_classes)}
+    for clss in range(num_classes):
+        for state in probs.keys():
+            agg_state = state[clss]
+            if agg_state in aggregate_probs_by_class[clss]:
+                aggregate_probs_by_class[clss][agg_state] += probs[state]
             else:
-                self.aggregate_probs[agg_state] = self.probs[state]
+                aggregate_probs_by_class[clss][agg_state] = probs[state]
+    return aggregate_probs_by_class
 
-    def aggregate_states_by_class(self):
-        """
-        Aggregates from individual states to overall numbers of customers of each class
-        """
-        self.aggregate_probs_by_class = {clss: {} for clss in range(self.k)}
-        for clss in range(self.k):
-            for state in self.probs.keys():
-                agg_state = state[0][clss]
-                if agg_state in self.aggregate_probs_by_class[clss]:
-                    self.aggregate_probs_by_class[clss][agg_state] += self.probs[state]
-                else:
-                    self.aggregate_probs_by_class[clss][agg_state] = self.probs[state]
 
-    def find_mean_sojourn_time_by_class(self):
-        """
-        Finds the mean sojourn time by customer class.
-        """
-        recs = self.Q.get_all_records()
-        self.mean_sojourn_times_by_class = {}
-        for clss in range(self.k):
-            self.mean_sojourn_times_by_class[clss] = np.mean(
-                [
-                    r.waiting_time + r.service_time
-                    for r in recs
-                    if r.original_customer_class == clss
-                ]
-            )
+def aggregate_sim_states(probs):
+    """
+    Aggregates from individual states to overall numbers of customers
+    """
+    agg_probs = {}
+    for state in probs.keys():
+        agg_state = sum(state[0])
+        if agg_state in agg_probs:
+            agg_probs[agg_state] += probs[state]
+        else:
+            agg_probs[agg_state] = probs[state]
+    return agg_probs
+
+
+def aggregate_sim_states_by_class(probs, num_classes):
+    """
+    Aggregates from individual states to overall numbers of customers of each class
+    """
+    aggregate_probs_by_class = {clss: {} for clss in range(num_classes)}
+    for clss in range(num_classes):
+        for state in probs.keys():
+            agg_state = state[0][clss]
+            if agg_state in aggregate_probs_by_class[clss]:
+                aggregate_probs_by_class[clss][agg_state] += probs[state]
+            else:
+                aggregate_probs_by_class[clss][agg_state] = probs[state]
+    return aggregate_probs_by_class
+
+
+def build_and_run_simulation(num_classes, num_servers, arrival_rates, service_rates, class_change_rate_matrix, max_simulation_time):
+    """
+    Builds and runs the simulation. Returns the simulation object after run.
+    """
+    N = ciw.create_network(
+        arrival_distributions={
+            "Class " + str(c): [ciw.dists.Exponential(arrival_rates[c])]
+            for c in range(num_classes)
+        },
+        service_distributions={
+            "Class " + str(c): [ciw.dists.Exponential(service_rates[c])]
+            for c in range(num_classes)
+        },
+        number_of_servers=[num_servers],
+        class_change_time_distributions=[
+            [
+                ciw.dists.Exponential(rate) if rate is not None else None
+                for rate in row
+            ]
+            for row in class_change_rate_matrix
+        ],
+        priority_classes=({"Class " + str(c): c for c in range(num_classes)}, ['resample']),
+    )
+    ciw.seed(0)
+    Q = ciw.Simulation(N, tracker=ciw.trackers.NodeClassMatrix())
+    Q.max_simulation_time = max_simulation_time
+    Q.simulate_until_max_time(max_simulation_time, progress_bar=True)
+    return Q
+
+
+def get_state_probabilities_from_simulation(Q, warmup):
+    """
+    Get state probabilities from Q state tracker.
+    """
+    obs_period = (warmup, Q.max_simulation_time - warmup)
+    probs = Q.statetracker.state_probabilities(
+        observation_period=obs_period
+    )
+    return probs
+
+
+def find_mean_sojourn_time_by_class_from_simulation(Q, num_classes, warmup):
+    """
+    Finds the mean sojourn time by customer class.
+    """
+    recs = Q.get_all_records()
+    recs = [r for r in recs if r.arrival_date > warmup]
+    mean_sojourn_times_by_class = {}
+    for clss in range(num_classes):
+        mean_sojourn_times_by_class[clss] = np.mean(
+            [
+                r.waiting_time + r.service_time
+                for r in recs
+                if r.original_customer_class == clss
+            ]
+        )
+    return [mean_sojourn_times_by_class[clss] for clss in range(num_classes)]
+
+
+def compare_mc_to_sim_states(num_classes, num_servers, arrival_rates, service_rates, thetas, infty, max_simulation_time, warmup, max_state):
+    probs_mc = get_state_probabilities(
+        num_classes=num_classes,
+        num_servers=num_servers,
+        arrival_rates=arrival_rates,
+        service_rates=service_rates,
+        thetas=thetas,
+        infty=infty
+    )
+    agg_probs_mc = aggregate_mc_states(probs_mc)
+    agg_probs_by_class_mc = aggregate_mc_states_by_class(probs_mc, num_classes)
+
+    Q = build_and_run_simulation(
+        num_classes=num_classes,
+        num_servers=num_servers,
+        arrival_rates=arrival_rates,
+        service_rates=service_rates,
+        class_change_rate_matrix=thetas,
+        max_simulation_time=max_simulation_time
+    )
+    probs_sim = get_state_probabilities_from_simulation(
+        Q=Q,
+        warmup=warmup
+    )
+    agg_probs_sim = aggregate_sim_states(probs_sim)
+    agg_probs_by_class_sim = aggregate_sim_states_by_class(probs_sim, num_classes)
+
+    fig, axarr = plt.subplots(1, 3, figsize=(17, 5))
+    states = range(max_state)
+    axarr[0].plot(
+        states, [agg_probs_mc.get(s, 0) for s in states], label="Markov Chain"
+    )
+    axarr[0].plot(states, [agg_probs_sim.get(s, 0) for s in states], label="Simulation")
+    axarr[0].set_xlabel("Number of Customers", fontsize=14)
+    axarr[0].set_ylabel("Probability", fontsize=14)
+    axarr[0].legend(fontsize=14, frameon=True)
+    
+    for clss in range(num_classes):
+        axarr[1].plot(
+            states,
+            [agg_probs_by_class_mc[clss].get(s, 0) for s in states],
+            label=f"Class {clss}",
+        )
+    axarr[1].set_title("Markov Chain", fontsize=16)
+    axarr[1].legend(fontsize=14, frameon=True)
+    axarr[1].set_xlabel("Number of Customers", fontsize=14)
+    axarr[1].set_ylabel("Probability", fontsize=14)
+    
+    for clss in range(num_classes):
+        axarr[2].plot(
+            states,
+            [agg_probs_by_class_sim[clss].get(s, 0) for s in states],
+            label=f"Class {clss}",
+        )
+    axarr[2].set_title("Simulation", fontsize=16)
+    axarr[2].legend(fontsize=14, frameon=True)
+    axarr[2].set_xlabel("Number of Customers", fontsize=14)
+    axarr[2].set_ylabel("Probability", fontsize=14)
+    return fig
+
+
+def compare_mc_to_sim_sojourn(num_classes, num_servers, arrival_rates, service_rates, thetas, infty, max_simulation_time, warmup):
+    probs = get_state_probabilities(
+        num_classes=num_classes,
+        num_servers=num_servers,
+        arrival_rates=arrival_rates,
+        service_rates=service_rates,
+        thetas=thetas,
+        infty=infty
+    )
+    mean_sojourn_times_mc = get_mean_sojourn_times(
+        num_classes=num_classes,
+        num_servers=num_servers,
+        arrival_rates=arrival_rates,
+        service_rates=service_rates,
+        thetas=thetas,
+        infty=infty,
+        probs=probs
+    )
+    Q = build_and_run_simulation(
+        num_classes=num_classes,
+        num_servers=num_servers,
+        arrival_rates=arrival_rates,
+        service_rates=service_rates,
+        class_change_rate_matrix=thetas,
+        max_simulation_time=max_simulation_time
+    )
+    mean_sojourn_times_sim = find_mean_sojourn_time_by_class_from_simulation(Q, num_classes, warmup)
+    return {'Markov Chain': mean_sojourn_times_mc, 'Simulation': mean_sojourn_times_sim}
