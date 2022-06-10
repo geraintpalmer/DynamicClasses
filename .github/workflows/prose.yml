@@ -20,4 +20,4 @@ jobs:
         sudo apt-get install texlive-fonts-extra
     - name: Check LaTeX compiles
       run: |
-        xelatex -shell-escape tex/main.tex
+        cd tex; xelatex -shell-escape main.tex
