@@ -10,3 +10,4 @@ slides/*
 *.log
 *.bbl
 *.blg
+*env/
