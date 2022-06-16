@@ -4,7 +4,7 @@ import ciw
 
 def test_simulation_builds_and_terminates():
     """
-    TODO Document and add to this test.
+    Tests that the simulation is built properly and it terminates.
     """
     max_simulation_time = 100
     num_classes = 2
@@ -34,3 +34,47 @@ def test_simulation_builds_and_terminates():
     assert Q.network.customer_classes[1].class_change_time_distributions[0].rate == class_change_rate_matrix[1][0]
     assert Q.network.customer_classes[1].class_change_time_distributions[1] == class_change_rate_matrix[1][1]
     assert len(inds) > 0
+
+
+def test_write_state_space_for_states():
+    """
+    Tests that the state markov chain's state space is written correctly.
+    """
+    infty = 3
+    n_classes = 2
+    states = models.write_state_space_for_states(num_classes=n_classes, infty=infty)
+    assert len(states) == infty ** n_classes
+    assert max(max(s) for s in states) == (infty - 1)
+    assert min(min(s) for s in states) == 0
+    assert all(len(s) == n_classes for s in states)
+
+    infty = 10
+    n_classes = 7
+    states = models.write_state_space_for_states(num_classes=n_classes, infty=infty)
+    assert len(states) == infty ** n_classes
+    assert max(max(s) for s in states) == (infty - 1)
+    assert min(min(s) for s in states) == 0
+    assert all(len(s) == n_classes for s in states)
+
+
+def test_write_state_space_for_sojourn():
+    """
+    Tests that the sojourn markov chain's state space is written correctly.
+    """
+    infty = 3
+    n_classes = 2
+    states = models.write_state_space_for_sojourn(num_classes=n_classes, infty=infty)
+    assert len(states) == (infty ** (n_classes + 1)) * n_classes + 1
+    assert max(max(s) for s in states[:-1]) == (infty - 1)
+    assert min(min(s) for s in states[:-1]) == 0
+    assert all(len(s) == n_classes + 2 for s in states[:-1])
+    assert states[-1] == '*'
+
+    infty = 7
+    n_classes = 3
+    states = models.write_state_space_for_sojourn(num_classes=n_classes, infty=infty)
+    assert len(states) == (infty ** (n_classes + 1)) * n_classes + 1
+    assert max(max(s) for s in states[:-1]) == (infty - 1)
+    assert min(min(s) for s in states[:-1]) == 0
+    assert all(len(s) == n_classes + 2 for s in states[:-1])
+    assert states[-1] == '*'
