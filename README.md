@@ -21,4 +21,4 @@ To run the tests:
 
 To check the format:
 
-    $ python -m black .
+    $ python -m black src/
