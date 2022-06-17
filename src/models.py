@@ -2,63 +2,58 @@ import numpy as np
 import itertools
 import ciw
 import matplotlib.pyplot as plt
+
 plt.style.use("seaborn-whitegrid")
 
-def get_state_probabilities(num_classes, num_servers, arrival_rates, service_rates, thetas, infty):
+
+def get_state_probabilities(
+    num_classes, num_servers, arrival_rates, service_rates, thetas, infty
+):
     """
     Get's the system's state probabilities
     """
-    State_Space = write_state_space_for_states(
-        num_classes=num_classes,
-        infty=infty
-    )
+    State_Space = write_state_space_for_states(num_classes=num_classes, infty=infty)
     transition_matrix = write_transition_matrix(
         State_Space=State_Space,
         transition_function=find_transition_rates_for_states,
         num_servers=num_servers,
         arrival_rates=arrival_rates,
         service_rates=service_rates,
-        thetas=thetas
+        thetas=thetas,
     )
     time_step = get_time_step(transition_matrix=transition_matrix)
     discrete_transition_matrix = discretise_transition_matrix(
-        transition_matrix=transition_matrix,
-        time_step=time_step
+        transition_matrix=transition_matrix, time_step=time_step
     )
     probs = solve_probabilities(
-        State_Space=State_Space,
-        discrete_transition_matrix=discrete_transition_matrix
+        State_Space=State_Space, discrete_transition_matrix=discrete_transition_matrix
     )
     return probs
 
 
-def get_mean_sojourn_times(num_classes, num_servers, arrival_rates, service_rates, thetas, infty, probs):
-    State_Space = write_state_space_for_sojourn(
-        num_classes=num_classes,
-        infty=infty
-    )
+def get_mean_sojourn_times(
+    num_classes, num_servers, arrival_rates, service_rates, thetas, infty, probs
+):
+    State_Space = write_state_space_for_sojourn(num_classes=num_classes, infty=infty)
     transition_matrix = write_transition_matrix(
         State_Space=State_Space,
         transition_function=find_transition_rates_for_sojourn_time,
         num_servers=num_servers,
         arrival_rates=arrival_rates,
         service_rates=service_rates,
-        thetas=thetas
+        thetas=thetas,
     )
     time_step = get_time_step(transition_matrix=transition_matrix)
     discrete_transition_matrix = discretise_transition_matrix(
-        transition_matrix=transition_matrix,
-        time_step=time_step
+        transition_matrix=transition_matrix, time_step=time_step
     )
     mean_sojourn_times = solve_time_to_absorbtion(
         State_Space=State_Space,
         discrete_transition_matrix=discrete_transition_matrix,
-        time_step=time_step
+        time_step=time_step,
     )
     mean_sojourn_times_by_class = find_mean_sojourn_time_by_class(
-        num_classes=num_classes,
-        mean_sojourn_times=mean_sojourn_times,
-        probs=probs
+        num_classes=num_classes, mean_sojourn_times=mean_sojourn_times, probs=probs
     )
     return mean_sojourn_times_by_class
 
@@ -67,9 +62,7 @@ def write_state_space_for_states(num_classes, infty):
     """
     Write the states for the state probability model
     """
-    State_Space = list(
-        itertools.product(*[range(infty) for _ in range(num_classes)])
-    )
+    State_Space = list(itertools.product(*[range(infty) for _ in range(num_classes)]))
     return State_Space
 
 
@@ -89,7 +82,9 @@ def write_state_space_for_sojourn(num_classes, infty):
     return State_Space
 
 
-def find_transition_rates_for_states(state1, state2, num_servers, arrival_rates, service_rates, thetas):
+def find_transition_rates_for_states(
+    state1, state2, num_servers, arrival_rates, service_rates, thetas
+):
     """
     Finds the transition rates for given state transition
     """
@@ -115,13 +110,16 @@ def find_transition_rates_for_states(state1, state2, num_servers, arrival_rates,
         leaving_clss = delta.index(-1)
         arriving_clss = delta.index(1)
         number_waiting = state1[leaving_clss] - min(
-            num_servers - min(num_servers, sum(state1[:leaving_clss])), state1[leaving_clss]
+            num_servers - min(num_servers, sum(state1[:leaving_clss])),
+            state1[leaving_clss],
         )
         return number_waiting * thetas[leaving_clss][arriving_clss]
     return 0.0
 
 
-def find_transition_rates_for_sojourn_time(state1, state2, num_servers, arrival_rates, service_rates, thetas):
+def find_transition_rates_for_sojourn_time(
+    state1, state2, num_servers, arrival_rates, service_rates, thetas
+):
     """
     Finds the transition rates for given state transition
     """
@@ -140,9 +138,7 @@ def find_transition_rates_for_sojourn_time(state1, state2, num_servers, arrival_
     if delta.count(0) == num_classes + 1:
         if delta.count(-1) == 1:
             leaving_clss = delta.index(-1)
-            if (
-                leaving_clss <= n
-            ):  # Someone in front of me finishes service and leaves
+            if leaving_clss <= n:  # Someone in front of me finishes service and leaves
                 number_in_service = min(
                     num_servers - min(num_servers, sum(state1[:leaving_clss])),
                     state1[leaving_clss],
@@ -153,7 +149,10 @@ def find_transition_rates_for_sojourn_time(state1, state2, num_servers, arrival_
             ):  # Someone behind me finishes service and leaves
                 number_in_service = min(
                     num_servers
-                    - min(num_servers, sum(state1[:leaving_clss]) + 1 + state1[num_classes]),
+                    - min(
+                        num_servers,
+                        sum(state1[:leaving_clss]) + 1 + state1[num_classes],
+                    ),
                     state1[leaving_clss],
                 )
                 return service_rates[leaving_clss] * number_in_service
@@ -161,7 +160,8 @@ def find_transition_rates_for_sojourn_time(state1, state2, num_servers, arrival_
                 leaving_clss == num_classes
             ):  # Someone of my class behind me finishes service and leaves
                 number_in_service = min(
-                    num_servers - min(num_servers, sum(state1[: n + 1]) + 1), state1[num_classes]
+                    num_servers - min(num_servers, sum(state1[: n + 1]) + 1),
+                    state1[num_classes],
                 )
                 return service_rates[n] * number_in_service
         if delta.count(1) == 1:
@@ -192,7 +192,9 @@ def find_transition_rates_for_sojourn_time(state1, state2, num_servers, arrival_
         ):  # Customer behind me (not my class) changing class not to my class
             number_waiting = state1[leaving_clss] - min(
                 num_servers
-                - min(num_servers, sum(state1[:leaving_clss]) + 1 + state1[num_classes]),
+                - min(
+                    num_servers, sum(state1[:leaving_clss]) + 1 + state1[num_classes]
+                ),
                 state1[leaving_clss],
             )
             return number_waiting * thetas[leaving_clss][arriving_clss]
@@ -202,7 +204,8 @@ def find_transition_rates_for_sojourn_time(state1, state2, num_servers, arrival_
             num_classes + 1,
         ]:  # Customer behind me (of my class) changing class not to my class
             number_waiting = state1[leaving_clss] - min(
-                num_servers - min(num_servers, sum(state1[: n + 1]) + 1), state1[leaving_clss]
+                num_servers - min(num_servers, sum(state1[: n + 1]) + 1),
+                state1[leaving_clss],
             )
             return number_waiting * thetas[n][arriving_clss]
         if (
@@ -214,11 +217,15 @@ def find_transition_rates_for_sojourn_time(state1, state2, num_servers, arrival_
             )
             return number_waiting * thetas[leaving_clss][n]
         if (
-            leaving_clss > n and leaving_clss < num_classes and arriving_clss == num_classes
+            leaving_clss > n
+            and leaving_clss < num_classes
+            and arriving_clss == num_classes
         ):  # Customer behind me (not my class) changing class to my class
             number_waiting = state1[leaving_clss] - min(
                 num_servers
-                - min(num_servers, sum(state1[:leaving_clss]) + 1 + state1[num_classes]),
+                - min(
+                    num_servers, sum(state1[:leaving_clss]) + 1 + state1[num_classes]
+                ),
                 state1[leaving_clss],
             )
             return number_waiting * thetas[leaving_clss][n]
@@ -241,16 +248,21 @@ def find_transition_rates_for_sojourn_time(state1, state2, num_servers, arrival_
     return 0
 
 
-def write_transition_matrix(State_Space, transition_function, num_servers, arrival_rates, service_rates, thetas):
+def write_transition_matrix(
+    State_Space, transition_function, num_servers, arrival_rates, service_rates, thetas
+):
     """
     Writes the transition matrix for the markov chain
     """
     transition_matrix = np.array(
         [
             [
-                transition_function(s1, s2, num_servers, arrival_rates, service_rates, thetas)
+                transition_function(
+                    s1, s2, num_servers, arrival_rates, service_rates, thetas
+                )
                 for s2 in State_Space
-            ] for s1 in State_Space
+            ]
+            for s1 in State_Space
         ]
     )
     row_sums = np.sum(transition_matrix, axis=1)
@@ -275,9 +287,7 @@ def discretise_transition_matrix(transition_matrix, time_step):
     """
     time_step = get_time_step(transition_matrix)
     lenmat = len(transition_matrix)
-    discrete_transition_matrix = (
-        transition_matrix * time_step + np.identity(lenmat)
-    )
+    discrete_transition_matrix = transition_matrix * time_step + np.identity(lenmat)
     return discrete_transition_matrix
 
 
@@ -301,16 +311,10 @@ def find_mean_sojourn_time_by_class(num_classes, mean_sojourn_times, probs):
     mean_sojourn_times_by_class = {}
     for clss in range(num_classes):
         arriving_states = [
-            s
-            for s in mean_sojourn_times
-            if s[-1] == clss and s[-2] == 0
+            s for s in mean_sojourn_times if s[-1] == clss and s[-2] == 0
         ]
         mean_sojourn_times_by_class[clss] = sum(
-            [
-                probs[state[:-2]]
-                * mean_sojourn_times[state]
-                for state in arriving_states
-            ]
+            [probs[state[:-2]] * mean_sojourn_times[state] for state in arriving_states]
         )
     return [mean_sojourn_times_by_class[clss] for clss in range(num_classes)]
 
@@ -390,7 +394,14 @@ def aggregate_sim_states_by_class(probs, num_classes):
     return aggregate_probs_by_class
 
 
-def build_and_run_simulation(num_classes, num_servers, arrival_rates, service_rates, class_change_rate_matrix, max_simulation_time):
+def build_and_run_simulation(
+    num_classes,
+    num_servers,
+    arrival_rates,
+    service_rates,
+    class_change_rate_matrix,
+    max_simulation_time,
+):
     """
     Builds and runs the simulation. Returns the simulation object after run.
     """
@@ -405,13 +416,13 @@ def build_and_run_simulation(num_classes, num_servers, arrival_rates, service_ra
         },
         number_of_servers=[num_servers],
         class_change_time_distributions=[
-            [
-                ciw.dists.Exponential(rate) if rate is not None else None
-                for rate in row
-            ]
+            [ciw.dists.Exponential(rate) if rate is not None else None for rate in row]
             for row in class_change_rate_matrix
         ],
-        priority_classes=({"Class " + str(c): c for c in range(num_classes)}, ['resample']),
+        priority_classes=(
+            {"Class " + str(c): c for c in range(num_classes)},
+            ["resample"],
+        ),
     )
     ciw.seed(0)
     Q = ciw.Simulation(N, tracker=ciw.trackers.NodeClassMatrix())
@@ -425,9 +436,7 @@ def get_state_probabilities_from_simulation(Q, warmup):
     Get state probabilities from Q state tracker.
     """
     obs_period = (warmup, Q.max_simulation_time - warmup)
-    probs = Q.statetracker.state_probabilities(
-        observation_period=obs_period
-    )
+    probs = Q.statetracker.state_probabilities(observation_period=obs_period)
     return probs
 
 
@@ -449,14 +458,24 @@ def find_mean_sojourn_time_by_class_from_simulation(Q, num_classes, warmup):
     return [mean_sojourn_times_by_class[clss] for clss in range(num_classes)]
 
 
-def compare_mc_to_sim_states(num_classes, num_servers, arrival_rates, service_rates, thetas, infty, max_simulation_time, warmup, max_state):
+def compare_mc_to_sim_states(
+    num_classes,
+    num_servers,
+    arrival_rates,
+    service_rates,
+    thetas,
+    infty,
+    max_simulation_time,
+    warmup,
+    max_state,
+):
     probs_mc = get_state_probabilities(
         num_classes=num_classes,
         num_servers=num_servers,
         arrival_rates=arrival_rates,
         service_rates=service_rates,
         thetas=thetas,
-        infty=infty
+        infty=infty,
     )
     agg_probs_mc = aggregate_mc_states(probs_mc)
     agg_probs_by_class_mc = aggregate_mc_states_by_class(probs_mc, num_classes)
@@ -467,12 +486,9 @@ def compare_mc_to_sim_states(num_classes, num_servers, arrival_rates, service_ra
         arrival_rates=arrival_rates,
         service_rates=service_rates,
         class_change_rate_matrix=thetas,
-        max_simulation_time=max_simulation_time
+        max_simulation_time=max_simulation_time,
     )
-    probs_sim = get_state_probabilities_from_simulation(
-        Q=Q,
-        warmup=warmup
-    )
+    probs_sim = get_state_probabilities_from_simulation(Q=Q, warmup=warmup)
     agg_probs_sim = aggregate_sim_states(probs_sim)
     agg_probs_by_class_sim = aggregate_sim_states_by_class(probs_sim, num_classes)
 
@@ -485,7 +501,7 @@ def compare_mc_to_sim_states(num_classes, num_servers, arrival_rates, service_ra
     axarr[0].set_xlabel("Number of Customers", fontsize=14)
     axarr[0].set_ylabel("Probability", fontsize=14)
     axarr[0].legend(fontsize=14, frameon=True)
-    
+
     for clss in range(num_classes):
         axarr[1].plot(
             states,
@@ -496,7 +512,7 @@ def compare_mc_to_sim_states(num_classes, num_servers, arrival_rates, service_ra
     axarr[1].legend(fontsize=14, frameon=True)
     axarr[1].set_xlabel("Number of Customers", fontsize=14)
     axarr[1].set_ylabel("Probability", fontsize=14)
-    
+
     for clss in range(num_classes):
         axarr[2].plot(
             states,
@@ -510,14 +526,23 @@ def compare_mc_to_sim_states(num_classes, num_servers, arrival_rates, service_ra
     return fig
 
 
-def compare_mc_to_sim_sojourn(num_classes, num_servers, arrival_rates, service_rates, thetas, infty, max_simulation_time, warmup):
+def compare_mc_to_sim_sojourn(
+    num_classes,
+    num_servers,
+    arrival_rates,
+    service_rates,
+    thetas,
+    infty,
+    max_simulation_time,
+    warmup,
+):
     probs = get_state_probabilities(
         num_classes=num_classes,
         num_servers=num_servers,
         arrival_rates=arrival_rates,
         service_rates=service_rates,
         thetas=thetas,
-        infty=infty
+        infty=infty,
     )
     mean_sojourn_times_mc = get_mean_sojourn_times(
         num_classes=num_classes,
@@ -526,7 +551,7 @@ def compare_mc_to_sim_sojourn(num_classes, num_servers, arrival_rates, service_r
         service_rates=service_rates,
         thetas=thetas,
         infty=infty,
-        probs=probs
+        probs=probs,
     )
     Q = build_and_run_simulation(
         num_classes=num_classes,
@@ -534,7 +559,9 @@ def compare_mc_to_sim_sojourn(num_classes, num_servers, arrival_rates, service_r
         arrival_rates=arrival_rates,
         service_rates=service_rates,
         class_change_rate_matrix=thetas,
-        max_simulation_time=max_simulation_time
+        max_simulation_time=max_simulation_time,
     )
-    mean_sojourn_times_sim = find_mean_sojourn_time_by_class_from_simulation(Q, num_classes, warmup)
-    return {'Markov Chain': mean_sojourn_times_mc, 'Simulation': mean_sojourn_times_sim}
+    mean_sojourn_times_sim = find_mean_sojourn_time_by_class_from_simulation(
+        Q, num_classes, warmup
+    )
+    return {"Markov Chain": mean_sojourn_times_mc, "Simulation": mean_sojourn_times_sim}
