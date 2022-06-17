@@ -260,23 +260,26 @@ def get_all_pairs_of_non_zero_entries_states(State_Space, infty):
     Returns a list of all pairs of states that have a possible non-zero rate
     for the state probabilities markov chain.
     """
-    all_pairs = []
-    for state1 in State_Space:
+    all_pairs_indices = []
+    for index, state1 in enumerate(State_Space):
         for i, s_i in enumerate(state1):
             state_arrival, state_service = list(state1), list(state1)
             if s_i < infty - 1:
                 state_arrival[i] = s_i + 1
-                all_pairs.append((state1, tuple(state_arrival)))
+                next_state = tuple(state_arrival)
+                all_pairs_indices.append((index, State_Space.index(next_state)))
             if s_i > 0:
                 state_service[i] = s_i - 1
-                all_pairs.append((state1, tuple(state_service)))
+                next_state = tuple(state_service)
+                all_pairs_indices.append((index, State_Space.index(next_state)))
             for j, s_j in enumerate(state1):
                 state_change = list(state1)
                 if i != j and s_j < infty - 1 and s_i > 0:
                     state_change[i] -= 1
                     state_change[j] += 1
-                    all_pairs.append((state1, tuple(state_change)))
-    return all_pairs
+                    next_state = tuple(state_change)
+                    all_pairs_indices.append((index, State_Space.index(next_state)))
+    return all_pairs_indices
 
 
 def get_all_pairs_of_non_zero_entries_sojourn(State_Space, infty):
@@ -285,10 +288,10 @@ def get_all_pairs_of_non_zero_entries_sojourn(State_Space, infty):
     for the sojourn time markov chain
     """
     all_pairs = []
-    for s1 in State_Space:
-        for s2 in State_Space:
+    for i, s1 in enumerate(State_Space):
+        for j, s2 in enumerate(State_Space):
             if s1 != s2:
-                all_pairs.append((s1, s2))
+                all_pairs.append((i, j))
     return all_pairs
 
 
@@ -310,11 +313,9 @@ def write_transition_matrix(
     all_pairs = non_zero_pair_function(State_Space=State_Space, infty=infty)
 
     for s1, s2 in all_pairs:
-        transition_matrix[
-            State_Space.index(s1), State_Space.index(s2)
-        ] = transition_function(
-            state1=s1,
-            state2=s2,
+        transition_matrix[s1, s2] = transition_function(
+            state1=State_Space[s1],
+            state2=State_Space[s2],
             num_servers=num_servers,
             arrival_rates=arrival_rates,
             service_rates=service_rates,
