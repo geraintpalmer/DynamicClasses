@@ -16,10 +16,12 @@ def get_state_probabilities(
     transition_matrix = write_transition_matrix(
         State_Space=State_Space,
         transition_function=find_transition_rates_for_states,
+        non_zero_pair_function=get_all_pairs_of_non_zero_entries_states,
         num_servers=num_servers,
         arrival_rates=arrival_rates,
         service_rates=service_rates,
         thetas=thetas,
+        infty=infty,
     )
     time_step = get_time_step(transition_matrix=transition_matrix)
     discrete_transition_matrix = discretise_transition_matrix(
@@ -34,14 +36,19 @@ def get_state_probabilities(
 def get_mean_sojourn_times(
     num_classes, num_servers, arrival_rates, service_rates, thetas, infty, probs
 ):
+    """
+    Get the mean sojourn times for the given state probabilities
+    """
     State_Space = write_state_space_for_sojourn(num_classes=num_classes, infty=infty)
     transition_matrix = write_transition_matrix(
         State_Space=State_Space,
         transition_function=find_transition_rates_for_sojourn_time,
+        non_zero_pair_function=get_all_pairs_of_non_zero_entries_sojourn,
         num_servers=num_servers,
         arrival_rates=arrival_rates,
         service_rates=service_rates,
         thetas=thetas,
+        infty=infty,
     )
     time_step = get_time_step(transition_matrix=transition_matrix)
     discrete_transition_matrix = discretise_transition_matrix(
@@ -251,6 +258,7 @@ def find_transition_rates_for_sojourn_time(
 def get_all_pairs_of_non_zero_entries_states(State_Space, infty):
     """
     Returns a list of all pairs of states that have a possible non-zero rate
+    for the state probabilities markov chain.
     """
     all_pairs = []
     for state1 in State_Space:
@@ -271,27 +279,49 @@ def get_all_pairs_of_non_zero_entries_states(State_Space, infty):
     return all_pairs
 
 
+def get_all_pairs_of_non_zero_entries_sojourn(State_Space, infty):
+    """
+    Returns a list of all pairs of states that have a possible non-zero rate
+    for the sojourn time markov chain
+    """
+    all_pairs = []
+    for s1 in State_Space:
+        for s2 in State_Space:
+            if s1 != s2:
+                all_pairs.append((s1, s2))
+    return all_pairs
+
+
 def write_transition_matrix(
-    State_Space, transition_function, num_servers, arrival_rates, service_rates, thetas
+    State_Space,
+    transition_function,
+    non_zero_pair_function,
+    num_servers,
+    arrival_rates,
+    service_rates,
+    thetas,
+    infty,
 ):
     """
     Writes the transition matrix for the markov chain
     """
-    transition_matrix = np.array(
-        [
-            [
-                transition_function(
-                    s1, s2, num_servers, arrival_rates, service_rates, thetas
-                )
-                for s2 in State_Space
-            ]
-            for s1 in State_Space
-        ]
-    )
+    size_mat = len(State_Space)
+    transition_matrix = np.zeros((size_mat, size_mat))
+    all_pairs = non_zero_pair_function(State_Space=State_Space, infty=infty)
+
+    for s1, s2 in all_pairs:
+        transition_matrix[
+            State_Space.index(s1), State_Space.index(s2)
+        ] = transition_function(
+            state1=s1,
+            state2=s2,
+            num_servers=num_servers,
+            arrival_rates=arrival_rates,
+            service_rates=service_rates,
+            thetas=thetas,
+        )
     row_sums = np.sum(transition_matrix, axis=1)
-    transition_matrix = transition_matrix - np.multiply(
-        np.identity(len(State_Space)), row_sums
-    )
+    transition_matrix = transition_matrix - np.multiply(np.identity(size_mat), row_sums)
     return transition_matrix
 
 
