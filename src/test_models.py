@@ -90,3 +90,74 @@ def test_write_state_space_for_sojourn():
     assert min(min(s) for s in states[:-1]) == 0
     assert all(len(s) == n_classes + 2 for s in states[:-1])
     assert states[-1] == "*"
+
+
+def test_get_all_pairs_of_non_zero_entries_states_example():
+    """
+    Tests we get all expected pairs of states that have a possible non-zero
+    rate.
+    """
+    num_classes = 2
+    infty = 3
+    all_states = models.write_state_space_for_states(
+        num_classes=num_classes, infty=infty
+    )
+    all_pairs_indices = models.get_all_pairs_of_non_zero_entries_states(
+        State_Space=all_states, infty=infty
+    )
+
+    expected_pairs = [
+        ((0, 0), (1, 0)),
+        ((0, 0), (0, 1)),
+        ((0, 1), (1, 1)),
+        ((0, 1), (0, 2)),
+        ((0, 1), (0, 0)),
+        ((0, 1), (1, 0)),
+        ((0, 2), (1, 2)),
+        ((0, 2), (0, 1)),
+        ((0, 2), (1, 1)),
+        ((1, 0), (2, 0)),
+        ((1, 0), (0, 0)),
+        ((1, 0), (0, 1)),
+        ((1, 0), (1, 1)),
+        ((1, 1), (2, 1)),
+        ((1, 1), (0, 1)),
+        ((1, 1), (0, 2)),
+        ((1, 1), (1, 2)),
+        ((1, 1), (1, 0)),
+        ((1, 1), (2, 0)),
+        ((1, 2), (2, 2)),
+        ((1, 2), (0, 2)),
+        ((1, 2), (1, 1)),
+        ((1, 2), (2, 1)),
+        ((2, 0), (1, 0)),
+        ((2, 0), (1, 1)),
+        ((2, 0), (2, 1)),
+        ((2, 1), (1, 1)),
+        ((2, 1), (1, 2)),
+        ((2, 1), (2, 2)),
+        ((2, 1), (2, 0)),
+        ((2, 2), (1, 2)),
+        ((2, 2), (2, 1)),
+    ]
+    expected_pairs_indices = [
+        (all_states.index(s1), all_states.index(s2)) for s1, s2 in expected_pairs
+    ]
+    assert len(all_pairs_indices) == len(expected_pairs)
+    assert set(expected_pairs_indices) == set(all_pairs_indices)
+
+
+def test_get_all_pairs_of_non_zero_entries_sojourn_example():
+    """
+    Tests we get all expected pairs of states that have a possible non-zero
+    rate.
+    """
+    num_classes = 2
+    infty = 3
+    all_states = models.write_state_space_for_sojourn(
+        num_classes=num_classes, infty=infty
+    )
+    all_pairs_indices = models.get_all_pairs_of_non_zero_entries_sojourn(
+        State_Space=all_states, infty=infty
+    )
+    assert len(all_pairs_indices) == 342
