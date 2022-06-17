@@ -145,3 +145,19 @@ def test_get_all_pairs_of_non_zero_entries_states_example():
     ]
     assert len(all_pairs_indices) == len(expected_pairs)
     assert set(expected_pairs_indices) == set(all_pairs_indices)
+
+
+def test_get_all_pairs_of_non_zero_entries_sojourn_example():
+    """
+    Tests we get all expected pairs of states that have a possible non-zero
+    rate.
+    """
+    num_classes = 2
+    infty = 3
+    all_states = models.write_state_space_for_sojourn(
+        num_classes=num_classes, infty=infty
+    )
+    all_pairs_indices = models.get_all_pairs_of_non_zero_entries_sojourn(
+        State_Space=all_states, infty=infty
+    )
+    assert len(all_pairs_indices) == 342

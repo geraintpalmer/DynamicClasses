@@ -287,12 +287,53 @@ def get_all_pairs_of_non_zero_entries_sojourn(State_Space, infty):
     Returns a list of all pairs of states that have a possible non-zero rate
     for the sojourn time markov chain
     """
-    all_pairs = []
-    for i, s1 in enumerate(State_Space):
-        for j, s2 in enumerate(State_Space):
-            if s1 != s2:
-                all_pairs.append((i, j))
-    return all_pairs
+    all_pairs_indices = []
+    num_classes = len(State_Space[0]) - 2
+    for index, state1 in enumerate(State_Space[:-1]):
+        n = state1[-1]
+        b = state1[-2]
+
+        # Go from any state to asterisk (I finish service)
+        all_pairs_indices.append((index, len(State_Space) - 1))
+
+        for i, s_i in enumerate(state1):
+            if i not in (n, num_classes + 1) and s_i < infty - 1:
+                # Arrival
+                state_arrival = list(state1)
+                state_arrival[i] = s_i + 1
+                next_state = tuple(state_arrival)
+                all_pairs_indices.append((index, State_Space.index(next_state)))
+            if i < num_classes + 1 and s_i > 0:
+                # Service
+                state_service = list(state1)
+                state_service[i] = s_i - 1
+                next_state = tuple(state_service)
+                all_pairs_indices.append((index, State_Space.index(next_state)))
+            for j, s_j in enumerate(state1[:-1]):
+                # Not me changing class
+                if (
+                    i != j
+                    and i != (num_classes + 1)
+                    and j != n
+                    and s_i > 0
+                    and s_j < infty - 1
+                ):
+                    if not (i == n and j == num_classes):
+                        state_change = list(state1)
+                        state_change[i] = s_i - 1
+                        state_change[j] = s_j + 1
+                        next_state = tuple(state_change)
+                        all_pairs_indices.append((index, State_Space.index(next_state)))
+        if state1[n] + b < infty:
+            for new_n in range(num_classes):
+                if new_n != n:
+                    state_I_change = list(state1)
+                    state_I_change[-2] = 0
+                    state_I_change[n] = state1[n] + b
+                    state_I_change[-1] = new_n
+                    next_state = tuple(state_I_change)
+                    all_pairs_indices.append((index, State_Space.index(next_state)))
+    return all_pairs_indices
 
 
 def write_transition_matrix(
