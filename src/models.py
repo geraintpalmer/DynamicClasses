@@ -248,6 +248,29 @@ def find_transition_rates_for_sojourn_time(
     return 0
 
 
+def get_all_pairs_of_non_zero_entries_states(State_Space, infty):
+    """
+    Returns a list of all pairs of states that have a possible non-zero rate
+    """
+    all_pairs = []
+    for state1 in State_Space:
+        for i, s_i in enumerate(state1):
+            state_arrival, state_service = list(state1), list(state1)
+            if s_i < infty - 1:
+                state_arrival[i] = s_i + 1
+                all_pairs.append((state1, tuple(state_arrival)))
+            if s_i > 0:
+                state_service[i] = s_i - 1
+                all_pairs.append((state1, tuple(state_service)))
+            for j, s_j in enumerate(state1):
+                state_change = list(state1)
+                if i != j and s_j < infty - 1 and s_i > 0:
+                    state_change[i] -= 1
+                    state_change[j] += 1
+                    all_pairs.append((state1, tuple(state_change)))
+    return all_pairs
+
+
 def write_transition_matrix(
     State_Space, transition_function, num_servers, arrival_rates, service_rates, thetas
 ):
