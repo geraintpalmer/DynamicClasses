@@ -2,6 +2,7 @@ import models
 import ciw
 import numpy as np
 
+
 def test_simulation_builds_and_terminates():
     """
     Tests that the simulation is built properly and it terminates.
@@ -602,13 +603,16 @@ def test_sojourn_transition_rates_noone_in_service():
         == thetas[1][2]
     )
 
+
 def test_writes_transition_matrix_states():
     """
     Tests that a valid transition matrix is written.
     """
     infty = 5
     num_classes = 2
-    State_Space = models.write_state_space_for_states(num_classes=num_classes, infty=infty)
+    State_Space = models.write_state_space_for_states(
+        num_classes=num_classes, infty=infty
+    )
     transition_matrix = models.write_transition_matrix(
         State_Space=State_Space,
         transition_function=models.find_transition_rates_for_states,
@@ -619,9 +623,9 @@ def test_writes_transition_matrix_states():
         thetas=[[None, 5], [3, None]],
         infty=infty,
     )
-    matrix_size = infty ** num_classes
+    matrix_size = infty**num_classes
     assert transition_matrix.shape == (matrix_size, matrix_size)
-    assert transition_matrix.size == matrix_size ** 2
+    assert transition_matrix.size == matrix_size**2
     assert (transition_matrix.sum(axis=1) == [0.0 for _ in range(matrix_size)]).all()
     diag = transition_matrix.diagonal().copy()
     np.fill_diagonal(transition_matrix, np.zeros(25))
@@ -635,7 +639,9 @@ def test_writes_transition_matrix_sojourn():
     """
     infty = 4
     num_classes = 2
-    State_Space = models.write_state_space_for_sojourn(num_classes=num_classes, infty=infty)
+    State_Space = models.write_state_space_for_sojourn(
+        num_classes=num_classes, infty=infty
+    )
     transition_matrix = models.write_transition_matrix(
         State_Space=State_Space,
         transition_function=models.find_transition_rates_for_sojourn_time,
@@ -648,12 +654,10 @@ def test_writes_transition_matrix_sojourn():
     )
     matrix_size = ((infty ** (num_classes + 1)) * num_classes) + 1
     assert transition_matrix.shape == (matrix_size, matrix_size)
-    assert transition_matrix.size == matrix_size ** 2
+    assert transition_matrix.size == matrix_size**2
     assert (transition_matrix.sum(axis=1) == [0.0 for _ in range(matrix_size)]).all()
     assert (transition_matrix[-1] == [0.0 for _ in range(matrix_size)]).all()
     diag = transition_matrix.diagonal().copy()
     np.fill_diagonal(transition_matrix, np.zeros(25))
     assert all(diag <= 0)
     assert all(transition_matrix.sum(axis=1) == -diag)
-
-
