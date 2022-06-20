@@ -114,6 +114,25 @@ def find_transition_rates_for_states(
     return 0.0
 
 
+def get_numbers_in_service(state, leaving_clss, num_servers, num_classes):
+    """
+    Returns the number of customerss of `leaving_clss` currently in service.
+    """
+    n = state[-1]
+    if leaving_clss <= n:
+        return min(num_servers, sum(state[: leaving_clss + 1])) - min(
+            num_servers, sum(state[:leaving_clss])
+        )
+    if leaving_clss > n and leaving_clss != num_classes:
+        return min(
+            num_servers, sum(state[: leaving_clss + 1]) + 1 + state[num_classes]
+        ) - min(num_servers, sum(state[:leaving_clss]) + 1 + state[num_classes])
+    if leaving_clss == num_classes:
+        return min(num_servers, sum(state[: n + 1]) + 1 + state[num_classes]) - min(
+            num_servers, sum(state[: n + 1]) + 1
+        )
+
+
 def find_transition_rates_for_sojourn_time(
     state1, state2, num_servers, arrival_rates, service_rates, thetas
 ):
@@ -135,31 +154,16 @@ def find_transition_rates_for_sojourn_time(
     if delta.count(0) == num_classes + 1:
         if delta.count(-1) == 1:
             leaving_clss = delta.index(-1)
-            if leaving_clss <= n:  # Someone in front of me finishes service and leaves
-                number_in_service = min(
-                    num_servers - min(num_servers, sum(state1[:leaving_clss])),
-                    state1[leaving_clss],
-                )
-                return service_rates[leaving_clss] * number_in_service
+            number_in_service = get_numbers_in_service(
+                state1, leaving_clss, num_servers, num_classes
+            )
             if (
-                leaving_clss > n and leaving_clss < num_classes
-            ):  # Someone behind me finishes service and leaves
-                number_in_service = min(
-                    num_servers
-                    - min(
-                        num_servers,
-                        sum(state1[:leaving_clss]) + 1 + state1[num_classes],
-                    ),
-                    state1[leaving_clss],
-                )
+                leaving_clss < num_classes
+            ):  # Someone finishes service and leaves (not my class and behind me)
                 return service_rates[leaving_clss] * number_in_service
             if (
                 leaving_clss == num_classes
             ):  # Someone of my class behind me finishes service and leaves
-                number_in_service = min(
-                    num_servers - min(num_servers, sum(state1[: n + 1]) + 1),
-                    state1[num_classes],
-                )
                 return service_rates[n] * number_in_service
         if delta.count(1) == 1:
             arriving_clss = delta.index(1)
@@ -172,59 +176,36 @@ def find_transition_rates_for_sojourn_time(
     if delta.count(0) == num_classes and delta.count(1) == 1 and delta.count(-1) == 1:
         leaving_clss = delta.index(-1)
         arriving_clss = delta.index(1)
+        number_waiting = state1[leaving_clss] - get_numbers_in_service(
+            state1, leaving_clss, num_servers, num_classes
+        )
         if leaving_clss <= n and arriving_clss not in [
             n,
             num_classes,
             num_classes + 1,
         ]:  # Customer before me changing class not to my class
-            number_waiting = state1[leaving_clss] - min(
-                num_servers - min(num_servers, sum(state1[:leaving_clss])),
-                state1[leaving_clss],
-            )
             return number_waiting * thetas[leaving_clss][arriving_clss]
         if (
             leaving_clss > n
             and leaving_clss < num_classes
             and arriving_clss not in [n, num_classes, num_classes + 1]
         ):  # Customer behind me (not my class) changing class not to my class
-            number_waiting = state1[leaving_clss] - min(
-                num_servers
-                - min(
-                    num_servers, sum(state1[:leaving_clss]) + 1 + state1[num_classes]
-                ),
-                state1[leaving_clss],
-            )
             return number_waiting * thetas[leaving_clss][arriving_clss]
         if leaving_clss == num_classes and arriving_clss not in [
             n,
             num_classes,
             num_classes + 1,
         ]:  # Customer behind me (of my class) changing class not to my class
-            number_waiting = state1[leaving_clss] - min(
-                num_servers - min(num_servers, sum(state1[: n + 1]) + 1),
-                state1[leaving_clss],
-            )
             return number_waiting * thetas[n][arriving_clss]
         if (
             leaving_clss < n and arriving_clss == num_classes
         ):  # Customer before me changing class to my class
-            number_waiting = state1[leaving_clss] - min(
-                num_servers - min(num_servers, sum(state1[:leaving_clss])),
-                state1[leaving_clss],
-            )
             return number_waiting * thetas[leaving_clss][n]
         if (
             leaving_clss > n
             and leaving_clss < num_classes
             and arriving_clss == num_classes
         ):  # Customer behind me (not my class) changing class to my class
-            number_waiting = state1[leaving_clss] - min(
-                num_servers
-                - min(
-                    num_servers, sum(state1[:leaving_clss]) + 1 + state1[num_classes]
-                ),
-                state1[leaving_clss],
-            )
             return number_waiting * thetas[leaving_clss][n]
     if (
         delta.count(0) == num_classes - 1
@@ -392,9 +373,7 @@ def solve_time_to_absorbtion(State_Space, transition_matrix):
     T = transition_matrix[:-1, :-1]
     b = np.ones(size_mat - 1)
     time2absorb = np.linalg.solve(-T, b)
-    mean_sojourn_time = {
-        State_Space[i]: float(t) for i, t in enumerate(time2absorb)
-    }
+    mean_sojourn_time = {State_Space[i]: float(t) for i, t in enumerate(time2absorb)}
     return mean_sojourn_time
 
 

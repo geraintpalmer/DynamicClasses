@@ -1,6 +1,7 @@
 import models
 import ciw
 import numpy as np
+import itertools
 
 
 def test_simulation_builds_and_terminates():
@@ -168,6 +169,7 @@ def test_states_transition_rates_everyone_in_service():
     """
     Tests the correct transition rates are given for state pairs, for state model, when everyone is in service
     """
+    all_states = models.write_state_space_for_states(num_classes=2, infty=10)
     arrival_rates = [5, 7]
     service_rates = [3, 4]
     num_servers = 100
@@ -179,6 +181,15 @@ def test_states_transition_rates_everyone_in_service():
     state_service2 = (10, 20)
     state_change12 = (9, 22)
     state_change21 = (11, 20)
+    nonzero = [
+        state,
+        state_arrival1,
+        state_arrival2,
+        state_change12,
+        state_change21,
+        state_service1,
+        state_service2,
+    ]
     assert (
         models.find_transition_rates_for_states(
             state, state_arrival1, num_servers, arrival_rates, service_rates, thetas
@@ -215,12 +226,21 @@ def test_states_transition_rates_everyone_in_service():
         )
         == 0
     )
+    for next_state in all_states:
+        if next_state not in nonzero:
+            assert (
+                models.find_transition_rates_for_states(
+                    state, next_state, num_servers, arrival_rates, service_rates, thetas
+                )
+                == 0
+            )
 
 
 def test_states_transition_rates_noone_in_service():
     """
     Tests the correct transition rates are given for state pairs, for state model, when no-one is in service
     """
+    all_states = models.write_state_space_for_states(num_classes=2, infty=10)
     arrival_rates = [5, 7]
     service_rates = [3, 4]
     num_servers = 0
@@ -232,6 +252,15 @@ def test_states_transition_rates_noone_in_service():
     state_service2 = (10, 20)
     state_change12 = (9, 22)
     state_change21 = (11, 20)
+    nonzero = [
+        state,
+        state_arrival1,
+        state_arrival2,
+        state_change12,
+        state_change21,
+        state_service1,
+        state_service2,
+    ]
     assert (
         models.find_transition_rates_for_states(
             state, state_arrival1, num_servers, arrival_rates, service_rates, thetas
@@ -268,12 +297,21 @@ def test_states_transition_rates_noone_in_service():
         )
         == state[1] * thetas[1][0]
     )
+    for next_state in all_states:
+        if next_state not in nonzero:
+            assert (
+                models.find_transition_rates_for_states(
+                    state, next_state, num_servers, arrival_rates, service_rates, thetas
+                )
+                == 0
+            )
 
 
 def test_sojourn_transition_rates_everyone_in_service():
     """
     Tests the correct transition rates are given for state pairs, for sojourn model, when everyone is in service
     """
+    all_states = models.write_state_space_for_sojourn(num_classes=3, infty=22)
     arrival_rates = [5, 7, 3]
     service_rates = [3, 4, 9]
     num_servers = 100
@@ -297,6 +335,27 @@ def test_sojourn_transition_rates_everyone_in_service():
     state_change32 = (11, 21, 6, 15, 1)
     state_change_me1 = (11, 35, 7, 0, 0)
     state_change_me3 = (11, 35, 7, 0, 2)
+    nonzero = [
+        state,
+        state_arrival1,
+        state_arrival2,
+        state_arrival3,
+        state_change12,
+        state_change13,
+        state_change21behind,
+        state_change21front,
+        state_change23behind,
+        state_change23front,
+        state_change31,
+        state_change32,
+        state_change_me1,
+        state_change_me3,
+        state_service1,
+        state_service2behind,
+        state_service2front,
+        state_service3,
+        state_service_me,
+    ]
     assert (
         models.find_transition_rates_for_sojourn_time(
             state, state_arrival1, num_servers, arrival_rates, service_rates, thetas
@@ -435,12 +494,21 @@ def test_sojourn_transition_rates_everyone_in_service():
         )
         == 0
     )
+    for next_state in all_states:
+        if next_state not in nonzero:
+            assert (
+                models.find_transition_rates_for_sojourn_time(
+                    state, next_state, num_servers, arrival_rates, service_rates, thetas
+                )
+                == 0
+            )
 
 
 def test_sojourn_transition_rates_noone_in_service():
     """
     Tests the correct transition rates are given for state pairs, for sojourn model, when no-one is in service
     """
+    all_states = models.write_state_space_for_sojourn(num_classes=3, infty=22)
     arrival_rates = [5, 7, 3]
     service_rates = [3, 4, 9]
     num_servers = 0
@@ -464,6 +532,27 @@ def test_sojourn_transition_rates_noone_in_service():
     state_change32 = (11, 21, 6, 15, 1)
     state_change_me1 = (11, 35, 7, 0, 0)
     state_change_me3 = (11, 35, 7, 0, 2)
+    nonzero = [
+        state,
+        state_arrival1,
+        state_arrival2,
+        state_arrival3,
+        state_change12,
+        state_change13,
+        state_change21behind,
+        state_change21front,
+        state_change23behind,
+        state_change23front,
+        state_change31,
+        state_change32,
+        state_change_me1,
+        state_change_me3,
+        state_service1,
+        state_service2behind,
+        state_service2front,
+        state_service3,
+        state_service_me,
+    ]
     assert (
         models.find_transition_rates_for_sojourn_time(
             state, state_arrival1, num_servers, arrival_rates, service_rates, thetas
@@ -602,6 +691,14 @@ def test_sojourn_transition_rates_noone_in_service():
         )
         == thetas[1][2]
     )
+    for next_state in all_states:
+        if next_state not in nonzero:
+            assert (
+                models.find_transition_rates_for_sojourn_time(
+                    state, next_state, num_servers, arrival_rates, service_rates, thetas
+                )
+                == 0
+            )
 
 
 def test_writes_transition_matrix_states():
@@ -661,3 +758,96 @@ def test_writes_transition_matrix_sojourn():
     np.fill_diagonal(transition_matrix, np.zeros(25))
     assert all(diag <= 0)
     assert all(transition_matrix.sum(axis=1) == -diag)
+
+
+def test_get_numbers_in_service():
+    """
+    Tests we correctly give the number of customers of that class in service.
+    """
+    state = (0, 3, 2, 1, 0)
+    # 0 servers
+    in_service = [models.get_numbers_in_service(state, clss, 0, 3) for clss in range(4)]
+    assert in_service == [0, 0, 0, 0]
+    # 1 servers
+    in_service = [models.get_numbers_in_service(state, clss, 1, 3) for clss in range(4)]
+    assert in_service == [0, 0, 0, 0]
+    # 2 servers
+    in_service = [models.get_numbers_in_service(state, clss, 2, 3) for clss in range(4)]
+    assert in_service == [0, 0, 0, 1]
+    # 3 servers
+    in_service = [models.get_numbers_in_service(state, clss, 3, 3) for clss in range(4)]
+    assert in_service == [0, 1, 0, 1]
+    # 4 servers
+    in_service = [models.get_numbers_in_service(state, clss, 4, 3) for clss in range(4)]
+    assert in_service == [0, 2, 0, 1]
+    # 5 servers
+    in_service = [models.get_numbers_in_service(state, clss, 5, 3) for clss in range(4)]
+    assert in_service == [0, 3, 0, 1]
+    # 6 servers
+    in_service = [models.get_numbers_in_service(state, clss, 6, 3) for clss in range(4)]
+    assert in_service == [0, 3, 1, 1]
+    # 7 servers
+    in_service = [models.get_numbers_in_service(state, clss, 7, 3) for clss in range(4)]
+    assert in_service == [0, 3, 2, 1]
+    # 8 servers
+    in_service = [models.get_numbers_in_service(state, clss, 8, 3) for clss in range(4)]
+    assert in_service == [0, 3, 2, 1]
+
+    state = (2, 1, 2, 2, 1)
+    # 0 servers
+    in_service = [models.get_numbers_in_service(state, clss, 0, 3) for clss in range(4)]
+    assert in_service == [0, 0, 0, 0]
+    # 1 servers
+    in_service = [models.get_numbers_in_service(state, clss, 1, 3) for clss in range(4)]
+    assert in_service == [1, 0, 0, 0]
+    # 2 servers
+    in_service = [models.get_numbers_in_service(state, clss, 2, 3) for clss in range(4)]
+    assert in_service == [2, 0, 0, 0]
+    # 3 servers
+    in_service = [models.get_numbers_in_service(state, clss, 3, 3) for clss in range(4)]
+    assert in_service == [2, 1, 0, 0]
+    # 4 servers
+    in_service = [models.get_numbers_in_service(state, clss, 4, 3) for clss in range(4)]
+    assert in_service == [2, 1, 0, 0]
+    # 5 servers
+    in_service = [models.get_numbers_in_service(state, clss, 5, 3) for clss in range(4)]
+    assert in_service == [2, 1, 0, 1]
+    # 6 servers
+    in_service = [models.get_numbers_in_service(state, clss, 6, 3) for clss in range(4)]
+    assert in_service == [2, 1, 0, 2]
+    # 7 servers
+    in_service = [models.get_numbers_in_service(state, clss, 7, 3) for clss in range(4)]
+    assert in_service == [2, 1, 1, 2]
+    # 8 servers
+    in_service = [models.get_numbers_in_service(state, clss, 8, 3) for clss in range(4)]
+    assert in_service == [2, 1, 2, 2]
+
+
+def test_correct_rates_in_transition_matrices():
+    """
+    Tests that the correct rates are places in the correct places in the trandsition matrices
+    """
+    num_classes = 2
+    num_servers = 2
+    arrival_rates = [5, 5]
+    service_rates = [3, 4]
+    class_change_rate_matrix = [[None, 3], [2, None]]
+    infty = 12
+    State_Space = models.write_state_space_for_states(
+        num_classes=num_classes, infty=infty
+    )
+    transition_matrix = models.write_transition_matrix(
+        State_Space=State_Space,
+        transition_function=models.find_transition_rates_for_states,
+        non_zero_pair_function=models.get_all_pairs_of_non_zero_entries_states,
+        num_servers=num_servers,
+        arrival_rates=arrival_rates,
+        service_rates=service_rates,
+        thetas=class_change_rate_matrix,
+        infty=infty,
+    )
+    nonzero_pairs = models.get_all_pairs_of_non_zero_entries_states(State_Space, infty)
+    size_mat = len(State_Space)
+    for i, j in itertools.product(range(size_mat), range(size_mat)):
+        if ((i, j) not in nonzero_pairs) and (i != j):
+            assert transition_matrix[i][j] == 0
