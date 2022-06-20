@@ -21,22 +21,55 @@
 \begin{document}
 \maketitle
 
-\section{Background}
+\section{Introduction}
+
 \begin{itemize}
-  \item \cite{jackson60} (1960): Non preemptive M/M/1 where customers are served in order of the difference between their waiting time and urgency number (that is priorities increasing linearly over time). Solved by considering event probabilities at clock ticks.
-  \item \cite{holtzman71} (1971): Similar to the above, but treat each urgency number as a separate customer class, and not considering clock ticks. Upper and lower bounds on the waiting times, based on FIFO and static priorities.
-  \item \cite{netterman79} (1979): Now considers the case where priorities increase non-linearly but concavely over time.
-  \item \cite{fratini90} (1990): Non preemptive M/G/1 queue with two classes of customers, where priorities switch if the number from one class exceeds a given threshold. Lower priority customers have a finite waiting capacity, higher have infinite capacity.
-  \item \cite{knessl03} (2003): Similar to the above but with Markovian services and infinite waiting capacities for both customers.
-  \item \cite{xie08} (2008): Preemptive n-priority-classes M/M/c with exponential upgrades. Customers only upgrade to the priority immediately higher than themselves. Stability considered.
-  \item \cite{down10} (2010): Preemptive two-priority-classes M/M/c with exponential upgrades. Customers cannot upgrade if the number of lower priority customers is below a given threshold. Holding costs considered.
-  \item \cite{he12} (2012): Extension of the above, allows batch arrivals, multiple classes, phase-type upgrades and services. Customers only upgrade to the priority immediately higher than themselves.
-  \item \cite{bilodeau22} (2022): Analytical (truncated) expressions for a two class delayed accumulating priority M/G/1 queue. Customer priorities increase linearly over time, at different rates according to class, after an initial fixed delay.
+    \item Model description and main contribution:
+
+        \textcolor{red}{At the moment I don't see any consideration of customers
+        downgrading, or 'skipping' classes, i.e. Transferring to a priority
+        class not immediately higher than themselves.}
+
+    \item Literature review
+        \begin{itemize}
+          \item \cite{jackson60} (1960): Non preemptive M/M/1 where customers
+              are served in order of the difference between their waiting time
+                and urgency number (that is priorities increasing linearly over
+                time). Solved by considering event probabilities at clock ticks.
+          \item \cite{holtzman71} (1971): Similar to the above, but treat each
+              urgency number as a separate customer class, and not considering
+                clock ticks. Upper and lower bounds on the waiting times, based
+                on FIFO and static priorities.
+          \item \cite{netterman79} (1979): Now considers the case where
+              priorities increase non-linearly but concavely over time.
+          \item \cite{fratini90} (1990): Non preemptive M/G/1 queue with two
+              classes of customers, where priorities switch if the number from
+                one class exceeds a given threshold. Lower priority customers
+                have a finite waiting capacity, higher have infinite capacity.
+          \item \cite{knessl03} (2003): Similar to the above but with Markovian
+              services and infinite waiting capacities for both customers.
+          \item \cite{xie08} (2008): Preemptive n-priority-classes M/M/c with
+              exponential upgrades. Customers only upgrade to the priority
+                immediately higher than themselves. Stability considered.
+          \item \cite{down10} (2010): Preemptive two-priority-classes M/M/c with
+              exponential upgrades. Customers cannot upgrade if the number of
+                lower priority customers is below a given threshold. Holding
+                costs considered.
+          \item \cite{he12} (2012): Extension of the above, allows batch
+              arrivals, multiple classes, phase-type upgrades and services.
+                Customers only upgrade to the priority immediately higher than
+                themselves.
+          \item \cite{bilodeau22} (2022): Analytical (truncated) expressions for
+              a two class delayed accumulating priority M/G/1 queue. Customer
+                priorities increase linearly over time, at different rates
+                according to class, after an initial fixed delay.
+        \end{itemize}
+
 \end{itemize}
 
-\textcolor{red}{At the moment I don't see any consideration of customers downgrading, or 'skipping' classes, i.e. Transferring to a priority class not immediately higher than themselves.}
 
 \section{The Model}
+
 Here we consider an $M/M/c$ queue with $K$ classes of customer.
 Order and label the customer classes $0, 1, 2, \dots, K-1$, with customer
 classes with lower labels having priority over customer classes of higher
@@ -158,6 +191,5 @@ class can be found.
 
 \bibliographystyle{plain}
 \bibliography{refs}
-
 
 \end{document}
