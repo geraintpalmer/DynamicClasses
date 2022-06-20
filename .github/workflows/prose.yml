@@ -1,0 +1,46 @@
+name: Prose
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install LaTeX
+      run: |
+        sudo apt-get update
+        #LaTeX packages
+        sudo apt-get install -y texlive-latex-extra
+        sudo apt-get install -y texlive-xetex
+        sudo apt-get install texlive-bibtex-extra biber
+        sudo apt-get install -y texlive-lang-greek
+        sudo apt-get install -y latexmk
+        sudo apt-get install lmodern
+        sudo apt-get install texlive-fonts-extra
+
+    - name: Check LaTeX compiles
+      run: |
+        cd tex/; xelatex -shell-escape main.tex
+
+    - name: Install node
+      uses: actions/setup-node@v1
+      with:
+        node-version: '12'
+
+    - name: Install alex - checker for inconsiderate / insensitive writing
+      run: |
+        npm install alex --global
+
+    - name: Run alex on documentation
+      run: |
+        alex tex/main.tex
+
+    - name: Install aspell 
+      run: |
+        sudo apt-get install aspell aspell-en #To check spelling
+
+    - name: Run aspell
+      run: |
+        python spell_check.py

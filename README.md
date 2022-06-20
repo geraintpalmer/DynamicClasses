@@ -22,3 +22,27 @@ To run the tests:
 To check the format:
 
     $ python -m black src/
+
+## Spelling checking
+
+`check_spelling.py` contains a `known_words` set: add known words there.
+
+This will run the spell checker:
+
+    $ python check_spelling.py
+
+Uses `aspell`.
+
+## Check for insensitive language
+
+Run:
+
+    $ alex tex/main.tex
+
+Uses `alex`.
+
+To avoid a check, annotate using:
+
+    % <!--alex disable-->
+    Text with prose you want alex to ignore.
+    % <!--alex enable-->
