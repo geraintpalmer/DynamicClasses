@@ -70,6 +70,8 @@
 
 \section{The Model}
 
+\subsection{Rigorous description}
+
 Here we consider an $M/M/c$ queue with $K$ classes of customer.
 Order and label the customer classes $0, 1, 2, \dots, K-1$, with customer
 classes with lower labels having priority over customer classes of higher
@@ -93,8 +95,16 @@ Figure~\ref{fig:twoclass_example} shows an example with two classes of customer.
 \label{fig:twoclass_example}
 \end{figure}
 
+\subsection{Description of the Simulation Model}
 
-\section{State Markov Chain Formulation}
+\subsection{Description of the bounded approximation}
+
+\begin{itemize}
+    \item Discuss how bound affects discrepancy of results (only using
+        simulation model)
+\end{itemize}
+
+\subsection{Discrete State Markov Chain Formulation}
 Let
 $\underline{\mathbf{s}}_t = (s_{0,t}, s_{1,t}, \dots, s_{K-1,t}) \in \mathbb{N}^K$
 represent the state of the system at time step $t$, where $s_{k,t}$ represents
@@ -124,7 +134,7 @@ B_{k,t} =\min\left(c - \min\left(\sum_{i < k} s_{i,t}, c\right), s_{k,t}\right)
 \textcolor{red}{TODO (?) Unroll the matrix to get a (double?) infinite sum for state probabilities. If possible this would make calculations much more efficient by truncating an infinite sum rather than an infinite matrix.}
 
 
-\section{Sojourn Time Markov Chain Formulation}
+\subsection{Sojourn Time Markov Chain Formulation}
 Let $\underline{\mathbf{z}}_t = (z_{0,t}, z_{1,t}, \dots, z_{n,t} \dots, z_{K-1,t}, b_t, n_t) \in \mathbb{N}^{K+2}$
 represent the state of a particular customer at time step $t$, where $n_t$
 represents that customer's class at time $t$; $z_{k,t} \; \forall \; k < n$
@@ -183,7 +193,14 @@ class can be found.
 
 \textcolor{red}{TODO (?) Unroll the matrix to get a (double?) infinite sum for state probabilities. If possible this would make calculations much more efficient by truncating an infinite sum rather than an infinite matrix.}
 
-\section{Numerical Experiments}
+\subsection{Convergence of model}
+
+\begin{itemize}
+        \item Using the hitting probabilities approach.
+        \item Using a Monte Carlo simulation + data analysis approach.
+\end{itemize}
+
+\section{What if scenarios}
 
 \textcolor{red}{TODO: Effect of class transition rates on sojourn times.}
 
