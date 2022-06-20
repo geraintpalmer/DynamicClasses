@@ -23,12 +23,8 @@ def get_state_probabilities(
         thetas=thetas,
         infty=infty,
     )
-    time_step = get_time_step(transition_matrix=transition_matrix)
-    discrete_transition_matrix = discretise_transition_matrix(
-        transition_matrix=transition_matrix, time_step=time_step
-    )
     probs = solve_probabilities(
-        State_Space=State_Space, discrete_transition_matrix=discrete_transition_matrix
+        State_Space=State_Space, transition_matrix=transition_matrix
     )
     return probs
 
@@ -50,14 +46,8 @@ def get_mean_sojourn_times(
         thetas=thetas,
         infty=infty,
     )
-    time_step = get_time_step(transition_matrix=transition_matrix)
-    discrete_transition_matrix = discretise_transition_matrix(
-        transition_matrix=transition_matrix, time_step=time_step
-    )
     mean_sojourn_times = solve_time_to_absorbtion(
-        State_Space=State_Space,
-        discrete_transition_matrix=discrete_transition_matrix,
-        time_step=time_step,
+        State_Space=State_Space, transition_matrix=transition_matrix
     )
     mean_sojourn_times_by_class = find_mean_sojourn_time_by_class(
         num_classes=num_classes, mean_sojourn_times=mean_sojourn_times, probs=probs
@@ -367,35 +357,15 @@ def write_transition_matrix(
     return transition_matrix
 
 
-def get_time_step(transition_matrix):
+def solve_probabilities(State_Space, transition_matrix):
     """
-    Finds the time step for the discrete transition amtrix
+    Solves the steady state probabilities for the markov chain.
     """
-    diagonal = np.diagonal(-transition_matrix)
-    time_step = 1 / np.max(diagonal)
-    return time_step
-
-
-def discretise_transition_matrix(transition_matrix, time_step):
-    """
-    Disctetises the transition matrix
-    """
-    time_step = get_time_step(transition_matrix)
-    lenmat = len(transition_matrix)
-    discrete_transition_matrix = transition_matrix * time_step + np.identity(lenmat)
-    return discrete_transition_matrix
-
-
-def solve_probabilities(State_Space, discrete_transition_matrix):
-    lenmat = len(discrete_transition_matrix)
-    A = np.append(
-        np.transpose(discrete_transition_matrix) - np.identity(lenmat),
-        [[1 for _ in range(lenmat)]],
-        axis=0,
-    )
-    b = np.transpose(np.array([0 for _ in range(lenmat)] + [1]))
-    sol = np.linalg.solve(np.transpose(A).dot(A), np.transpose(A).dot(b))
-    probs = {State_Space[i]: sol[i] for i in range(lenmat)}
+    size_mat = len(State_Space)
+    A = np.vstack((transition_matrix.transpose()[:-1], np.ones(size_mat)))
+    b = np.vstack((np.zeros((size_mat - 1, 1)), [1]))
+    sol = np.linalg.solve(A, b).transpose()[0]
+    probs = {State_Space[i]: sol[i] for i in range(size_mat)}
     return probs
 
 
@@ -414,19 +384,16 @@ def find_mean_sojourn_time_by_class(num_classes, mean_sojourn_times, probs):
     return [mean_sojourn_times_by_class[clss] for clss in range(num_classes)]
 
 
-def solve_time_to_absorbtion(State_Space, discrete_transition_matrix, time_step):
+def solve_time_to_absorbtion(State_Space, transition_matrix):
     """
-    Finds the mean time to absorbtion for discretised transition matrix.
+    Finds the mean time to absorbtion for transition matrix.
     """
-    T = discrete_transition_matrix[:-1, :-1]
-    S = np.linalg.inv(np.identity(len(T)) - T)
-    steps2absorb = [sum([S[i, j] for j in range(len(S))]) for i in range(len(S))]
-    time2absorb = [s * time_step for s in steps2absorb]
-    mean_steps_to_absorbtion = {
-        State_Space[i]: steps2absorb[i] for i in range(len(steps2absorb))
-    }
+    size_mat = len(State_Space)
+    T = transition_matrix[:-1, :-1]
+    b = np.ones(size_mat - 1)
+    time2absorb = np.linalg.solve(-T, b)
     mean_sojourn_time = {
-        State_Space[i]: float(time2absorb[i]) for i in range(len(time2absorb))
+        State_Space[i]: float(t) for i, t in enumerate(time2absorb)
     }
     return mean_sojourn_time
 
