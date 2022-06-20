@@ -131,15 +131,16 @@ Equations~\ref{eqn:inservice_adapt} and~\ref{eqn:inservice_adapt_tilde}.
 \begin{equation}\label{eqn:inservice_adapt}
 A_{k,n,t} =
 \begin{cases}
-\min\left(c - \min\left(\sum_{i < k} z_{i,t}, c\right), z_{k,t}\right) & \text{if } k \leq n \\
-\min\left(c - \min\left(1 + \sum_{i < k} z_{i,t}, c\right), z_{k,t}\right) & \text{if } n < k < K
+\min\left(c, \sum_{i \leq k} z_{i,t}\right) - \min\left(c \sum_{i < k} z_{i,t}\right) & \text{if } k \leq n \\
+\min\left(c, \sum_{i \leq k} z_{i,t} + 1 + z_{K,t}\right) - \min\left(c \sum_{i < k} z_{i,t} + 1 + z_{K,t}\right) & \text{if } n < k < K
 \end{cases}
 \end{equation}
 
 \begin{equation}\label{eqn:inservice_adapt_tilde}
 \tilde{A}_{n,t} =
-\min\left(c - \min\left(1 + \sum_{i \leq n} z_{i,t}, c\right), z_{K,t}\right) \\
+\min\left(c, \sum_{i \leq n} z_{i,t} + 1 + z_{K,t}\right) - \min\left(c, \sum_{i \leq n} z_{i,t} + 1\right) \\
 \end{equation}
+
 
 The expected time to absorption can be calculated from each state.
 Customers arrive in all states where $z_{K,t} = 0$, and their class can be
