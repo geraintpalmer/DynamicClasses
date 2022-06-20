@@ -18,6 +18,25 @@ jobs:
         sudo apt-get install -y latexmk
         sudo apt-get install lmodern
         sudo apt-get install texlive-fonts-extra
+    - name: Display pwd
+      run: |
+        pwd
+    - name: Display dir
+      run: |
+        ls
     - name: Check LaTeX compiles
       run: |
         cd tex/; xelatex -shell-escape main.tex
+    - uses: actions/checkout@v2
+    - name: Install node
+      uses: actions/setup-node@v1
+      with:
+        node-version: '12'
+
+    - name: Install alex - checker for inconsiderate / insensitive writing
+      run: |
+        npm install alex --global
+
+    - name: Run alex on documentation
+      run: |
+        alex tex/main.tex
