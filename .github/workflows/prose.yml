@@ -2,11 +2,13 @@ name: Prose
 
 on: [push, pull_request]
 
-# This job installs dependencies, build the site, and pushes it to `gh-pages``
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+    steps:
+    - uses: actions/checkout@v2
+
     - name: Install LaTeX
       run: |
         sudo apt-get update
@@ -18,16 +20,11 @@ jobs:
         sudo apt-get install -y latexmk
         sudo apt-get install lmodern
         sudo apt-get install texlive-fonts-extra
-    - name: Display pwd
-      run: |
-        pwd
-    - name: Display dir
-      run: |
-        ls
+
     - name: Check LaTeX compiles
       run: |
         cd tex/; xelatex -shell-escape main.tex
-    - uses: actions/checkout@v2
+
     - name: Install node
       uses: actions/setup-node@v1
       with:
@@ -40,3 +37,11 @@ jobs:
     - name: Run alex on documentation
       run: |
         alex tex/main.tex
+
+    - name: Install aspell 
+      run: |
+        sudo apt-get install aspell aspell-en #To check spelling
+
+    - name: Run aspell
+      run: |
+        python spell_check.py
