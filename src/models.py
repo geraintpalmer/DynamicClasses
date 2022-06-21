@@ -441,7 +441,7 @@ def build_and_run_simulation(
     arrival_rates,
     service_rates,
     class_change_rate_matrix,
-    max_simulation_time,
+    max_simulation_time
 ):
     """
     Builds and runs the simulation. Returns the simulation object after run.
@@ -486,7 +486,7 @@ def find_mean_sojourn_time_by_class_from_simulation(Q, num_classes, warmup):
     Finds the mean sojourn time by customer class.
     """
     recs = Q.get_all_records()
-    recs = [r for r in recs if r.arrival_date > warmup]
+    recs = [r for r in recs if r.arrival_date > warmup and r.record_type == 'service']
     mean_sojourn_times_by_class = {}
     for clss in range(num_classes):
         mean_sojourn_times_by_class[clss] = np.mean(
