@@ -7,12 +7,12 @@ plt.style.use("seaborn-whitegrid")
 
 
 def get_state_probabilities(
-    num_classes, num_servers, arrival_rates, service_rates, thetas, infty
+    num_classes, num_servers, arrival_rates, service_rates, thetas, bound
 ):
     """
     Get's the system's state probabilities
     """
-    State_Space = write_state_space_for_states(num_classes=num_classes, infty=infty)
+    State_Space = write_state_space_for_states(num_classes=num_classes, bound=bound)
     transition_matrix = write_transition_matrix(
         State_Space=State_Space,
         transition_function=find_transition_rates_for_states,
@@ -21,7 +21,7 @@ def get_state_probabilities(
         arrival_rates=arrival_rates,
         service_rates=service_rates,
         thetas=thetas,
-        infty=infty,
+        bound=bound,
     )
     probs = solve_probabilities(
         State_Space=State_Space, transition_matrix=transition_matrix
@@ -30,12 +30,12 @@ def get_state_probabilities(
 
 
 def get_mean_sojourn_times(
-    num_classes, num_servers, arrival_rates, service_rates, thetas, infty, probs
+    num_classes, num_servers, arrival_rates, service_rates, thetas, bound, probs
 ):
     """
     Get the mean sojourn times for the given state probabilities
     """
-    State_Space = write_state_space_for_sojourn(num_classes=num_classes, infty=infty)
+    State_Space = write_state_space_for_sojourn(num_classes=num_classes, bound=bound)
     transition_matrix = write_transition_matrix(
         State_Space=State_Space,
         transition_function=find_transition_rates_for_sojourn_time,
@@ -44,7 +44,7 @@ def get_mean_sojourn_times(
         arrival_rates=arrival_rates,
         service_rates=service_rates,
         thetas=thetas,
-        infty=infty,
+        bound=bound,
     )
     mean_sojourn_times = solve_time_to_absorbtion(
         State_Space=State_Space, transition_matrix=transition_matrix
@@ -55,23 +55,23 @@ def get_mean_sojourn_times(
     return mean_sojourn_times_by_class
 
 
-def write_state_space_for_states(num_classes, infty):
+def write_state_space_for_states(num_classes, bound):
     """
     Write the states for the state probability model
     """
-    State_Space = list(itertools.product(*[range(infty) for _ in range(num_classes)]))
+    State_Space = list(itertools.product(*[range(bound) for _ in range(num_classes)]))
     return State_Space
 
 
-def write_state_space_for_sojourn(num_classes, infty):
+def write_state_space_for_sojourn(num_classes, bound):
     """
     Write the states for the sojourn time model
     """
     State_Space = list(
         itertools.product(
             *(
-                [range(infty) for _ in range(num_classes)]
-                + [range(infty)]
+                [range(bound) for _ in range(num_classes)]
+                + [range(bound)]
                 + [range(num_classes)]
             )
         )
@@ -226,7 +226,7 @@ def find_transition_rates_for_sojourn_time(
     return 0
 
 
-def get_all_pairs_of_non_zero_entries_states(State_Space, infty):
+def get_all_pairs_of_non_zero_entries_states(State_Space, bound):
     """
     Returns a list of all pairs of states that have a possible non-zero rate
     for the state probabilities markov chain.
@@ -235,7 +235,7 @@ def get_all_pairs_of_non_zero_entries_states(State_Space, infty):
     for index, state1 in enumerate(State_Space):
         for i, s_i in enumerate(state1):
             state_arrival, state_service = list(state1), list(state1)
-            if s_i < infty - 1:
+            if s_i < bound - 1:
                 state_arrival[i] = s_i + 1
                 next_state = tuple(state_arrival)
                 all_pairs_indices.append((index, State_Space.index(next_state)))
@@ -245,7 +245,7 @@ def get_all_pairs_of_non_zero_entries_states(State_Space, infty):
                 all_pairs_indices.append((index, State_Space.index(next_state)))
             for j, s_j in enumerate(state1):
                 state_change = list(state1)
-                if i != j and s_j < infty - 1 and s_i > 0:
+                if i != j and s_j < bound - 1 and s_i > 0:
                     state_change[i] -= 1
                     state_change[j] += 1
                     next_state = tuple(state_change)
@@ -253,7 +253,7 @@ def get_all_pairs_of_non_zero_entries_states(State_Space, infty):
     return all_pairs_indices
 
 
-def get_all_pairs_of_non_zero_entries_sojourn(State_Space, infty):
+def get_all_pairs_of_non_zero_entries_sojourn(State_Space, bound):
     """
     Returns a list of all pairs of states that have a possible non-zero rate
     for the sojourn time markov chain
@@ -268,7 +268,7 @@ def get_all_pairs_of_non_zero_entries_sojourn(State_Space, infty):
         all_pairs_indices.append((index, len(State_Space) - 1))
 
         for i, s_i in enumerate(state1):
-            if i not in (n, num_classes + 1) and s_i < infty - 1:
+            if i not in (n, num_classes + 1) and s_i < bound - 1:
                 # Arrival
                 state_arrival = list(state1)
                 state_arrival[i] = s_i + 1
@@ -287,7 +287,7 @@ def get_all_pairs_of_non_zero_entries_sojourn(State_Space, infty):
                     and i != (num_classes + 1)
                     and j != n
                     and s_i > 0
-                    and s_j < infty - 1
+                    and s_j < bound - 1
                 ):
                     if not (i == n and j == num_classes):
                         state_change = list(state1)
@@ -295,7 +295,7 @@ def get_all_pairs_of_non_zero_entries_sojourn(State_Space, infty):
                         state_change[j] = s_j + 1
                         next_state = tuple(state_change)
                         all_pairs_indices.append((index, State_Space.index(next_state)))
-        if state1[n] + b < infty:
+        if state1[n] + b < bound:
             for new_n in range(num_classes):
                 if new_n != n:
                     state_I_change = list(state1)
@@ -315,14 +315,14 @@ def write_transition_matrix(
     arrival_rates,
     service_rates,
     thetas,
-    infty,
+    bound,
 ):
     """
     Writes the transition matrix for the markov chain
     """
     size_mat = len(State_Space)
     transition_matrix = np.zeros((size_mat, size_mat))
-    all_pairs = non_zero_pair_function(State_Space=State_Space, infty=infty)
+    all_pairs = non_zero_pair_function(State_Space=State_Space, bound=bound)
 
     for s1, s2 in all_pairs:
         transition_matrix[s1, s2] = transition_function(
@@ -505,7 +505,7 @@ def compare_mc_to_sim_states(
     arrival_rates,
     service_rates,
     thetas,
-    infty,
+    bound,
     max_simulation_time,
     warmup,
     max_state,
@@ -516,7 +516,7 @@ def compare_mc_to_sim_states(
         arrival_rates=arrival_rates,
         service_rates=service_rates,
         thetas=thetas,
-        infty=infty,
+        bound=bound,
     )
     agg_probs_mc = aggregate_mc_states(probs_mc)
     agg_probs_by_class_mc = aggregate_mc_states_by_class(probs_mc, num_classes)
@@ -573,7 +573,7 @@ def compare_mc_to_sim_sojourn(
     arrival_rates,
     service_rates,
     thetas,
-    infty,
+    bound,
     max_simulation_time,
     warmup,
 ):
@@ -583,7 +583,7 @@ def compare_mc_to_sim_sojourn(
         arrival_rates=arrival_rates,
         service_rates=service_rates,
         thetas=thetas,
-        infty=infty,
+        bound=bound,
     )
     mean_sojourn_times_mc = get_mean_sojourn_times(
         num_classes=num_classes,
@@ -591,7 +591,7 @@ def compare_mc_to_sim_sojourn(
         arrival_rates=arrival_rates,
         service_rates=service_rates,
         thetas=thetas,
-        infty=infty,
+        bound=bound,
         probs=probs,
     )
     Q = build_and_run_simulation(

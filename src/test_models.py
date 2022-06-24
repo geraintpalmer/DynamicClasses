@@ -54,19 +54,19 @@ def test_write_state_space_for_states():
     """
     Tests that the state markov chain's state space is written correctly.
     """
-    infty = 3
+    bound = 3
     n_classes = 2
-    states = models.write_state_space_for_states(num_classes=n_classes, infty=infty)
-    assert len(states) == infty**n_classes
-    assert max(max(s) for s in states) == (infty - 1)
+    states = models.write_state_space_for_states(num_classes=n_classes, bound=bound)
+    assert len(states) == bound**n_classes
+    assert max(max(s) for s in states) == (bound - 1)
     assert min(min(s) for s in states) == 0
     assert all(len(s) == n_classes for s in states)
 
-    infty = 10
+    bound = 10
     n_classes = 7
-    states = models.write_state_space_for_states(num_classes=n_classes, infty=infty)
-    assert len(states) == infty**n_classes
-    assert max(max(s) for s in states) == (infty - 1)
+    states = models.write_state_space_for_states(num_classes=n_classes, bound=bound)
+    assert len(states) == bound**n_classes
+    assert max(max(s) for s in states) == (bound - 1)
     assert min(min(s) for s in states) == 0
     assert all(len(s) == n_classes for s in states)
 
@@ -75,20 +75,20 @@ def test_write_state_space_for_sojourn():
     """
     Tests that the sojourn markov chain's state space is written correctly.
     """
-    infty = 3
+    bound = 3
     n_classes = 2
-    states = models.write_state_space_for_sojourn(num_classes=n_classes, infty=infty)
-    assert len(states) == (infty ** (n_classes + 1)) * n_classes + 1
-    assert max(max(s) for s in states[:-1]) == (infty - 1)
+    states = models.write_state_space_for_sojourn(num_classes=n_classes, bound=bound)
+    assert len(states) == (bound ** (n_classes + 1)) * n_classes + 1
+    assert max(max(s) for s in states[:-1]) == (bound - 1)
     assert min(min(s) for s in states[:-1]) == 0
     assert all(len(s) == n_classes + 2 for s in states[:-1])
     assert states[-1] == "*"
 
-    infty = 7
+    bound = 7
     n_classes = 3
-    states = models.write_state_space_for_sojourn(num_classes=n_classes, infty=infty)
-    assert len(states) == (infty ** (n_classes + 1)) * n_classes + 1
-    assert max(max(s) for s in states[:-1]) == (infty - 1)
+    states = models.write_state_space_for_sojourn(num_classes=n_classes, bound=bound)
+    assert len(states) == (bound ** (n_classes + 1)) * n_classes + 1
+    assert max(max(s) for s in states[:-1]) == (bound - 1)
     assert min(min(s) for s in states[:-1]) == 0
     assert all(len(s) == n_classes + 2 for s in states[:-1])
     assert states[-1] == "*"
@@ -100,12 +100,12 @@ def test_get_all_pairs_of_non_zero_entries_states_example():
     rate.
     """
     num_classes = 2
-    infty = 3
+    bound = 3
     all_states = models.write_state_space_for_states(
-        num_classes=num_classes, infty=infty
+        num_classes=num_classes, bound=bound
     )
     all_pairs_indices = models.get_all_pairs_of_non_zero_entries_states(
-        State_Space=all_states, infty=infty
+        State_Space=all_states, bound=bound
     )
 
     expected_pairs = [
@@ -155,12 +155,12 @@ def test_get_all_pairs_of_non_zero_entries_sojourn_example():
     rate.
     """
     num_classes = 2
-    infty = 3
+    bound = 3
     all_states = models.write_state_space_for_sojourn(
-        num_classes=num_classes, infty=infty
+        num_classes=num_classes, bound=bound
     )
     all_pairs_indices = models.get_all_pairs_of_non_zero_entries_sojourn(
-        State_Space=all_states, infty=infty
+        State_Space=all_states, bound=bound
     )
     assert len(all_pairs_indices) == 342
 
@@ -169,7 +169,7 @@ def test_states_transition_rates_everyone_in_service():
     """
     Tests the correct transition rates are given for state pairs, for state model, when everyone is in service
     """
-    all_states = models.write_state_space_for_states(num_classes=2, infty=10)
+    all_states = models.write_state_space_for_states(num_classes=2, bound=10)
     arrival_rates = [5, 7]
     service_rates = [3, 4]
     num_servers = 100
@@ -240,7 +240,7 @@ def test_states_transition_rates_noone_in_service():
     """
     Tests the correct transition rates are given for state pairs, for state model, when no-one is in service
     """
-    all_states = models.write_state_space_for_states(num_classes=2, infty=10)
+    all_states = models.write_state_space_for_states(num_classes=2, bound=10)
     arrival_rates = [5, 7]
     service_rates = [3, 4]
     num_servers = 0
@@ -311,7 +311,7 @@ def test_sojourn_transition_rates_everyone_in_service():
     """
     Tests the correct transition rates are given for state pairs, for sojourn model, when everyone is in service
     """
-    all_states = models.write_state_space_for_sojourn(num_classes=3, infty=22)
+    all_states = models.write_state_space_for_sojourn(num_classes=3, bound=22)
     arrival_rates = [5, 7, 3]
     service_rates = [3, 4, 9]
     num_servers = 100
@@ -508,7 +508,7 @@ def test_sojourn_transition_rates_noone_in_service():
     """
     Tests the correct transition rates are given for state pairs, for sojourn model, when no-one is in service
     """
-    all_states = models.write_state_space_for_sojourn(num_classes=3, infty=22)
+    all_states = models.write_state_space_for_sojourn(num_classes=3, bound=22)
     arrival_rates = [5, 7, 3]
     service_rates = [3, 4, 9]
     num_servers = 0
@@ -705,10 +705,10 @@ def test_writes_transition_matrix_states():
     """
     Tests that a valid transition matrix is written.
     """
-    infty = 5
+    bound = 5
     num_classes = 2
     State_Space = models.write_state_space_for_states(
-        num_classes=num_classes, infty=infty
+        num_classes=num_classes, bound=bound
     )
     transition_matrix = models.write_transition_matrix(
         State_Space=State_Space,
@@ -718,9 +718,9 @@ def test_writes_transition_matrix_states():
         arrival_rates=[14, 10],
         service_rates=[7, 5],
         thetas=[[None, 5], [3, None]],
-        infty=infty,
+        bound=bound,
     )
-    matrix_size = infty**num_classes
+    matrix_size = bound**num_classes
     assert transition_matrix.shape == (matrix_size, matrix_size)
     assert transition_matrix.size == matrix_size**2
     assert (transition_matrix.sum(axis=1) == [0.0 for _ in range(matrix_size)]).all()
@@ -734,10 +734,10 @@ def test_writes_transition_matrix_sojourn():
     """
     Tests that a valid absorbing transition matrix is written.
     """
-    infty = 4
+    bound = 4
     num_classes = 2
     State_Space = models.write_state_space_for_sojourn(
-        num_classes=num_classes, infty=infty
+        num_classes=num_classes, bound=bound
     )
     transition_matrix = models.write_transition_matrix(
         State_Space=State_Space,
@@ -747,9 +747,9 @@ def test_writes_transition_matrix_sojourn():
         arrival_rates=[14, 10],
         service_rates=[7, 5],
         thetas=[[None, 5], [3, None]],
-        infty=infty,
+        bound=bound,
     )
-    matrix_size = ((infty ** (num_classes + 1)) * num_classes) + 1
+    matrix_size = ((bound ** (num_classes + 1)) * num_classes) + 1
     assert transition_matrix.shape == (matrix_size, matrix_size)
     assert transition_matrix.size == matrix_size**2
     assert (transition_matrix.sum(axis=1) == [0.0 for _ in range(matrix_size)]).all()
@@ -832,9 +832,9 @@ def test_correct_rates_in_transition_matrices():
     arrival_rates = [5, 5]
     service_rates = [3, 4]
     class_change_rate_matrix = [[None, 3], [2, None]]
-    infty = 12
+    bound = 12
     State_Space = models.write_state_space_for_states(
-        num_classes=num_classes, infty=infty
+        num_classes=num_classes, bound=bound
     )
     transition_matrix = models.write_transition_matrix(
         State_Space=State_Space,
@@ -844,9 +844,9 @@ def test_correct_rates_in_transition_matrices():
         arrival_rates=arrival_rates,
         service_rates=service_rates,
         thetas=class_change_rate_matrix,
-        infty=infty,
+        bound=bound,
     )
-    nonzero_pairs = models.get_all_pairs_of_non_zero_entries_states(State_Space, infty)
+    nonzero_pairs = models.get_all_pairs_of_non_zero_entries_states(State_Space, bound)
     size_mat = len(State_Space)
     for i, j in itertools.product(range(size_mat), range(size_mat)):
         if ((i, j) not in nonzero_pairs) and (i != j):
