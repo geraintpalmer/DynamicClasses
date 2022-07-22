@@ -23,13 +23,13 @@ To check the format:
 
     $ python -m black src/
 
-## Spelling checking
+## Spelling checking
 
-`check_spelling.py` contains a `known_words` set: add known words there.
+`spell_check.py` contains a `known_words` set: add known words there.
 
 This will run the spell checker:
 
-    $ python check_spelling.py
+    $ python spell_check.py
 
 Uses `aspell`.
 
