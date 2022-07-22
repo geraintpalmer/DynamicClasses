@@ -14,76 +14,97 @@
 \usetikzlibrary{decorations.pathreplacing}
 
 
-\title{Dynamic Priority Classes (?)}
-\author{authors (?)}
+\title{Modelling Queues Where Customers Randomly  Change Priority Classes While Waiting}
+\author{Geraint I. Palmer, Michalis Panayidis \& Vincent Knight}
 \date{}
 
 \begin{document}
 \maketitle
 
 \section{Introduction}
+There are a number of situations in which a customer's priority in a queue might
+change during their time queueing, or equivalently where their priority depends
+on the amount of time they have already spent in the queue.
+Classic examples arise in healthcare systems, for example when a patient's
+medical urgency might increase the longer they spend waiting due to health
+degeneration. Another example would be a prioritisation scheme that attempts a
+trade-off between medical need and waiting times.
+These are both examples where a patient's priority has the chance to upgrade
+over time while in the queue.
+However there also might be situations in which a patient's priority can
+downgrade over time: consider a medical intervention that can improve a
+patient's outcome if caught early, if a patient has been waiting a long time
+already then they might be passed over for a newly referred patient who will
+gain more benefit from the intervention. In this case a patient's priority is
+downgraded the longer they wait.
+
+In this paper a single $M/M/c$ queue is modelled, with multiple classes of
+customer of different priorities. While waiting in the queue customers change
+their class to any other class at specific rates. Thus upgrades, downgrades, and
+`skip-grades' (moving to a priority class not immediately above or below the
+current class) are modelled.
+
+This is first modelled using simulation, where we describe generalisable logic.
+This is implemented in version v2.3.0 of the Ciw library in Python
+\cite{palmer19}.
+Then two Markov chain models are defined for the system, which are used to find
+steady state distributions and expected sojourn times for each customer class.
+These Markov chains give some insights into the behaviour of the systems under
+different combinations of parameters; and numerical experiments give further
+behaviours.
+
+Systems of this kind have been investigated previously:
 
 \begin{itemize}
-    \item Model description and main contribution:
-
-        \textcolor{red}{At the moment I don't see any consideration of customers
-        downgrading, or 'skipping' classes, i.e. Transferring to a priority
-        class not immediately higher than themselves.}
-
-    \item Literature review
-        \begin{itemize}
-          \item \cite{jackson60} (1960): Non preemptive M/M/1 where customers
-              are served in order of the difference between their waiting time
-                and urgency number (that is priorities increasing linearly over
-                time). Solved by considering event probabilities at clock ticks.
-          \item \cite{holtzman71} (1971): Similar to the above, but treat each
-              urgency number as a separate customer class, and not considering
-                clock ticks. Upper and lower bounds on the waiting times, based
-                on FIFO and static priorities.
-          \item \cite{netterman79} (1979): Now considers the case where
-              priorities increase non-linearly but concavely over time.
-          \item \cite{fratini90} (1990): Non preemptive M/G/1 queue with two
-              classes of customers, where priorities switch if the number from
-                one class exceeds a given threshold. Lower priority customers
-                have a finite waiting capacity, higher have infinite capacity.
-          \item \cite{knessl03} (2003): Similar to the above but with Markovian
-              services and infinite waiting capacities for both customers.
-          \item \cite{xie08} (2008): Preemptive n-priority-classes M/M/c with
-              exponential upgrades. Customers only upgrade to the priority
-                immediately higher than themselves. Stability considered.
-          \item \cite{down10} (2010): Preemptive two-priority-classes M/M/c with
-              exponential upgrades. Customers cannot upgrade if the number of
-                lower priority customers is below a given threshold. Holding
-                costs considered.
-          \item \cite{he12} (2012): Extension of the above, allows batch
-              arrivals, multiple classes, phase-type upgrades and services.
-                Customers only upgrade to the priority immediately higher than
-                themselves.
-          \item \cite{bilodeau22} (2022): Analytical (truncated) expressions for
-              a two class delayed accumulating priority M/G/1 queue. Customer
-                priorities increase linearly over time, at different rates
-                according to class, after an initial fixed delay.
-        \end{itemize}
-
+  \item \cite{jackson60} (1960): Non preemptive M/M/1 where customers
+      are served in order of the difference between their waiting time
+        and urgency number (that is priorities increasing linearly over
+        time). Solved by considering event probabilities at clock ticks.
+  \item \cite{holtzman71} (1971): Similar to the above, but treat each
+      urgency number as a separate customer class, and not considering
+        clock ticks. Upper and lower bounds on the waiting times, based
+        on FIFO and static priorities.
+  \item \cite{netterman79} (1979): Now considers the case where
+      priorities increase non-linearly but concavely over time.
+  \item \cite{fratini90} (1990): Non preemptive M/G/1 queue with two
+      classes of customers, where priorities switch if the number from
+        one class exceeds a given threshold. Lower priority customers
+        have a finite waiting capacity, higher have infinite capacity.
+  \item \cite{knessl03} (2003): Similar to the above but with Markovian
+      services and infinite waiting capacities for both customers.
+  \item \cite{xie08} (2008): Preemptive n-priority-classes M/M/c with
+      exponential upgrades. Customers only upgrade to the priority
+        immediately higher than themselves. Stability considered.
+  \item \cite{down10} (2010): Preemptive two-priority-classes M/M/c with
+      exponential upgrades. Customers cannot upgrade if the number of
+        lower priority customers is below a given threshold. Holding
+        costs considered.
+  \item \cite{he12} (2012): Extension of the above, allows batch
+      arrivals, multiple classes, phase-type upgrades and services.
+        Customers only upgrade to the priority immediately higher than
+        themselves.
+  \item \cite{bilodeau22} (2022): Analytical (truncated) expressions for
+      a two class delayed accumulating priority M/G/1 queue. Customer
+        priorities increase linearly over time, at different rates
+        according to class, after an initial fixed delay.
 \end{itemize}
 
 
-\section{The Model}
 
-\subsection{Rigorous description}
-
-Here we consider an $M/M/c$ queue with $K$ classes of customer.
-Order and label the customer classes $0, 1, 2, \dots, K-1$, with customer
-classes with lower labels having priority over customer classes of higher
-labels. The index $k$ will be used to represent customer classes.
+\section{The Models}\label{sec:model}
+Consider an $M/M/c$ queue with $K$ classes of customer labelled
+$0, 1, 2, \dots, K-1$.
 Let:
 
 \begin{itemize}
   \item $\lambda_k$ be the arrival rate of customers of class $k$,
   \item $\mu_k$ be the service rate of customers of class $k$,
-  \item $\theta_{k_i,k_j}$ be the rate at which customers of class $k_i$ change
-  to customers of class $k_j$.
+  \item $\theta_{i,j}$ be the rate at which customers of class $i$ change
+  to customers of class $j$ while they are waiting in line.
 \end{itemize}
+
+Customers of class $i$ have priority over customers of class $j$ if $i < j$.
+Customers of the same class are served in the order they arrived to that class.
 
 Figure~\ref{fig:twoclass_example} shows an example with two classes of customer.
 
@@ -95,16 +116,45 @@ Figure~\ref{fig:twoclass_example} shows an example with two classes of customer.
 \label{fig:twoclass_example}
 \end{figure}
 
-\subsection{Description of the Simulation Model}
+The key feature here is the $K \times K$ class change matrix
+$\Theta = (\theta_{ij})$. All elements $\theta_{i,j}$ where $i \neq j$ are
+rates, and so are non-negative real numbers, if customers of class $i$ cannot
+change to customers of class $j$ directly, then $\theta_{i,j} = 0$. The diagonal
+values $\theta_{i,i}$ are unused as customers cannot change to their own class.
+All elements $\theta_{i,i+1}$ represent the direct upgrade rates; all elements
+$\theta_{i,i-1}$ represent the direct downgrade rates, while all other elements
+can be thought of as `skip-grades`.
+This is shown in Figure~\ref{fig:skipgrades}.
 
-\subsection{Description of the bounded approximation}
+\begin{figure}
+\begin{center}
+\includestandalone[width=0.55\textwidth]{img/skipgrades}
+\end{center}
+\caption{Representations of parts of the matrix $\Theta$. Example when $K=5$.}
+\label{fig:skipgrades}
+\end{figure}
 
-\begin{itemize}
-    \item Discuss how bound affects discrepancy of results (only using
-        simulation model)
-\end{itemize}
 
-\subsection{Discrete State Markov Chain Formulation}
+\subsection{Simulation Model Logic}
+
+\subsection{Markov Chain Models}
+The situation described in words in Section~\ref{sec:model} can be described
+precisely as two different Markov chains.
+The first, described in Section~\ref{sec:state_formulation}, describes the
+overall changes in state, where a state records the number of customers of each
+class at the node. This is useful for analysing system wide statistics such as
+average queue size.
+The second, described in Section~\ref{sec:sojourn_formulation}, describes how an
+individual arriving customer experiences the system until their exit. This is
+useful for analysing individual customers' statistics such as average sojourn
+time.
+Section~\ref{sec:bound} explores a bounded approximation for numerically
+tractable analysis, and gives guidelines on choosing a large enough bound so as
+to sufficiently approximate an unbounded system.
+Section~\ref{sec:stationary} explores the parameter requirements for these
+systems to have steady state distributions, and not grow infinitely.
+
+\subsubsection{Discrete State Markov Chain Formulation}\label{sec:state_formulation}
 Let
 $\underline{\mathbf{s}}_t = (s_{0,t}, s_{1,t}, \dots, s_{K-1,t}) \in \mathbb{N}^K$
 represent the state of the system at time step $t$, where $s_{k,t}$ represents
@@ -131,10 +181,7 @@ service at time step $t$, is given by Equation~\ref{eqn:inservice}.
 B_{k,t} =\min\left(c - \min\left(\sum_{i < k} s_{i,t}, c\right), s_{k,t}\right)
 \end{equation}
 
-\textcolor{red}{TODO (?) Unroll the matrix to get a (double?) infinite sum for state probabilities. If possible this would make calculations much more efficient by truncating an infinite sum rather than an infinite matrix.}
-
-
-\subsection{Sojourn Time Markov Chain Formulation}
+\subsubsection{Sojourn Time Markov Chain Formulation}\label{sec:sojourn_formulation}
 Let $\underline{\mathbf{z}}_t = (z_{0,t}, z_{1,t}, \dots, z_{n,t} \dots, z_{K-1,t}, b_t, n_t) \in \mathbb{N}^{K+2}$
 represent the state of a particular customer at time step $t$, where $n_t$
 represents that customer's class at time $t$; $z_{k,t} \; \forall \; k < n$
@@ -191,20 +238,12 @@ determined by $n$. Combining these times to absorption with the state
 probabilities found in the previous section, the sojourn times for each customer
 class can be found.
 
-\textcolor{red}{TODO (?) Unroll the matrix to get a (double?) infinite sum for state probabilities. If possible this would make calculations much more efficient by truncating an infinite sum rather than an infinite matrix.}
 
-\subsection{Convergence of model}
+\subsubsection{Bounded approximation}\label{sec:bound}
+\subsubsection{Existence of Stationary Distributions}\label{sec:stationary}
 
-\begin{itemize}
-        \item Using the hitting probabilities approach.
-        \item Using a Monte Carlo simulation + data analysis approach.
-\end{itemize}
 
 \section{What if scenarios}
-
-\textcolor{red}{TODO: Effect of class transition rates on sojourn times.}
-
-\textcolor{red}{TODO: Find stability based on the relationships between $\theta_{k_i,k_j}$, $\lambda_k$ and $\mu_k$.}
 
 \bibliographystyle{plain}
 \bibliography{refs}
