@@ -8,10 +8,13 @@
 \usepackage{hyperref}
 \usepackage{amsmath}
 \usepackage{amsfonts}
+\usepackage{amsthm}
 \usepackage[table]{xcolor}
 \usepackage{tikz}
 \usetikzlibrary{arrows}
 \usetikzlibrary{decorations.pathreplacing}
+
+\newtheorem{theorem}{Theorem}
 
 
 \title{Modelling Queues Where Customers Randomly  Change Priority Classes While Waiting}
@@ -239,11 +242,66 @@ probabilities found in the previous section, the sojourn times for each customer
 class can be found.
 
 
-\subsubsection{Bounded approximation}\label{sec:bound}
+\subsubsection{Bounded Approximation}\label{sec:bound}
+
 \subsubsection{Existence of Stationary Distributions}\label{sec:stationary}
+A key difference between using a bounded approximation to analysing infinite
+Markov chains is the existence of stationary distributions. All bounded
+approximations have steady state distributions, even if the corresponding
+infinite Markov chain does not, leading to spurious results in these cases.
+Theorem~\ref{thrm:steadystate} gives a simple check for the existence or
+non-existence of steady states, but does not cover all possibilities.
 
+\begin{theorem}\label{thrm:steadystate}
+For $M/M/c$ work conserving queue with $K$ classes of customer, with arrival
+rate $\lambda_k$ for customers of class $k$ and service rate $\mu_k$ for
+customers of class $k$:
+\begin{enumerate}
+  \item if $\sum_i \lambda_i < c \min_i \mu_i$ then it will reach steady state,
+  \item if $\sum_i \lambda_i > c \max_i \mu_i$ then it will never reach steady state.
+\end{enumerate}
+\end{theorem}
 
-\section{What if scenarios}
+Note that this result does not assume any particular service discipline such as
+first-in-first-out or prioritised classes, but holds for any work conserving
+discipline.
+
+\begin{proof}
+The queue will reach steady state if the rate at which customers are added to
+the queue is less than the rate at which customers leave the queue.
+As arrivals are not state dependent, customers are added to the queue at a rate
+$\sum_i \lambda_i$ when in any state.
+The rate at which customers leave the queue is state dependent, depending on the
+service discipline.
+
+We do not need to consider cases when there are less than $c$ customers present,
+as here any arrival will increase the rate at which customers leave the queue,
+as that arrival would enter service immediately.
+Considering the cases where there are $c$ or more customers in the queue, there
+are two extreme cases, either:
+
+\begin{enumerate}
+  \item All customers in service are of the class with the slowest service rate.
+  In this case the rate at which customers leave the queue is $c \min_i \mu_i$,
+  which is the slowest possible rate at which customers can leave the queue.
+  If $\sum_i \lambda_i < c \min_i \mu_i$ then the rate at which customers enter
+  the queue is smaller than the smallest possible rate at which customers leave
+  the queue, and so will always be smaller than the rate at which customers
+  leave the queue in all states. Therefore the system will reach steady state.
+  \item All customers in service are of the class with the fastest service rate.
+  In this case the rate at which customers leave the queue is $c \max_i \mu_i$,
+  which is the fastest possible rate at which customers can leave the queue.
+  If $\sum_i \lambda_i > c \max_i \mu_i$ then the rate at which customers enter
+  the queue is greater than the largest possible rate at which customers leave
+  the queue, and so will always be greater than the rate at which customers
+  leave the queue in all states. Therefore the system cannot reach steady state.
+\end{enumerate}
+\end{proof}
+
+If $c \min_i \mu_i < \sum_i \lambda_i < c \max_i \mu_i$ then more investigation
+is needed.
+
+\section{Effect of $\Theta$ on System Behaviour}
 
 \bibliographystyle{plain}
 \bibliography{refs}
