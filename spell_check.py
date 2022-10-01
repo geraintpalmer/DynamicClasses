@@ -32,5 +32,10 @@ if __name__ == "__main__":
         "generalisable",
         "queueing",
         "skipgrades",
+        "rb",
+        "ergodic",
+        "hyperparameter",
+        "hyperparameters",
+        "calc"
     }
     main(path=path, known_words=known_words)

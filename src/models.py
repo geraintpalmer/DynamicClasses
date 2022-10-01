@@ -608,7 +608,6 @@ def compare_mc_to_sim_sojourn(
     return {"Markov Chain": mean_sojourn_times_mc, "Simulation": mean_sojourn_times_sim}
 
 
-
 def find_hitting_probs(state_space, transition_matrix, boundary_region):
     """
     Finds the maximum probability of ever reaching a state in the boundary_region
@@ -617,8 +616,10 @@ def find_hitting_probs(state_space, transition_matrix, boundary_region):
     P = transition_matrix.copy()
     n_states = len(state_space)
     Bi = [state_space.index(state) for state in boundary_region]
-    absorbing_states = [si for si, s in enumerate(state_space) if P[si, si]==1.0]
-    transient_states = [si for si, s in enumerate(state_space) if si not in absorbing_states]
+    absorbing_states = [si for si, s in enumerate(state_space) if P[si, si] == 1.0]
+    transient_states = [
+        si for si, s in enumerate(state_space) if si not in absorbing_states
+    ]
     Bit = [transient_states.index(i) for i in Bi]
     n_transient = len(transient_states)
     for i in Bi:
@@ -628,5 +629,7 @@ def find_hitting_probs(state_space, transition_matrix, boundary_region):
     for it in Bit:
         b[it] = -1
     p = np.linalg.solve(A, b)
-    hitting_probabilities = {state_space[s]: p[si] for si, s in enumerate(transient_states)}
+    hitting_probabilities = {
+        state_space[s]: p[si] for si, s in enumerate(transient_states)
+    }
     return hitting_probabilities

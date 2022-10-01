@@ -13,6 +13,7 @@
 \usepackage{tikz}
 \usetikzlibrary{arrows}
 \usetikzlibrary{decorations.pathreplacing}
+\usetikzlibrary{calc}
 
 \newtheorem{theorem}{Theorem}
 
@@ -94,7 +95,7 @@ Systems of this kind have been investigated previously:
 
 
 
-\section{The Models}\label{sec:model}
+\section{System Under Consideration}\label{sec:system}
 Consider an $M/M/c$ queue with $K$ classes of customer labelled
 $0, 1, 2, \dots, K-1$.
 Let:
@@ -131,17 +132,17 @@ This is shown in Figure~\ref{fig:skipgrades}.
 
 \begin{figure}
 \begin{center}
-\includestandalone[width=0.55\textwidth]{img/skipgrades}
+\includestandalone[width=0.65\textwidth]{img/skipgrades}
 \end{center}
 \caption{Representations of parts of the matrix $\Theta$. Example when $K=5$.}
 \label{fig:skipgrades}
 \end{figure}
 
 
-\subsection{Simulation Model Logic}
+\section{Simulation Model Logic}
 
-\subsection{Markov Chain Models}
-The situation described in words in Section~\ref{sec:model} can be described
+\section{Markov Chain Models}
+The situation described in words in Section~\ref{sec:system} can be described
 precisely as two different Markov chains.
 The first, described in Section~\ref{sec:state_formulation}, describes the
 overall changes in state, where a state records the number of customers of each
@@ -151,13 +152,14 @@ The second, described in Section~\ref{sec:sojourn_formulation}, describes how an
 individual arriving customer experiences the system until their exit. This is
 useful for analysing individual customers' statistics such as average sojourn
 time.
+Section~\ref{sec:stationary} explores the parameter requirements for these
+systems to have steady state distributions, and not grow infinitely.
 Section~\ref{sec:bound} explores a bounded approximation for numerically
 tractable analysis, and gives guidelines on choosing a large enough bound so as
 to sufficiently approximate an unbounded system.
-Section~\ref{sec:stationary} explores the parameter requirements for these
-systems to have steady state distributions, and not grow infinitely.
 
-\subsubsection{Discrete State Markov Chain Formulation}\label{sec:state_formulation}
+
+\subsection{Discrete State Markov Chain Formulation}\label{sec:state_formulation}
 Let
 $\underline{\mathbf{s}}_t = (s_{0,t}, s_{1,t}, \dots, s_{K-1,t}) \in \mathbb{N}^K$
 represent the state of the system at time step $t$, where $s_{k,t}$ represents
@@ -184,7 +186,8 @@ service at time step $t$, is given by Equation~\ref{eqn:inservice}.
 B_{k,t} =\min\left(c - \min\left(\sum_{i < k} s_{i,t}, c\right), s_{k,t}\right)
 \end{equation}
 
-\subsubsection{Sojourn Time Markov Chain Formulation}\label{sec:sojourn_formulation}
+
+\subsection{Sojourn Time Markov Chain Formulation}\label{sec:sojourn_formulation}
 Let $\underline{\mathbf{z}}_t = (z_{0,t}, z_{1,t}, \dots, z_{n,t} \dots, z_{K-1,t}, b_t, n_t) \in \mathbb{N}^{K+2}$
 represent the state of a particular customer at time step $t$, where $n_t$
 represents that customer's class at time $t$; $z_{k,t} \; \forall \; k < n$
@@ -242,9 +245,7 @@ probabilities found in the previous section, the sojourn times for each customer
 class can be found.
 
 
-\subsubsection{Bounded Approximation}\label{sec:bound}
-
-\subsubsection{Existence of Stationary Distributions}\label{sec:stationary}
+\subsection{Existence of Stationary Distributions}\label{sec:stationary}
 A key difference between using a bounded approximation to analysing infinite
 Markov chains is the existence of stationary distributions. All bounded
 approximations have steady state distributions, even if the corresponding
@@ -300,6 +301,183 @@ are two extreme cases, either:
 
 If $c \min_i \mu_i < \sum_i \lambda_i < c \max_i \mu_i$ then more investigation
 is needed.
+
+
+
+\subsection{Bounded Approximation}\label{sec:bound}
+In order to analyse the above Markov chain models numerically, finite
+approximations can be made. Define $b$ as a bound, such that the maximum allowed
+number of customers of each priority class if $b$, with transitions to any
+states greater than this disallowed.
+Assuming the infinite system reaches a stationary distribution, then the
+probability of the number of customers of a particular customer class exceeding
+$b$ approaches zero as $b$ increases. Thus the finite approximations approaches
+a good approximation as $b$ increases, and any statistics found using a bounded
+approximation will approach their corresponding values of the infinite models as
+$b$ increases.
+
+Choosing an appropriate value for $b$ is a trade off between accuracy and model
+size, and so computational time. An inefficient way to choose $b$ is to
+sequentially build bounded models, increasing $b$ each time, calculating the
+statistics of interest, and observing when the relationship between $b$ and that
+statistic levels off.
+It would be more efficient to choose a $b$ and be able to immediately check if
+the accuracy is sufficient. We propose two checks, one for ergodic Markov
+chains (the model in Section~\ref{sec:state_formulation}), and one for absorbing
+Markov chains (the model in Section~\ref{sec:sojourn_formulation}).
+
+
+\subsubsection{Bound check for ergodic Markov chains}\label{sec:ergodic_check}
+Let $S_b = \{\underline{\mathbf{s}} \;|\; b \in \underline{\mathbf{s}}\}$, the
+set of states that lie on the Markov chain boundary. Consider
+$\max_{\underline{\mathbf{s}} \in S_b} \pi_{\underline{\mathbf{s}}}$, the
+largest of the steady-state probabilities of being at a state on the boundary.
+Choose a tolerance level $\epsilon > 0$. Now consider $b$ large enough if
+
+\begin{equation}
+\max_{\underline{\mathbf{s}} \in S_b} \pi_{\underline{\mathbf{s}}} < \epsilon.
+\end{equation}
+
+As an example, consider a standard M/M/1 queue with arrival rate $\lambda = 4$
+and service rate $\mu = 5$.
+Here the set $S_b$ contains just one state, the state $b$.
+Figure~\ref{fig:ergodic_b7} shows the steady state probabilities obtained when
+$b=7$, while Figure~\ref{fig:ergodic_b39} shows the steady state probabilities
+obtained when $b=39$; both choosing $\epsilon=0.02$.
+Under the proposed check it can be seen that $b=7$ is not sufficient to
+approximate an infinite system as $\pi_7 > \epsilon$, while $b=39$ is sufficient
+as $\pi_{39} < \epsilon$.
+
+\begin{figure}[!htbp]
+  \begin{center}
+  \begin{subfigure}[b]{0.65\textwidth}
+    \includegraphics[width=\textwidth]{img/example_mc_8states.pdf}
+    \caption{$b=7$}
+    \label{fig:ergodic_b7}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.65\textwidth}
+    \includegraphics[width=\textwidth]{img/example_mc_40states.pdf}
+    \caption{$b=39$}
+    \label{fig:ergodic_b39}
+  \end{subfigure}
+  \end{center}
+  \caption{Steady-state probabilities of bounded approximations of an M/M/1 queue.}
+  \label{fig:ergodic_check}
+\end{figure}
+
+
+\subsubsection{Bound check for absorbing Markov chains}\label{sec:absorbing_check}
+The above check isn't possible for absorbing Markov chains as they will not
+reach steady state, so another check is required. This method assumed the
+absorbing Markov chain takes the same shape as defined in
+Section~\ref{sec:sojourn_formulation}, where states move further away from the
+absorbing state as their labels increase.
+
+Again let $S_b = \{\underline{\mathbf{s}} \;|\; b \in \underline{\mathbf{s}}\}$,
+the set of states that lie on the Markov chain boundary. Now define $h_{i,J}$ as
+the hitting probabilities of a set of states $J$ from state $i$, that is, what
+is the probability of ever reaching any state in $J$ when starting from state
+$i$. These are found by solving:
+
+\begin{equation}
+h_{i, J} = \begin{cases}
+\sum_k p_{i, k} h_{k, J} & \text{if } i \notin J \\
+1 & \text{if } i \in J
+\end{cases}
+\end{equation}
+
+Now for the bounded approximation define a \textit{reasonable region}, $R$, of
+the state space, a region of states which we reasonable expect the infinite
+Markov chain to visit. Let it's complement be known as the \textit{unreasonable
+region}.
+Let us define $R$ by the percentage $r$ of the distance between the absorbing
+state and a boundary state. That is
+$R = \{\underline{\mathbf{s}} \;|\; s < rb \;\forall\; s \in \underline{\mathbf{s}}\}$.
+
+Now as above, choose a tolerance level $\epsilon > 0$. Now consider $b$ large
+enough if
+
+\begin{equation}
+\max_{\underline{\mathbf{s}} \in R} h_{\underline{\mathbf{s}}, S_b} < \epsilon.
+\end{equation}
+
+As an example, consider a standard M/M/1 queue, with arrival rate $\lambda = 4$
+and service rate $\mu = 5$, but with arrivals rejected if the queue is empty.
+That is the state $0$ is an absorbing state, see Figure~\ref{fig:mm1_absorbing}.
+Here the set $S_b$ contains just one state, the state $b$.
+Figure~\ref{fig:absorbing_b7} shows the hitting probabilities from each state to
+$b$ obtained when $b=7$, while Figure~\ref{fig:absorbing_b39} shows the hitting
+probabilities obtained when $b=39$; both choosing $\epsilon=0.05$ and $r=0.75$.
+Under the proposed check it can be seen that $b=7$ is not sufficient to
+approximate an infinite system as $h_{5,7} > \epsilon$, while $b=39$ is sufficient
+as $h_{29, 39} < \epsilon$.
+
+\begin{figure}
+\includestandalone[width=\textwidth]{img/absorbing_mm1}
+\caption{An M/M/1 queue with absorbing state.}
+\label{fig:mm1_absorbing}
+\end{figure}
+
+\begin{figure}[!htbp]
+  \begin{center}
+  \begin{subfigure}[b]{0.65\textwidth}
+    \includegraphics[width=\textwidth]{img/example_absorbingmc_8states.pdf}
+    \caption{$b=7$}
+    \label{fig:absorbing_b7}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.65\textwidth}
+    \includegraphics[width=\textwidth]{img/example_absorbingmc_40states.pdf}
+    \caption{$b=39$}
+    \label{fig:absorbing_b39}
+  \end{subfigure}
+  \end{center}
+  \caption{Hitting probabilities of bounded approximations of an absorbing M/M/1 queue.}
+  \label{fig:absorbing_check}
+\end{figure}
+
+The hyperparameters choices of $\epsilon$ and $r$ can greatly effect the
+effectiveness of this check, and aren't as intuitive as the boundary hitting
+tolerance hyperparameter of Section~\ref{sec:ergodic_check}. In general,
+increasing $r$ increases the relative size of the reasonable region, and so a
+larger bound would be needed to ensure a low hitting probability from this
+region to the boundary. Decreasing $\epsilon$ forces the probability of hitting
+the boundary from the reasonable region to be smaller, and so a larger boundary
+would be needed.
+
+To investigate, Figure~\ref{fig:investigate_hyperparamers} the calculated mean
+time to absorption from state 6, for the example system described above.
+The figure highlights the boundaries that were accepted or rejected by this
+check for combinations of $\epsilon = 0.01, 0.02$ and $0.05$, and
+$r = 0.6, 0.7, 0.8$ and $0.9$.
+As the mean time to absorption levels off we can be confident that the bound is
+large enough to approximate the infinite system; and as both $r$ and $\epsilon$
+increase the check will only accept bounds that are large enough.
+
+\begin{figure}
+  \begin{center}
+    \includegraphics[width=0.8\textwidth]{img/check_hyperparameters_effect.pdf}
+  \end{center}
+  \caption{Investigating the effect of the hyperparameters $\epsilon$ and $r$.}
+  \label{fig:investigate_hyperparameters}
+\end{figure}
+
+However this is a trade-off between accuracy and model size.
+This is highlighted further in Figure~\ref{fig:summary_hyperparameters}.
+This plot on the left shows the minimum $b$ required to pass the check with the
+given hyperparameters $\epsilon$ and $r$; and the plot on the right shows the
+absolute error between the result obtained from using that minimum bound and the
+infinite system (the infinite system here is modelled as a bounded system with a
+very large bound of $b = 200$).
+
+\begin{figure}
+  \begin{center}
+    \includegraphics[width=0.9\textwidth]{img/check_hyperparameters_effect_summary.pdf}
+  \end{center}
+  \caption{Investigating the effect of the hyperparameters $\epsilon$ and $r$ on
+  accuracy and model size.}
+  \label{fig:summary_hyperparameters}
+\end{figure}
+
 
 \section{Effect of $\Theta$ on System Behaviour}
 

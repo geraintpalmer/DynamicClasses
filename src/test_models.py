@@ -855,9 +855,9 @@ def test_correct_rates_in_transition_matrices():
 
 def test_find_hitting_probs():
     """
-    Made up example based on the maths of https://youtu.be/edTup9lQU90, but now treating 
+    Made up example based on the maths of https://youtu.be/edTup9lQU90, but now treating
     transient states as absorbing states:
-    
+
     P = (
       (1/5,  1/5,  1/5,  2/5,  0  ,  0  )
       (0  ,  1  ,  0  ,    0,  0  ,  0  )
@@ -869,17 +869,17 @@ def test_find_hitting_probs():
     + There are two abosrbing states, state 1 and 3, so h_{10} = h_{30} = 0 by definition.
     + For $h_{00}$ we are already at state 0, so guaranteed hit, h_{00} = 1
     + To find h_{20}, h_{40}, and h_{50} we solve:
-      
+
       h_{20} &= (1/3)h_{10} + (1/3)h_{30} + (1/3)h_{40}
       h_{40} &= (1/2)h_{00} + (1/2)h_{50}
       h_{50} &= (1/2)h_{20} + (1/4)h_{30} + (1/4)h_{40}
-    
+
       which simplifies to:
-      
+
       h_{20} &= (1/3)h_{40}
       h_{40} &= (1/2) +(1/2)h_{50}
       h_{50} &= (1/2)h_{40} +(1/4)h_{40}
-      
+
     + This gives
       - h_{20} = 4/19 = 0.210526
       - h_{40} = 12/19 = 0.631579
@@ -887,12 +887,12 @@ def test_find_hitting_probs():
     """
     P = np.array(
         [
-            [1/5, 1/5, 1/5, 2/5, 0.0, 0.0],
+            [1 / 5, 1 / 5, 1 / 5, 2 / 5, 0.0, 0.0],
             [0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
-            [0.0, 1/3, 0.0, 1/3, 1/3, 0.0],
+            [0.0, 1 / 3, 0.0, 1 / 3, 1 / 3, 0.0],
             [0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
-            [1/2, 0.0, 0.0, 0.0, 0.0, 1/2],
-            [0.0, 0.0, 1/2, 1/4, 1/4, 0.0]
+            [1 / 2, 0.0, 0.0, 0.0, 0.0, 1 / 2],
+            [0.0, 0.0, 1 / 2, 1 / 4, 1 / 4, 0.0],
         ]
     )
     probs = models.find_hitting_probs(range(6), P, [0])
