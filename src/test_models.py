@@ -57,7 +57,7 @@ def test_write_state_space_for_states():
     bound = 3
     n_classes = 2
     states = models.write_state_space_for_states(num_classes=n_classes, bound=bound)
-    assert len(states) == bound ** n_classes
+    assert len(states) == bound**n_classes
     assert max(max(s) for s in states) == (bound - 1)
     assert min(min(s) for s in states) == 0
     assert all(len(s) == n_classes for s in states)
@@ -65,7 +65,7 @@ def test_write_state_space_for_states():
     bound = 10
     n_classes = 7
     states = models.write_state_space_for_states(num_classes=n_classes, bound=bound)
-    assert len(states) == bound ** n_classes
+    assert len(states) == bound**n_classes
     assert max(max(s) for s in states) == (bound - 1)
     assert min(min(s) for s in states) == 0
     assert all(len(s) == n_classes for s in states)
@@ -720,9 +720,9 @@ def test_writes_transition_matrix_states():
         thetas=[[None, 5], [3, None]],
         bound=bound,
     )
-    matrix_size = bound ** num_classes
+    matrix_size = bound**num_classes
     assert transition_matrix.shape == (matrix_size, matrix_size)
-    assert transition_matrix.size == matrix_size ** 2
+    assert transition_matrix.size == matrix_size**2
     assert (transition_matrix.sum(axis=1) == [0.0 for _ in range(matrix_size)]).all()
     diag = transition_matrix.diagonal().copy()
     np.fill_diagonal(transition_matrix, np.zeros(25))
@@ -751,7 +751,7 @@ def test_writes_transition_matrix_sojourn():
     )
     matrix_size = ((bound ** (num_classes + 1)) * num_classes) + 1
     assert transition_matrix.shape == (matrix_size, matrix_size)
-    assert transition_matrix.size == matrix_size ** 2
+    assert transition_matrix.size == matrix_size**2
     assert (transition_matrix.sum(axis=1) == [0.0 for _ in range(matrix_size)]).all()
     assert (transition_matrix[-1] == [0.0 for _ in range(matrix_size)]).all()
     diag = transition_matrix.diagonal().copy()
