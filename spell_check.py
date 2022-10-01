@@ -36,6 +36,6 @@ if __name__ == "__main__":
         "ergodic",
         "hyperparameter",
         "hyperparameters",
-        "calc"
+        "calc",
     }
     main(path=path, known_words=known_words)
