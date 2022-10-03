@@ -21,6 +21,9 @@
 \usetikzlibrary{decorations.text}
 \usetikzlibrary{arrows.meta}
 
+\usepackage{todonotes} %% for TODO notes
+
+
 \newtheorem{theorem}{Theorem}
 
 
@@ -165,6 +168,7 @@ Systems of this kind have been investigated previously:
         according to class, after an initial fixed delay.
 \end{itemize}
 
+\todo[inline]{Add more literature, flesh out as paragraphs.}
 
 
 
@@ -576,10 +580,18 @@ Alternatively if the rate at which customers of the other classes change to that
 class is large, then that slow service rate could be a bottleneck for the
 system.
 
+\todo[inline]{Add the above as numerical examples with plots?}
+
+\todo[inline]{Can we think of any way of investigating this?}
+
 
 
 
 \section{Effect of $\Theta$ on System Behaviour}\label{sec:behaviour}
+
+\todo[inline]{Design and run numerical experiments using checks above to keep
+the Markov chains accurate but of reasonable size.}
+
 
 \bibliographystyle{plain}
 \bibliography{refs}
