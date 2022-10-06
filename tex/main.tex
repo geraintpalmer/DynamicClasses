@@ -115,10 +115,11 @@ $\Theta = (\theta_{i,j})$. All elements $\theta_{i,j}$ where $i \neq j$ are
 rates, and so are non-negative real numbers, if customers of class $i$ cannot
 change to customers of class $j$ directly, then $\theta_{i,j} = 0$. The diagonal
 values $\theta_{i,i}$ are unused as customers cannot change to their own class.
-All elements $\theta_{i,i+1}$ represent the direct upgrade rates; all elements
-$\theta_{i,i-1}$ represent the direct downgrade rates, while all other elements
+All elements $\theta_{i,i+1}$ represent the direct downgrade rates; all elements
+$\theta_{i,i-1}$ represent the direct upgrade rates, while all other elements
 can be thought of as `skip-grades`.
 This is shown in Figure~\ref{fig:skipgrades}.
+% TODO: I think in the THETA matrix, the upgrades should be on the lower left, and the downgrades on the upper right.
 
 \begin{figure}
 \begin{center}
@@ -193,6 +194,7 @@ a flow diagram of the logic of the event scheduling approach.
     \caption{Flow diagram of the event scheduling approach used by Ciw, taken from \cite{palmer18}.}
     \label{fig:eventscheduling}
 \end{figure}
+% TODO: Maybe use larger font here
 
 The primary scheduled, or \textbf{B}-events are customers arriving to a queue,
 and customers finishing service. The conditional, or \textbf{C}-events are those
@@ -248,6 +250,9 @@ the number of customers of class $k$ present at time step $t$.
 Then the rates of change between $\underline{\mathbf{s}}_t$ and
 $\underline{\mathbf{s}}_{t+1}$ are given by Equation~\ref{eqn:transitions},
 where $\underline{\mathbf{\delta}} = \underline{\mathbf{s}}_{t+1} - \underline{\mathbf{s}}_t$,
+% TODO: Maybe specify here that $\delta$ can also be expressed as:
+% $\underline{\mathbf{\delta}} = (\delta_1, \delta_2, \dots, \delta_n)$
+% Could be useful for equation \ref{eq:transitions}
 
 \begin{equation}\label{eqn:transitions}
 q_{\underline{\mathbf{s}}_t, \underline{\mathbf{s}}_{t+1}} = 
@@ -266,7 +271,7 @@ service at time step $t$, is given by Equation~\ref{eqn:inservice}.
 B_{k,t} =\min\left(c - \min\left(\sum_{i < k} s_{i,t}, c\right), s_{k,t}\right)
 \end{equation}
 
-
+% TODO: Should specify somewhere that c is the number of servers
 
 
 \subsection{Sojourn Time Markov Chain Formulation}\label{sec:sojourn_formulation}
@@ -333,7 +338,7 @@ class can be found.
 \section{Bounded Approximation}\label{sec:bound}
 In order to analyse the above Markov chain models numerically, finite
 approximations can be made. Define $b$ as a bound, such that the maximum allowed
-number of customers of each priority class if $b$, with transitions to any
+number of customers of each priority class is $b$, with transitions to any
 states greater than this disallowed.
 Assuming the infinite system reaches a stationary distribution, then the
 probability of the number of customers of a particular customer class exceeding
@@ -343,7 +348,7 @@ approximation will approach their corresponding values of the infinite models as
 $b$ increases.
 
 Choosing an appropriate value for $b$ is a trade off between accuracy and model
-size, and so computational time. An inefficient way to choose $b$ would bes to
+size, and so computational time. An inefficient way to choose $b$ would be to
 sequentially build bounded models, increasing $b$ each time, calculating the
 statistics of interest, and observing when the relationship between $b$ and that
 statistic levels off.
@@ -357,6 +362,8 @@ Markov chains (the model in Section~\ref{sec:sojourn_formulation}).
 
 \subsection{Bound check for ergodic Markov chains}\label{sec:ergodic_check}
 Let $S_b = \{\underline{\mathbf{s}} \;|\; b \in \underline{\mathbf{s}}\}$, the
+% TODO: Shouldn't this be something like that? (I might be completely wrong)
+% $S_b = {s \in \underline{\mathbf{s}} | s_i = b for all i \in [0, K-1]}$
 set of states that lie on the Markov chain boundary. We wish to choose $b$ large
 enough that the boundary is irrelevant, that is that the Markov chain hardly
 ever hits the bound. Consider
@@ -583,6 +590,7 @@ system.
 \todo[inline]{Add the above as numerical examples with plots?}
 
 \todo[inline]{Can we think of any way of investigating this?}
+% TODO: Idea - what if we create another Markov model based only on Theta? Each state is one of the possible classes and the rates between states are the theta_{i,j}'s. That way by getting the state probabilities we can see what's the actual probability of being at each class. Then we could argue that these probabilities could be used together with each class's service rate \mu_k to find something like the relative traffic intensity for this particular model. Not sure if this is a good idea.
 
 
 
