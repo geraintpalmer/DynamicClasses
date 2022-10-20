@@ -633,3 +633,48 @@ def find_hitting_probs(state_space, transition_matrix, boundary_region):
         state_space[s]: p[si] for si, s in enumerate(transient_states)
     }
     return hitting_probabilities
+
+
+def bound_check(state_space, transition_matrix, boundary, reasonable_ratio, epsilon):
+    """
+    Bound check for absorbing Markov chains. Checks wherther the maximum hitting
+    probability for within the reasonable region to the boundary region is less
+    than epsilon. This assumes that the Markov chain has a specific structure,
+    where the head is the absorbing state and all other states go further away
+    from the absorbing state as the elements of the states increase towards the
+    boundary.
+
+    Parameters
+    ----------
+    state_space : list
+        List of states where each state is a tuple of numbers and the absorbing
+        state is the first element of the list. The last number is a label
+        representing what state you are currently in and does not contribute
+        towards the distance from the absorbing state.
+    transition_matrix : np.array
+        Transition matrix for the state space.
+    boundary : int
+        The largest element of any state.
+    reasonable_ratio : float [0, 1]
+        The ratio of the of the state space that is considered in the reasonable
+        region.
+    epsilon : float > 0
+        The tolerance for which the condition is satisfied.
+
+    Returns
+    -------
+    bool
+        True if the condition is satisfied.
+    """
+    boundary_region = [
+        state for state in state_space if state != "*" if (boundary - 1) in state
+    ]
+    hitting_probs = find_hitting_probs(state_space, transition_matrix, boundary_region)
+    reasonable_region = [
+        state
+        for state in state_space
+        if state != "*"
+        if sum(s ** 2 for s in state[:-1]) ** (1 / 2) <= (boundary * reasonable_ratio)
+    ]
+    condition = max([hitting_probs[state] for state in reasonable_region]) < epsilon
+    return condition
