@@ -674,7 +674,7 @@ def bound_check(state_space, transition_matrix, boundary, reasonable_ratio, epsi
         state
         for state in state_space
         if state != "*"
-        if sum(s ** 2 for s in state[:-1]) ** (1 / 2) <= (boundary * reasonable_ratio)
+        if sum(s**2 for s in state[:-1]) ** (1 / 2) <= (boundary * reasonable_ratio)
     ]
     condition = max([hitting_probs[state] for state in reasonable_region]) < epsilon
     return condition
