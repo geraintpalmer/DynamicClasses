@@ -900,3 +900,57 @@ def test_find_hitting_probs():
     assert round(probs[2], 6) == 0.210526
     assert round(probs[4], 6) == 0.631579
     assert round(probs[5], 6) == 0.263158
+
+
+def build_state_space_and_transition_matrix(boundary):
+    classes = 2
+    num_of_servers = 3
+    arrival_rates = [1, 2]
+    service_rates = [100, 100]
+    thetas = [[None, 1], [10, None]]
+    state_space = models.write_state_space_for_sojourn(
+        num_classes=classes, bound=boundary
+    )
+    transition_matrix = models.write_transition_matrix(
+        State_Space=state_space,
+        transition_function=models.find_transition_rates_for_sojourn_time,
+        non_zero_pair_function=models.get_all_pairs_of_non_zero_entries_sojourn,
+        num_servers=num_of_servers,
+        arrival_rates=arrival_rates,
+        service_rates=service_rates,
+        thetas=thetas,
+        bound=boundary,
+    )
+    return state_space, transition_matrix
+
+
+def test_bound_check_bound_increase():
+    expected = [False, False, False, False, False, True, True, True, True, True]
+    for i, boundary in enumerate(range(5, 15)):
+        state_space, transition_matrix = build_state_space_and_transition_matrix(
+            boundary=boundary
+        )
+        condition = models.bound_check(
+            state_space, transition_matrix, boundary, 0.63, 0.01
+        )
+        assert condition == expected[i], (boundary, i)
+
+
+def test_bound_check_reasonable_ratio_increase():
+    expected = [True, True, True, False, False, False, False, False, False, False]
+    for i, ratio in enumerate(np.arange(0.6, 0.7, 0.01)):
+        state_space, transition_matrix = build_state_space_and_transition_matrix(
+            boundary=9
+        )
+        condition = models.bound_check(state_space, transition_matrix, 9, ratio, 0.01)
+        assert condition == expected[i]
+
+
+def test_bound_check_epsilon_decrease():
+    expected = [False, False, False, False, True, True, True, True, True, True]
+    for i, epsilon in enumerate(np.arange(0.01, 0.1, 0.01)):
+        state_space, transition_matrix = build_state_space_and_transition_matrix(
+            boundary=9
+        )
+        condition = models.bound_check(state_space, transition_matrix, 9, 0.7, epsilon)
+        assert condition == expected[i]
