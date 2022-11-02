@@ -331,35 +331,37 @@ class can be found.
 
 
 \section{Bounded Approximation}\label{sec:bound}
+
 In order to analyse the above Markov chain models numerically, finite
 approximations can be made. Define $b$ as a bound, such that the maximum allowed
-number of customers of each priority class if $b$, with transitions to any
+number of customers of each priority class is $b$, with transitions to any
 states greater than this disallowed.
 Assuming the infinite system reaches a stationary distribution, then the
 probability of the number of customers of a particular customer class exceeding
-$b$ approaches zero as $b$ increases. Thus the finite approximations approaches
+$b$ approaches zero as $b$ increases. % TODO I agree with this completely, however it needs to be reworded here/justified better for the paper.
+Thus the finite approximations approaches
 a good approximation as $b$ increases, and any statistics found using a bounded
 approximation will approach their corresponding values of the infinite models as
 $b$ increases.
 
 Choosing an appropriate value for $b$ is a trade off between accuracy and model
-size, and so computational time. An inefficient way to choose $b$ would bes to
+size, and so computational time. An inefficient way to choose $b$ would be to
 sequentially build bounded models, increasing $b$ each time, calculating the
 statistics of interest, and observing when the relationship between $b$ and that
-statistic levels off.
+statistic levels off.  % TODO Some examples/references of this would be good.
+                       % Including as a possible example, using the MM1 and 
+                        % showing various values of \(b\)?
 It would be more efficient to choose a $b$ and be able to immediately check if
 the accuracy is sufficient. We propose two checks, one for ergodic Markov
 chains (the model in Section~\ref{sec:state_formulation}), and one for absorbing
 Markov chains (the model in Section~\ref{sec:sojourn_formulation}).
 
-
-
-
 \subsection{Bound check for ergodic Markov chains}\label{sec:ergodic_check}
-Let $S_b = \{\underline{\mathbf{s}} \;|\; b \in \underline{\mathbf{s}}\}$, the
+
+Let $S_b = \{\underline{\mathbf{s}}\in S \;|\; b \in \underline{\mathbf{s}}\}$, the
 set of states that lie on the Markov chain boundary. We wish to choose $b$ large
 enough that the boundary is irrelevant, that is that the Markov chain hardly
-ever hits the bound. Consider
+ever reaches the boundar. Consider
 $\max_{\underline{\mathbf{s}} \in S_b} \pi_{\underline{\mathbf{s}}}$, the
 largest of the steady-state probabilities of being at a state on the boundary.
 Choose a tolerance level $\epsilon > 0$. Now consider $b$ large enough if
@@ -395,26 +397,24 @@ as $\pi_{39} < \epsilon$.
   queue.}
   \label{fig:ergodic_check}
 \end{figure}
-
-
-
+% TODO Can we add a plot of \(\max \pi_s - \epsilons\) as a function of b?
 
 \subsection{Bound check for absorbing Markov chains}\label{sec:absorbing_check}
+
 The above check isn't possible for absorbing Markov chains as they will not
 reach steady state, so another check is required. This method assumed the
 absorbing Markov chain takes the same shape as defined in
 Section~\ref{sec:sojourn_formulation}, where states move further away from the
 absorbing state as their labels increase.
 
-Again let $S_b = \{\underline{\mathbf{s}} \;|\; b \in \underline{\mathbf{s}}\}$,
-the set of states that lie on the Markov chain boundary. Now define $h_{i,J}$ as
+Now define $h_{iJ}$ as
 the hitting probabilities of a set of states $J$ from state $i$, that is, what
 is the probability of ever reaching any state in $J$ when starting from state
-$i$. These are found by solving:
+$i$. These are defined recursively as:
 
 \begin{equation}
-h_{i, J} = \begin{cases}
-\sum_k p_{i, k} h_{k, J} & \text{if } i \notin J \\
+h_{iJ} = \begin{cases}
+\sum_k p_{ik} h_{kJ} & \text{if } i \notin J \\
 1 & \text{if } i \in J
 \end{cases}
 \end{equation}
@@ -425,13 +425,13 @@ Markov chain to visit. Let it's complement be known as the \textit{unreasonable
 region}.
 Let us define $R$ by the percentage $r$ of the distance between the absorbing
 state and a boundary state. That is
-$R = \{\underline{\mathbf{s}} \;|\; s < rb \;\forall\; s \in \underline{\mathbf{s}}\}$.
+$R = \{\underline{\mathbf{s}}\in S \;|\; s < rb \text{ for all } s \in \underline{\mathbf{s}}\}$.
 
 Now as above, choose a tolerance level $\epsilon > 0$. Now consider $b$ large
 enough if
 
 \begin{equation}
-\max_{\underline{\mathbf{s}} \in R} h_{\underline{\mathbf{s}}, S_b} < \epsilon.
+\max_{\underline{\mathbf{s}} \in R} h_{\underline{\mathbf{s}}S_b} < \epsilon.
 \end{equation}
 
 As an example, consider a standard M/M/1 queue, with arrival rate $\lambda = 4$
@@ -468,6 +468,7 @@ sufficient as $h_{29, 39} < \epsilon$.
   M/M/1 queue.}
   \label{fig:absorbing_check}
 \end{figure}
+% TODO Can we include a plot of \(\max h_... = \epsilon\) as a function of b?
 
 The hyperparameters choices of $\epsilon$ and $r$ can greatly effect the
 effectiveness of this check, and aren't as intuitive as the boundary hitting
@@ -492,14 +493,14 @@ increase the check will only accept bounds that are large enough.
   \begin{center}
     \includegraphics[width=0.8\textwidth]{img/check_hyperparameters_effect.pdf}
   \end{center}
-  \caption{Investigating the effect of the hyperparameters $\epsilon$ and $r$.}
+  \caption{Investigating the effect of the parameters $\epsilon$ and $r$.}
   \label{fig:investigate_hyperparameters}
 \end{figure}
 
 However this is a trade-off between accuracy and model size.
 This is highlighted further in Figure~\ref{fig:summary_hyperparameters}.
 This plot on the left shows the minimum $b$ required to pass the check with the
-given hyperparameters $\epsilon$ and $r$; and the plot on the right shows the
+given parameters $\epsilon$ and $r$; and the plot on the right shows the
 absolute error between the result obtained from using that minimum bound and the
 infinite system (the infinite system here is modelled as a bounded system with a
 very large bound of $b = 200$).
