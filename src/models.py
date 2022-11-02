@@ -49,10 +49,13 @@ def get_mean_sojourn_times(
     mean_sojourn_times = solve_time_to_absorbtion(
         State_Space=State_Space, transition_matrix=transition_matrix
     )
+    overall_sojourn_time = find_overall_mean_sojourn_time(
+        num_classes=num_classes, mean_sojourn_times=mean_sojourn_times, probs=probs
+    )
     mean_sojourn_times_by_class = find_mean_sojourn_time_by_class(
         num_classes=num_classes, mean_sojourn_times=mean_sojourn_times, probs=probs
     )
-    return mean_sojourn_times_by_class
+    return mean_sojourn_times_by_class + [overall_sojourn_time]
 
 
 def write_state_space_for_states(num_classes, bound):
@@ -348,6 +351,17 @@ def solve_probabilities(State_Space, transition_matrix):
     sol = np.linalg.solve(A, b).transpose()[0]
     probs = {State_Space[i]: sol[i] for i in range(size_mat)}
     return probs
+
+
+def find_overall_mean_sojourn_time(num_classes, mean_sojourn_times, probs):
+    """
+    Finds the mean sojourn time for the system.
+    """
+    arriving_states = [s for s in mean_sojourn_times if s[-2] == 0]
+    overall_mean_sojourn_time = sum(
+        [probs[state[:-2]] * mean_sojourn_times[state] for state in arriving_states]
+    )
+    return overall_mean_sojourn_time
 
 
 def find_mean_sojourn_time_by_class(num_classes, mean_sojourn_times, probs):
