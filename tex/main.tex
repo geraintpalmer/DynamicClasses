@@ -260,7 +260,8 @@ B_{k,t} \mu_k & \text{if } \delta_k = 1 \text{ and } \delta_i = 0 \; \forall \; 
 \end{equation}
 
 and $B_{k,t}$, representing the number of customers of class $k$ currently in
-service at time step $t$, is given by Equation~\ref{eqn:inservice}.
+service at time step $t$, is given by Equation~\ref{eqn:inservice}, where $c$
+is the number of servers.
 
 \begin{equation}\label{eqn:inservice}
 B_{k,t} =\min\left(c - \min\left(\sum_{i < k} s_{i,t}, c\right), s_{k,t}\right)
@@ -333,7 +334,7 @@ class can be found.
 \section{Bounded Approximation}\label{sec:bound}
 In order to analyse the above Markov chain models numerically, finite
 approximations can be made. Define $b$ as a bound, such that the maximum allowed
-number of customers of each priority class if $b$, with transitions to any
+number of customers of each priority class is $b$, with transitions to any
 states greater than this disallowed.
 Assuming the infinite system reaches a stationary distribution, then the
 probability of the number of customers of a particular customer class exceeding
@@ -343,7 +344,7 @@ approximation will approach their corresponding values of the infinite models as
 $b$ increases.
 
 Choosing an appropriate value for $b$ is a trade off between accuracy and model
-size, and so computational time. An inefficient way to choose $b$ would bes to
+size, and so computational time. An inefficient way to choose $b$ would be to
 sequentially build bounded models, increasing $b$ each time, calculating the
 statistics of interest, and observing when the relationship between $b$ and that
 statistic levels off.
@@ -356,7 +357,7 @@ Markov chains (the model in Section~\ref{sec:sojourn_formulation}).
 
 
 \subsection{Bound check for ergodic Markov chains}\label{sec:ergodic_check}
-Let $S_b = \{\underline{\mathbf{s}} \;|\; b \in \underline{\mathbf{s}}\}$, the
+Let $S_b = \{\underline{\mathbf{s}} \in S \;|\; b \in \underline{\mathbf{s}}\}$, the
 set of states that lie on the Markov chain boundary. We wish to choose $b$ large
 enough that the boundary is irrelevant, that is that the Markov chain hardly
 ever hits the bound. Consider
@@ -410,11 +411,11 @@ Again let $S_b = \{\underline{\mathbf{s}} \;|\; b \in \underline{\mathbf{s}}\}$,
 the set of states that lie on the Markov chain boundary. Now define $h_{i,J}$ as
 the hitting probabilities of a set of states $J$ from state $i$, that is, what
 is the probability of ever reaching any state in $J$ when starting from state
-$i$. These are found by solving:
+$i$. These are defined recursively as:
 
 \begin{equation}
-h_{i, J} = \begin{cases}
-\sum_k p_{i, k} h_{k, J} & \text{if } i \notin J \\
+h_{iJ} = \begin{cases}
+\sum_k p_{ik} h_{kJ} & \text{if } i \notin J \\
 1 & \text{if } i \in J
 \end{cases}
 \end{equation}
@@ -425,13 +426,13 @@ Markov chain to visit. Let it's complement be known as the \textit{unreasonable
 region}.
 Let us define $R$ by the percentage $r$ of the distance between the absorbing
 state and a boundary state. That is
-$R = \{\underline{\mathbf{s}} \;|\; s < rb \;\forall\; s \in \underline{\mathbf{s}}\}$.
+$R = \{\underline{\mathbf{s}} \;|\; s < rb \text{ for all } s \in \underline{\mathbf{s}}\}$.
 
 Now as above, choose a tolerance level $\epsilon > 0$. Now consider $b$ large
 enough if
 
 \begin{equation}
-\max_{\underline{\mathbf{s}} \in R} h_{\underline{\mathbf{s}}, S_b} < \epsilon.
+\max_{\underline{\mathbf{s}} \in R} h_{\underline{\mathbf{s}} S_b} < \epsilon.
 \end{equation}
 
 As an example, consider a standard M/M/1 queue, with arrival rate $\lambda = 4$
