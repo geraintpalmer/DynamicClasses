@@ -343,6 +343,8 @@ a good approximation as $b$ increases, and any statistics found using a bounded
 approximation will approach their corresponding values of the infinite models as
 $b$ increases.
 
+\todo[inline]{Reword this and justify better.}
+
 Choosing an appropriate value for $b$ is a trade off between accuracy and model
 size, and so computational time. An inefficient way to choose $b$ would be to
 sequentially build bounded models, increasing $b$ each time, calculating the
@@ -360,7 +362,7 @@ Markov chains (the model in Section~\ref{sec:sojourn_formulation}).
 Let $S_b = \{\underline{\mathbf{s}} \in S \;|\; b \in \underline{\mathbf{s}}\}$, the
 set of states that lie on the Markov chain boundary. We wish to choose $b$ large
 enough that the boundary is irrelevant, that is that the Markov chain hardly
-ever hits the bound. Consider
+ever reaches the boundary. Consider
 $\max_{\underline{\mathbf{s}} \in S_b} \pi_{\underline{\mathbf{s}}}$, the
 largest of the steady-state probabilities of being at a state on the boundary.
 Choose a tolerance level $\epsilon > 0$. Now consider $b$ large enough if
@@ -397,6 +399,7 @@ as $\pi_{39} < \epsilon$.
   \label{fig:ergodic_check}
 \end{figure}
 
+\todo[inline]{Add a plot of max $\max \pi_s - \epsilon$ as a function of $b$.}
 
 
 
@@ -425,8 +428,9 @@ the state space, a region of states which we reasonable expect the infinite
 Markov chain to visit. Let it's complement be known as the \textit{unreasonable
 region}.
 Let us define $R$ by the percentage $r$ of the distance between the absorbing
-state and a boundary state. That is
-$R = \{\underline{\mathbf{s}} \;|\; s < rb \text{ for all } s \in \underline{\mathbf{s}}\}$.
+state and a boundary state, that is
+$R = \{\underline{\mathbf{s}} \;|\; \lVert \mathbf{s} \rVert < rb \text{ for all } s \in \underline{\mathbf{s}}\}$,
+where $\lVert \mathbf{x} \rVert = \sqrt{\sum_i x_i^2}$.
 
 Now as above, choose a tolerance level $\epsilon > 0$. Now consider $b$ large
 enough if
@@ -469,6 +473,9 @@ sufficient as $h_{29, 39} < \epsilon$.
   M/M/1 queue.}
   \label{fig:absorbing_check}
 \end{figure}
+
+\todo[inline]{Add a plot of max $\max h - \epsilon$ as a function of $b$.}
+
 
 The hyperparameters choices of $\epsilon$ and $r$ can greatly effect the
 effectiveness of this check, and aren't as intuitive as the boundary hitting
