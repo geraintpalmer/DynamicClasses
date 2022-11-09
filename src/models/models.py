@@ -692,3 +692,10 @@ def bound_check(state_space, transition_matrix, boundary, reasonable_ratio, epsi
     ]
     condition = max([hitting_probs[state] for state in reasonable_region]) < epsilon
     return condition
+
+
+
+
+# TODO: Make the bound_check a one-line function that just gets the maximum
+# hitting probability and checks if it is less than epsilon.
+# TODO: Tests for everything (already existing functions and new ones)
