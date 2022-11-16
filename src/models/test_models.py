@@ -96,7 +96,7 @@ def test_get_mean_sojourn_times():
         [4, None],
     ]
     bound = 2
-    
+
     state_probs = models.get_state_probabilities(
         num_classes=num_classes,
         num_servers=num_servers,
@@ -124,7 +124,9 @@ def test_get_mean_sojourn_times():
         0.29127484397130005,
         0.23935477009436945,
     ]
-    assert calculated_sojourn_times == expected_sojourn_times
+
+    for time_1, time_2 in zip(calculated_sojourn_times, expected_sojourn_times):
+        assert np.round(time_1, 5) == np.round(time_2, 5)
 
 
 def test_simulation_builds_and_terminates():
