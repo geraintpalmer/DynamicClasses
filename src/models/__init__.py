@@ -25,4 +25,10 @@ from .models import (
     find_hitting_probs,
     get_maximum_hitting_probs,
     bound_check,
+    get_average_num_of_customers_from_state_probs,
+    get_variance_of_number_of_customers_from_state_probs,
+    get_average_num_of_customers_waiting_from_state_probs,
+    get_variance_of_customers_waiting_from_state_probs,
+    get_empty_probabilities_from_state_probs,
+    get_mean_sojourn_times_using_simulation,
 )

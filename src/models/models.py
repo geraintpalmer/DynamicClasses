@@ -49,30 +49,6 @@ def build_state_space_and_transition_matrix_sojourn_mc(
     return State_Space, transition_matrix
 
 
-def get_mean_sojourn_times(
-    state_space_sojourn, transition_matrix_sojourn, num_classes, arrival_rates, probs
-):
-    """
-    Get the mean sojourn times for the given state probabilities
-    """
-    mean_sojourn_times = solve_time_to_absorbtion(
-        State_Space=state_space_sojourn, transition_matrix=transition_matrix_sojourn
-    )
-    mean_sojourn_times_by_class = find_mean_sojourn_time_by_class(
-        num_classes=num_classes, mean_sojourn_times=mean_sojourn_times, probs=probs
-    )
-    overall_sojourn_time = sum(
-        [
-            sojourn_time * arr_rate
-            for sojourn_time, arr_rate in zip(
-                arrival_rates, mean_sojourn_times_by_class
-            )
-        ]
-    ) / sum(arrival_rates)
-
-    return mean_sojourn_times_by_class + [overall_sojourn_time]
-
-
 def write_state_space_for_states(num_classes, bound):
     """
     Write the states for the state probability model
@@ -714,6 +690,147 @@ def bound_check(state_space, transition_matrix, boundary, reasonable_ratio, epsi
     return condition
 
 
-# TODO: Make the bound_check a one-line function that just gets the maximum
-# hitting probability and checks if it is less than epsilon.
-# TODO: Tests for everything (already existing functions and new ones)
+def get_mean_sojourn_times(
+    state_space_sojourn, transition_matrix_sojourn, num_classes, arrival_rates, probs
+):
+    """
+    Get the mean sojourn times for the given state probabilities
+    """
+    mean_sojourn_times = solve_time_to_absorbtion(
+        State_Space=state_space_sojourn, transition_matrix=transition_matrix_sojourn
+    )
+    mean_sojourn_times_by_class = find_mean_sojourn_time_by_class(
+        num_classes=num_classes, mean_sojourn_times=mean_sojourn_times, probs=probs
+    )
+    overall_sojourn_time = sum(
+        [
+            sojourn_time * arr_rate
+            for sojourn_time, arr_rate in zip(
+                arrival_rates, mean_sojourn_times_by_class
+            )
+        ]
+    ) / sum(arrival_rates)
+
+    return mean_sojourn_times_by_class + [overall_sojourn_time]
+
+
+def get_average_num_of_customers_from_state_probs(state_probs, num_classes):
+    """
+    Gets the average number of customers in the system for all classes
+    of customers and the combined average for all classes
+    """
+    average_num_of_customers = [0 for _ in range(num_classes + 1)]
+    for state, prob in state_probs.items():
+        for class_id in range(num_classes):
+            average_num_of_customers[class_id] += prob * state[class_id]
+        average_num_of_customers[-1] += prob * sum(state)
+    return average_num_of_customers
+
+
+def get_variance_of_number_of_customers_from_state_probs(
+    state_probs, average_in_system, num_classes
+):
+    """
+    Gets the variance of the number of customers in the system for
+    all classes of customers and the combined average for all classes
+    """
+    variance_of_num_of_customers = [0 for _ in range(num_classes + 1)]
+    for state, prob in state_probs.items():
+        for class_id in range(num_classes):
+            variance_of_num_of_customers[class_id] += (
+                prob * (state[class_id] - average_in_system[class_id]) ** 2
+            )
+        variance_of_num_of_customers[-1] += (
+            prob * (sum(state) - average_in_system[-1]) ** 2
+        )
+    return variance_of_num_of_customers
+
+
+def get_average_num_of_customers_waiting_from_state_probs(
+    state_probs, num_servers, num_classes
+):
+    """
+    Get the average number of waiting customers
+    """
+    average_num_waiting = [0 for _ in range(num_classes + 1)]
+    for state, prob in state_probs.items():
+        for class_id in range(num_classes):
+            average_num_waiting[class_id] += prob * max(
+                state[class_id] - num_servers + min(sum(state[:class_id]), num_servers),
+                0,
+            )
+        average_num_waiting[-1] += prob * max(sum(state) - num_servers, 0)
+    return average_num_waiting
+
+
+def get_variance_of_customers_waiting_from_state_probs(
+    state_probs, num_servers, average_waiting, num_classes
+):
+    """
+    Get the variance of the number of waiting customers
+    """
+    average_num_waiting = [0 for _ in range(num_classes + 1)]
+    for state, prob in state_probs.items():
+        for class_id in range(num_classes):
+            average_num_waiting[class_id] += (
+                prob
+                * (
+                    max(
+                        state[class_id]
+                        - num_servers
+                        + min(sum(state[:class_id]), num_servers),
+                        0,
+                    )
+                    - average_waiting[class_id]
+                )
+                ** 2
+            )
+        average_num_waiting[-1] += (
+            prob * (max(sum(state) - num_servers, 0) - average_waiting[-1]) ** 2
+        )
+    return average_num_waiting
+
+
+def get_empty_probabilities_from_state_probs(state_probs, num_classes):
+    """
+    Gets the probabilities of no customers of all specific class and
+    the probability of no customers at all
+    """
+    empty_probs = [0 for _ in range(num_classes + 1)]
+    empty_probs[-1] = state_probs[tuple(0 for _ in range(num_classes))]
+    for state, prob in state_probs.items():
+        for class_id in range(num_classes):
+            if state[class_id] == 0:
+                empty_probs[class_id] += prob
+    return empty_probs
+
+
+def get_mean_sojourn_times_using_simulation(
+    Q, max_simulation_time, warmup_time, cooldown_time, num_classes
+):
+    """
+    Simulate the system and get the mean sojourn times for each class
+    """
+    mean_sojourn_time_by_class = [
+        np.mean(
+            [
+                q.waiting_time + q.service_time
+                for q in Q.get_all_records()
+                if q.customer_class == class_id
+                and q.arrival_date > warmup_time
+                and q.arrival_date < max_simulation_time - cooldown_time
+            ]
+        )
+        for class_id in range(num_classes)
+    ]
+
+    overall_mean_sojour_time = np.mean(
+        [
+            q.waiting_time + q.service_time
+            for q in Q.get_all_records()
+            if q.arrival_date > warmup_time
+            and q.arrival_date < max_simulation_time - cooldown_time
+        ]
+    )
+
+    return mean_sojourn_time_by_class + [overall_mean_sojour_time]
