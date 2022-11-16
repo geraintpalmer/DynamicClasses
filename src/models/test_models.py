@@ -4,6 +4,129 @@ import numpy as np
 import itertools
 
 
+def test_get_state_probabilites():
+    """
+    Tests that the state probabilities are calculated correctly.
+    """
+    num_classes = 2
+    num_servers = 2
+    arrival_rates = [5, 7]
+    service_rates = [6, 4]
+    thetas = [
+        [None, 2],
+        [4, None],
+    ]
+    bound = 3
+    calculated_state_probs = models.get_state_probabilities(
+        num_classes=num_classes,
+        num_servers=num_servers,
+        arrival_rates=arrival_rates,
+        service_rates=service_rates,
+        thetas=thetas,
+        bound=bound,
+    )
+
+    expected_state_probs = {
+        (0, 0): 0.09087913672922397,
+        (0, 1): 0.1735865446485757,
+        (0, 2): 0.16908761375045728,
+        (1, 0): 0.06603391035939747,
+        (1, 1): 0.13142164121149752,
+        (1, 2): 0.16383886103598583,
+        (2, 0): 0.017377344831420383,
+        (2, 1): 0.07547921389586176,
+        (2, 2): 0.11229573353758014,
+    }
+
+    for (key_1, value_1), (key_2, value_2) in zip(
+        calculated_state_probs.items(), expected_state_probs.items()
+    ):
+        assert key_1 == key_2
+        assert np.round(value_1, 5) == np.round(value_2, 5)
+
+
+def test_build_state_space_and_transition_matrix_sojourn_mc():
+    """
+    Tests that the state space and transition matrix are built correctly.
+    """
+    num_classes = 2
+    num_servers = 2
+    arrival_rates = [5, 7]
+    service_rates = [6, 4]
+    thetas = [
+        [None, 2],
+        [4, None],
+    ]
+    bound = 1
+
+    (
+        calculated_state_space,
+        calculated_transition_matrix,
+    ) = models.build_state_space_and_transition_matrix_sojourn_mc(
+        num_classes=num_classes,
+        num_servers=num_servers,
+        arrival_rates=arrival_rates,
+        service_rates=service_rates,
+        thetas=thetas,
+        bound=bound,
+    )
+
+    expected_state_space = [(0, 0, 0, 0), (0, 0, 0, 1), "*"]
+    for calcualted_state, expected_state in zip(
+        calculated_state_space, expected_state_space
+    ):
+        assert calcualted_state == expected_state
+
+    expected_transition_matrix = np.array(
+        [[-6.0, 0.0, 6.0], [0.0, -4.0, 4.0], [0.0, 0.0, 0.0]]
+    )
+    assert np.allclose(calculated_transition_matrix, expected_transition_matrix)
+
+
+def test_get_mean_sojourn_times():
+    """
+    Tests that the mean sojourn times are calculated correctly.
+    """
+    num_classes = 2
+    num_servers = 2
+    arrival_rates = [5, 7]
+    service_rates = [6, 4]
+    thetas = [
+        [None, 2],
+        [4, None],
+    ]
+    bound = 2
+    
+    state_probs = models.get_state_probabilities(
+        num_classes=num_classes,
+        num_servers=num_servers,
+        arrival_rates=arrival_rates,
+        service_rates=service_rates,
+        thetas=thetas,
+        bound=bound,
+    )
+    (
+        state_space,
+        transition_matrix,
+    ) = models.build_state_space_and_transition_matrix_sojourn_mc(
+        num_classes=num_classes,
+        num_servers=num_servers,
+        arrival_rates=arrival_rates,
+        service_rates=service_rates,
+        thetas=thetas,
+        bound=bound,
+    )
+    calculated_sojourn_times = models.get_mean_sojourn_times(
+        state_space, transition_matrix, num_classes, arrival_rates, state_probs
+    )
+    expected_sojourn_times = [
+        0.16666666666666666,
+        0.29127484397130005,
+        0.23935477009436945,
+    ]
+    assert calculated_sojourn_times == expected_sojourn_times
+
+
 def test_simulation_builds_and_terminates():
     """
     Tests that the simulation is built properly and it terminates.

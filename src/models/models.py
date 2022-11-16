@@ -29,11 +29,11 @@ def get_state_probabilities(
     return probs
 
 
-def get_mean_sojourn_times(
-    num_classes, num_servers, arrival_rates, service_rates, thetas, bound, probs
+def build_state_space_and_transition_matrix_sojourn_mc(
+    num_classes, num_servers, arrival_rates, service_rates, thetas, bound
 ):
     """
-    Get the mean sojourn times for the given state probabilities
+    Build the state space and transition matrix for the sojourn time Markov Chain.
     """
     State_Space = write_state_space_for_sojourn(num_classes=num_classes, bound=bound)
     transition_matrix = write_transition_matrix(
@@ -46,15 +46,30 @@ def get_mean_sojourn_times(
         thetas=thetas,
         bound=bound,
     )
+    return State_Space, transition_matrix
+
+
+def get_mean_sojourn_times(
+    state_space_sojourn, transition_matrix_sojourn, num_classes, arrival_rates, probs
+):
+    """
+    Get the mean sojourn times for the given state probabilities
+    """
     mean_sojourn_times = solve_time_to_absorbtion(
-        State_Space=State_Space, transition_matrix=transition_matrix
-    )
-    overall_sojourn_time = find_overall_mean_sojourn_time(
-        num_classes=num_classes, mean_sojourn_times=mean_sojourn_times, probs=probs
+        State_Space=state_space_sojourn, transition_matrix=transition_matrix_sojourn
     )
     mean_sojourn_times_by_class = find_mean_sojourn_time_by_class(
         num_classes=num_classes, mean_sojourn_times=mean_sojourn_times, probs=probs
     )
+    overall_sojourn_time = sum(
+        [
+            sojourn_time * arr_rate
+            for sojourn_time, arr_rate in zip(
+                arrival_rates, mean_sojourn_times_by_class
+            )
+        ]
+    ) / sum(arrival_rates)
+
     return mean_sojourn_times_by_class + [overall_sojourn_time]
 
 
@@ -351,17 +366,6 @@ def solve_probabilities(State_Space, transition_matrix):
     sol = np.linalg.solve(A, b).transpose()[0]
     probs = {State_Space[i]: sol[i] for i in range(size_mat)}
     return probs
-
-
-def find_overall_mean_sojourn_time(num_classes, mean_sojourn_times, probs):
-    """
-    Finds the mean sojourn time for the system.
-    """
-    arriving_states = [s for s in mean_sojourn_times if s[-2] == 0]
-    overall_mean_sojourn_time = sum(
-        [probs[state[:-2]] * mean_sojourn_times[state] for state in arriving_states]
-    )
-    return overall_mean_sojourn_time
 
 
 def find_mean_sojourn_time_by_class(num_classes, mean_sojourn_times, probs):
