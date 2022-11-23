@@ -626,7 +626,14 @@ def get_maximum_hitting_probs(
     return max([hitting_probs[state] for state in reasonable_region])
 
 
-def bound_check(state_space, transition_matrix, boundary, reasonable_ratio, epsilon):
+def bound_check(
+    state_space,
+    transition_matrix,
+    boundary,
+    reasonable_ratio,
+    epsilon,
+    max_hitting_prob=None,
+):
     """
     Bound check for absorbing Markov chains. Checks wherther the maximum hitting
     probability for within the reasonable region to the boundary region is less
@@ -657,9 +664,10 @@ def bound_check(state_space, transition_matrix, boundary, reasonable_ratio, epsi
     bool
         True if the condition is satisfied.
     """
-    max_hitting_prob = get_maximum_hitting_probs(
-        state_space, transition_matrix, boundary, reasonable_ratio
-    )
+    if max_hitting_prob is None:
+        max_hitting_prob = get_maximum_hitting_probs(
+            state_space, transition_matrix, boundary, reasonable_ratio
+        )
     condition = max_hitting_prob < epsilon
     return condition
 
