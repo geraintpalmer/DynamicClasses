@@ -937,7 +937,7 @@ def write_row(
     Get a row of the results that will be written to the csv file. The function
     first checks if force_simulation is set to True and runs the simulation if
     so. Otherwise, it checks if the bound is big enough to run the Markov chain.
-    If not, it runs the simulation. Otherwise, it runs the Markov chain. 
+    If not, it runs the simulation. Otherwise, it runs the Markov chain.
     The generated row consists of the following values:
 
         Simulation time,
