@@ -371,7 +371,7 @@ def solve_time_to_absorbtion(State_Space, transition_matrix):
     return mean_sojourn_time
 
 
-def aggregate_mc_states(probs):
+def aggregate_states(probs):
     """
     Aggregates from individual states to overall numbers of customers
     """
@@ -385,7 +385,7 @@ def aggregate_mc_states(probs):
     return agg_probs
 
 
-def aggregate_mc_states_by_class(probs, num_classes):
+def aggregate_states_by_class(probs, num_classes):
     """
     Aggregates from individual states to overall numbers of customers of each class
     """
@@ -393,35 +393,6 @@ def aggregate_mc_states_by_class(probs, num_classes):
     for clss in range(num_classes):
         for state in probs.keys():
             agg_state = state[clss]
-            if agg_state in aggregate_probs_by_class[clss]:
-                aggregate_probs_by_class[clss][agg_state] += probs[state]
-            else:
-                aggregate_probs_by_class[clss][agg_state] = probs[state]
-    return aggregate_probs_by_class
-
-
-def aggregate_sim_states(probs):
-    """
-    Aggregates from individual states to overall numbers of customers
-    """
-    agg_probs = {}
-    for state in probs.keys():
-        agg_state = sum(state[0])
-        if agg_state in agg_probs:
-            agg_probs[agg_state] += probs[state]
-        else:
-            agg_probs[agg_state] = probs[state]
-    return agg_probs
-
-
-def aggregate_sim_states_by_class(probs, num_classes):
-    """
-    Aggregates from individual states to overall numbers of customers of each class
-    """
-    aggregate_probs_by_class = {clss: {} for clss in range(num_classes)}
-    for clss in range(num_classes):
-        for state in probs.keys():
-            agg_state = state[0][clss]
             if agg_state in aggregate_probs_by_class[clss]:
                 aggregate_probs_by_class[clss][agg_state] += probs[state]
             else:
@@ -472,6 +443,9 @@ def get_state_probabilities_from_simulation(Q, warmup):
     """
     obs_period = (warmup, Q.max_simulation_time - warmup)
     probs = Q.statetracker.state_probabilities(observation_period=obs_period)
+    probs_sim = {
+        state[0]: prob for state, prob in probs.items()
+    }
     return probs
 
 
@@ -512,8 +486,8 @@ def compare_mc_to_sim_states(
         thetas=thetas,
         bound=bound,
     )
-    agg_probs_mc = aggregate_mc_states(probs_mc)
-    agg_probs_by_class_mc = aggregate_mc_states_by_class(probs_mc, num_classes)
+    agg_probs_mc = aggregate_states(probs_mc)
+    agg_probs_by_class_mc = aggregate_states_by_class(probs_mc, num_classes)
 
     Q = build_and_run_simulation(
         num_classes=num_classes,
