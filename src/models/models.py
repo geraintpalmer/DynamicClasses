@@ -437,14 +437,16 @@ def build_and_run_simulation(
     return Q
 
 
-def get_state_probabilities_from_simulation(Q, warmup):
+def get_state_probabilities_from_simulation(Q, warmup, cooldown):
     """
     Get state probabilities from Q state tracker.
     """
-    obs_period = (warmup, Q.max_simulation_time - warmup)
-    probs = Q.statetracker.state_probabilities(observation_period=obs_period)
-    probs_sim = {
-        state[0]: prob for state, prob in probs.items()
+    obs_period = (warmup, Q.max_simulation_time - cooldown)
+    probs = {
+        state[0]: prob
+        for state, prob in Q.statetracker.state_probabilities(
+            observation_period=obs_period
+        ).items()
     }
     return probs
 
