@@ -4,6 +4,131 @@ import numpy as np
 import itertools
 
 
+def test_get_state_probabilites():
+    """
+    Tests that the state probabilities are calculated correctly.
+    """
+    num_classes = 2
+    num_servers = 2
+    arrival_rates = [5, 7]
+    service_rates = [6, 4]
+    thetas = [
+        [None, 2],
+        [4, None],
+    ]
+    bound = 3
+    calculated_state_probs = models.get_state_probabilities(
+        num_classes=num_classes,
+        num_servers=num_servers,
+        arrival_rates=arrival_rates,
+        service_rates=service_rates,
+        thetas=thetas,
+        bound=bound,
+    )
+
+    expected_state_probs = {
+        (0, 0): 0.09087913672922397,
+        (0, 1): 0.1735865446485757,
+        (0, 2): 0.16908761375045728,
+        (1, 0): 0.06603391035939747,
+        (1, 1): 0.13142164121149752,
+        (1, 2): 0.16383886103598583,
+        (2, 0): 0.017377344831420383,
+        (2, 1): 0.07547921389586176,
+        (2, 2): 0.11229573353758014,
+    }
+
+    for (key_1, value_1), (key_2, value_2) in zip(
+        calculated_state_probs.items(), expected_state_probs.items()
+    ):
+        assert key_1 == key_2
+        assert np.round(value_1, 5) == np.round(value_2, 5)
+
+
+def test_build_state_space_and_transition_matrix_sojourn_mc():
+    """
+    Tests that the state space and transition matrix are built correctly.
+    """
+    num_classes = 2
+    num_servers = 2
+    arrival_rates = [5, 7]
+    service_rates = [6, 4]
+    thetas = [
+        [None, 2],
+        [4, None],
+    ]
+    bound = 1
+
+    (
+        calculated_state_space,
+        calculated_transition_matrix,
+    ) = models.build_state_space_and_transition_matrix_sojourn_mc(
+        num_classes=num_classes,
+        num_servers=num_servers,
+        arrival_rates=arrival_rates,
+        service_rates=service_rates,
+        thetas=thetas,
+        bound=bound,
+    )
+
+    expected_state_space = [(0, 0, 0, 0), (0, 0, 0, 1), "*"]
+    for calcualted_state, expected_state in zip(
+        calculated_state_space, expected_state_space
+    ):
+        assert calcualted_state == expected_state
+
+    expected_transition_matrix = np.array(
+        [[-6.0, 0.0, 6.0], [0.0, -4.0, 4.0], [0.0, 0.0, 0.0]]
+    )
+    assert np.allclose(calculated_transition_matrix, expected_transition_matrix)
+
+
+def test_get_mean_sojourn_times():
+    """
+    Tests that the mean sojourn times are calculated correctly.
+    """
+    num_classes = 2
+    num_servers = 2
+    arrival_rates = [5, 7]
+    service_rates = [6, 4]
+    thetas = [
+        [None, 2],
+        [4, None],
+    ]
+    bound = 2
+
+    state_probs = models.get_state_probabilities(
+        num_classes=num_classes,
+        num_servers=num_servers,
+        arrival_rates=arrival_rates,
+        service_rates=service_rates,
+        thetas=thetas,
+        bound=bound,
+    )
+    (
+        state_space,
+        transition_matrix,
+    ) = models.build_state_space_and_transition_matrix_sojourn_mc(
+        num_classes=num_classes,
+        num_servers=num_servers,
+        arrival_rates=arrival_rates,
+        service_rates=service_rates,
+        thetas=thetas,
+        bound=bound,
+    )
+    calculated_sojourn_times = models.get_mean_sojourn_times(
+        state_space, transition_matrix, num_classes, arrival_rates, state_probs
+    )
+    expected_sojourn_times = [
+        0.16666666666666666,
+        0.29127484397130005,
+        0.23935477009436945,
+    ]
+
+    for time_1, time_2 in zip(calculated_sojourn_times, expected_sojourn_times):
+        assert np.round(time_1, 5) == np.round(time_2, 5)
+
+
 def test_simulation_builds_and_terminates():
     """
     Tests that the simulation is built properly and it terminates.
@@ -954,3 +1079,201 @@ def test_bound_check_epsilon_decrease():
         )
         condition = models.bound_check(state_space, transition_matrix, 9, 0.7, epsilon)
         assert condition == expected[i]
+
+
+def test_num_of_customers_from_state_probs():
+    """
+    Test the function that calculates the average number of customers in the system
+    from the state probabilities.
+    """
+    state_probs = {
+        (0, 0, 0): 0.5000000000000001,
+        (0, 0, 1): 0.25000000000000006,
+        (0, 1, 0): 0.08333333333333336,
+        (0, 1, 1): 0.04166666666666668,
+        (1, 0, 0): 0.07142857142857144,
+        (1, 0, 1): 0.03571428571428571,
+        (1, 1, 0): 0.01190476190476191,
+        (1, 1, 1): 0.005952380952380958,
+    }
+
+    expected_mean_num_customers = [
+        0.125,
+        0.1428571428571429,
+        0.33333333333333337,
+        0.6011904761904764,
+    ]
+    expected_variance_num_customers = [
+        0.10937500000000003,
+        0.12244897959183679,
+        0.2222222222222223,
+        0.4540462018140592,
+    ]
+    mean_num_customers = models.get_average_num_of_customers_from_state_probs(
+        state_probs=state_probs, num_classes=3
+    )
+    variance_num_customers = (
+        models.get_variance_of_number_of_customers_from_state_probs(
+            state_probs=state_probs, average_in_system=mean_num_customers, num_classes=3
+        )
+    )
+
+    for calculated, expected in zip(mean_num_customers, expected_mean_num_customers):
+        assert round(calculated, 6) == round(expected, 6)
+
+    for calculated, expected in zip(
+        variance_num_customers, expected_variance_num_customers
+    ):
+        assert round(calculated, 6) == round(expected, 6)
+
+
+def test_num_of_waiting_customers_from_state_probs():
+    """
+    Test the function that calculates the variance of the number of customers in
+    the system from the state probabilities.
+    """
+    state_probs = {
+        (0, 0, 0): 0.43068862456851414,
+        (0, 0, 1): 0.17290069162270447,
+        (0, 0, 2): 0.02297705234495762,
+        (0, 1, 0): 0.09050701021124082,
+        (0, 1, 1): 0.032735754808111535,
+        (0, 1, 2): 0.0043101664726587705,
+        (0, 2, 0): 0.02139241253255558,
+        (0, 2, 1): 0.007255033096773404,
+        (0, 2, 2): 0.0011204853428618273,
+        (1, 0, 0): 0.057603204170384066,
+        (1, 0, 1): 0.02734945714377484,
+        (1, 0, 2): 0.00442983328441701,
+        (1, 1, 0): 0.03650285601961712,
+        (1, 1, 1): 0.01339640744852269,
+        (1, 1, 2): 0.0023589395923088413,
+        (1, 2, 0): 0.009713525107870219,
+        (1, 2, 1): 0.0041194757535687595,
+        (1, 2, 2): 0.0009089379880510089,
+        (2, 0, 0): 0.020763345305046668,
+        (2, 0, 1): 0.00858953069181794,
+        (2, 0, 2): 0.0017320743788380231,
+        (2, 1, 0): 0.01396193587637746,
+        (2, 1, 1): 0.005884932929408871,
+        (2, 1, 2): 0.001339399319490708,
+        (2, 2, 0): 0.004474057252765048,
+        (2, 2, 1): 0.0023307074817494147,
+        (2, 2, 2): 0.0006541492556130306,
+    }
+
+    mean_waiting = models.get_average_num_of_customers_waiting_from_state_probs(
+        state_probs=state_probs, num_servers=1, num_classes=3
+    )
+    variance_waiting = models.get_variance_of_customers_waiting_from_state_probs(
+        state_probs=state_probs,
+        num_servers=1,
+        average_waiting=mean_waiting,
+        num_classes=3,
+    )
+
+    expecetd_mean_waiting = [
+        0.05973013249110716,
+        0.14761410783715148,
+        0.1583463229671635,
+        0.36569056329542216,
+    ]
+    expected_variance_waiting = [
+        0.05616244376370194,
+        0.17022588868382826,
+        0.1669807362384207,
+        0.5414451532512363,
+    ]
+
+    for calculated, expected in zip(mean_waiting, expecetd_mean_waiting):
+        assert round(calculated, 6) == round(expected, 6)
+
+    for calculated, expected in zip(variance_waiting, expected_variance_waiting):
+        assert round(calculated, 6) == round(expected, 6)
+
+
+def test_get_empty_probabilities_from_state_probs():
+    """
+    Test the function that calculates the probability of the system being empty
+    from the state probabilities.
+    """
+    state_probs = {
+        (0, 0, 0): 0.43068862456851414,
+        (0, 0, 1): 0.17290069162270447,
+        (0, 0, 2): 0.02297705234495762,
+        (0, 1, 0): 0.09050701021124082,
+        (0, 1, 1): 0.032735754808111535,
+        (0, 1, 2): 0.0043101664726587705,
+        (0, 2, 0): 0.02139241253255558,
+        (0, 2, 1): 0.007255033096773404,
+        (0, 2, 2): 0.0011204853428618273,
+        (1, 0, 0): 0.057603204170384066,
+        (1, 0, 1): 0.02734945714377484,
+        (1, 0, 2): 0.00442983328441701,
+        (1, 1, 0): 0.03650285601961712,
+        (1, 1, 1): 0.01339640744852269,
+        (1, 1, 2): 0.0023589395923088413,
+        (1, 2, 0): 0.009713525107870219,
+        (1, 2, 1): 0.0041194757535687595,
+        (1, 2, 2): 0.0009089379880510089,
+        (2, 0, 0): 0.020763345305046668,
+        (2, 0, 1): 0.00858953069181794,
+        (2, 0, 2): 0.0017320743788380231,
+        (2, 1, 0): 0.01396193587637746,
+        (2, 1, 1): 0.005884932929408871,
+        (2, 1, 2): 0.001339399319490708,
+        (2, 2, 0): 0.004474057252765048,
+        (2, 2, 1): 0.0023307074817494147,
+        (2, 2, 2): 0.0006541492556130306,
+    }
+
+    empty_probs = models.get_empty_probabilities_from_state_probs(
+        state_probs=state_probs, num_classes=3
+    )
+
+    expected_empty_probs = [
+        0.7838872310003782,
+        0.7470338135104547,
+        0.6856069710443712,
+        0.43068862456851414,
+    ]
+
+    for calculated, expected in zip(empty_probs, expected_empty_probs):
+        assert round(calculated, 6) == round(expected, 6)
+
+
+def test_get_mean_sojourn_times_using_simulation():
+    """
+    Test the function that calculates the mean sojourn times using simulation.
+    """
+    num_classes = 3
+    num_servers = 4
+    arrival_rates = [1, 1, 1]
+    service_rates = [7, 6, 2]
+    thetas = [[None, 1, 2], [3, None, 1], [3, 3, None]]
+    max_simulation_time = 10000
+    warmup_time = max_simulation_time * 0.4
+    cooldown_time = 100
+
+    Q = models.build_and_run_simulation(
+        num_classes=num_classes,
+        num_servers=num_servers,
+        arrival_rates=arrival_rates,
+        service_rates=service_rates,
+        class_change_rate_matrix=thetas,
+        max_simulation_time=max_simulation_time,
+    )
+
+    sojourn_times = models.get_mean_sojourn_times_using_simulation(
+        Q, max_simulation_time, warmup_time, cooldown_time, num_classes
+    )
+
+    expected_sojourn_times = [
+        0.14016834542458317,
+        0.16976994909878249,
+        0.4935770593297915,
+        0.26699596150196186,
+    ]
+
+    for calculated, expected in zip(sojourn_times, expected_sojourn_times):
+        assert round(calculated, 6) == round(expected, 6)
