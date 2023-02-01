@@ -37,5 +37,11 @@ if __name__ == "__main__":
         "hyperparameter",
         "hyperparameters",
         "calc",
+        "Ciw's",
+        "eventschedulingapproach",
+        "iJ",
+        "ik",
+        "kJ",
+        "pre",
     }
     main(path=path, known_words=known_words)

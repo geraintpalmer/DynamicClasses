@@ -437,14 +437,16 @@ def build_and_run_simulation(
     return Q
 
 
-def get_state_probabilities_from_simulation(Q, warmup):
+def get_state_probabilities_from_simulation(Q, warmup, cooldown):
     """
     Get state probabilities from Q state tracker.
     """
-    obs_period = (warmup, Q.max_simulation_time - warmup)
-    probs = Q.statetracker.state_probabilities(observation_period=obs_period)
-    probs_sim = {
-        state[0]: prob for state, prob in probs.items()
+    obs_period = (warmup, Q.max_simulation_time - cooldown)
+    probs = {
+        state[0]: prob
+        for state, prob in Q.statetracker.state_probabilities(
+            observation_period=obs_period
+        ).items()
     }
     return probs
 
@@ -626,7 +628,14 @@ def get_maximum_hitting_probs(
     return max([hitting_probs[state] for state in reasonable_region])
 
 
-def bound_check(state_space, transition_matrix, boundary, reasonable_ratio, epsilon):
+def bound_check(
+    state_space,
+    transition_matrix,
+    boundary,
+    reasonable_ratio,
+    epsilon,
+    max_hitting_prob=None,
+):
     """
     Bound check for absorbing Markov chains. Checks wherther the maximum hitting
     probability for within the reasonable region to the boundary region is less
@@ -657,9 +666,10 @@ def bound_check(state_space, transition_matrix, boundary, reasonable_ratio, epsi
     bool
         True if the condition is satisfied.
     """
-    max_hitting_prob = get_maximum_hitting_probs(
-        state_space, transition_matrix, boundary, reasonable_ratio
-    )
+    if max_hitting_prob is None:
+        max_hitting_prob = get_maximum_hitting_probs(
+            state_space, transition_matrix, boundary, reasonable_ratio
+        )
     condition = max_hitting_prob < epsilon
     return condition
 
@@ -808,3 +818,284 @@ def get_mean_sojourn_times_using_simulation(
     )
 
     return mean_sojourn_time_by_class + [overall_mean_sojour_time]
+
+
+def get_simulation_performance_measures(
+    Q, num_servers, num_classes, max_simulation_time, warmup_time, cooldown_time
+):
+    """
+    Get all performance measures using the simulation
+    """
+    state_probs_sim = get_state_probabilities_from_simulation(
+        Q=Q, warmup=warmup_time, cooldown=cooldown_time
+    )
+    mean_custs = get_average_num_of_customers_from_state_probs(
+        state_probs=state_probs_sim, num_classes=num_classes
+    )
+    variance_custs = get_variance_of_number_of_customers_from_state_probs(
+        state_probs=state_probs_sim,
+        average_in_system=mean_custs,
+        num_classes=num_classes,
+    )
+    mean_waiting = get_average_num_of_customers_waiting_from_state_probs(
+        state_probs=state_probs_sim, num_servers=num_servers, num_classes=num_classes
+    )
+    variance_waiting = get_variance_of_customers_waiting_from_state_probs(
+        state_probs=state_probs_sim,
+        num_servers=num_servers,
+        average_waiting=mean_waiting,
+        num_classes=num_classes,
+    )
+    empty_probs = get_empty_probabilities_from_state_probs(
+        state_probs=state_probs_sim, num_classes=num_classes
+    )
+    mean_sojourn_times = get_mean_sojourn_times_using_simulation(
+        Q=Q,
+        max_simulation_time=max_simulation_time,
+        warmup_time=warmup_time,
+        cooldown_time=cooldown_time,
+        num_classes=num_classes,
+    )
+
+    return (
+        mean_custs,
+        variance_custs,
+        mean_waiting,
+        variance_waiting,
+        empty_probs,
+        mean_sojourn_times,
+    )
+
+
+def get_markov_perfromance_measures(
+    arrival_rates,
+    state_probs,
+    state_space_sojourn,
+    transition_matrix_sojourn,
+    num_classes,
+    num_servers,
+    bound,
+):
+    """
+    Get all performance measures using the Markov chain
+    """
+    mean_custs = get_average_num_of_customers_from_state_probs(
+        state_probs=state_probs, num_classes=num_classes
+    )
+    variance_custs = get_variance_of_number_of_customers_from_state_probs(
+        state_probs=state_probs,
+        average_in_system=mean_custs,
+        num_classes=num_classes,
+    )
+    mean_waiting = get_average_num_of_customers_waiting_from_state_probs(
+        state_probs=state_probs,
+        num_servers=num_servers,
+        num_classes=num_classes,
+    )
+    variance_waiting = get_variance_of_customers_waiting_from_state_probs(
+        state_probs=state_probs,
+        num_servers=num_servers,
+        average_waiting=mean_waiting,
+        num_classes=num_classes,
+    )
+    empty_probs = get_empty_probabilities_from_state_probs(
+        state_probs=state_probs, num_classes=num_classes
+    )
+    mean_sojourn_times = get_mean_sojourn_times(
+        state_space_sojourn=state_space_sojourn,
+        transition_matrix_sojourn=transition_matrix_sojourn,
+        num_classes=num_classes,
+        arrival_rates=arrival_rates,
+        probs=state_probs,
+    )
+
+    return (
+        mean_custs,
+        variance_custs,
+        mean_waiting,
+        variance_waiting,
+        empty_probs,
+        mean_sojourn_times,
+    )
+
+
+def write_row(
+    num_classes,
+    arrival_rates,
+    service_rates,
+    num_servers,
+    thetas,
+    bound,
+    reasonable_ratio,
+    epsilon,
+    max_simulation_time,
+    warmup_time,
+    cooldown_time,
+    force_simulation=False,
+):
+    """
+    Get a row of the results that will be written to the csv file. The function
+    first checks if force_simulation is set to True and runs the simulation if
+    so. Otherwise, it checks if the bound is big enough to run the Markov chain.
+    If not, it runs the simulation. Otherwise, it runs the Markov chain.
+    The generated row consists of the following values:
+
+        Simulation time,
+        Warmup time,
+        Cooldown time,
+        Boundary,
+        Reasonable ratio,
+        Epsilon,
+        Number of classes,
+        Arrival rates,
+        Service rates,
+        Thetas,
+        Number of servers,
+        Mean number of customers in the system,
+        Variance of the number of customers in the system,
+        Mean number of customers waiting,
+        Variance of the number of customers waiting,
+        Probability of the system being empty,
+        Mean sojourn time,
+        Maximum hitting probability
+
+    Note that when the simulation is used Bound, Reasonable ratio and Epsilon are
+    set to None. In addtion when the Markov chain is used, Simulation time, Warmup
+    time and Cooldown time are set to None.
+    """
+    if force_simulation:
+        Q = build_and_run_simulation(
+            num_classes=num_classes,
+            num_servers=num_servers,
+            arrival_rates=arrival_rates,
+            service_rates=service_rates,
+            class_change_rate_matrix=thetas,
+            max_simulation_time=max_simulation_time,
+        )
+
+        (
+            mean_custs,
+            variance_custs,
+            mean_waiting,
+            variance_waiting,
+            empty_probs,
+            mean_sojourn_times,
+        ) = get_simulation_performance_measures(
+            Q=Q,
+            num_servers=num_servers,
+            num_classes=num_classes,
+            max_simulation_time=max_simulation_time,
+            warmup_time=warmup_time,
+            cooldown_time=cooldown_time,
+        )
+
+        bound, reasonable_ratio, epsilon, max_hitting_probs = None, None, None, None
+
+    else:
+
+        state_probs = get_state_probabilities(
+            num_classes=num_classes,
+            num_servers=num_servers,
+            arrival_rates=arrival_rates,
+            service_rates=service_rates,
+            thetas=thetas,
+            bound=bound,
+        )
+
+        (
+            state_space_sojourn,
+            transition_matrix_sojourn,
+        ) = build_state_space_and_transition_matrix_sojourn_mc(
+            num_classes=num_classes,
+            num_servers=num_servers,
+            arrival_rates=arrival_rates,
+            service_rates=service_rates,
+            thetas=thetas,
+            bound=bound,
+        )
+        max_hitting_probs = get_maximum_hitting_probs(
+            state_space=state_space_sojourn,
+            transition_matrix=transition_matrix_sojourn,
+            boundary=bound,
+            reasonable_ratio=reasonable_ratio,
+        )
+        use_markov = bound_check(
+            state_space=None,
+            transition_matrix=None,
+            boundary=None,
+            reasonable_ratio=None,
+            epsilon=epsilon,
+            max_hitting_prob=max_hitting_probs,
+        )
+
+        if use_markov:
+            (
+                mean_custs,
+                variance_custs,
+                mean_waiting,
+                variance_waiting,
+                empty_probs,
+                mean_sojourn_times,
+            ) = get_markov_perfromance_measures(
+                arrival_rates=arrival_rates,
+                state_probs=state_probs,
+                state_space_sojourn=state_space_sojourn,
+                transition_matrix_sojourn=transition_matrix_sojourn,
+                num_classes=num_classes,
+                num_servers=num_servers,
+                bound=bound,
+            )
+
+            max_simulation_time, warmup_time, cooldown_time = None, None, None
+
+        else:
+            # I thinks this should not be here. It does not make sense to run
+            # the simulation if the Markov chain is not used. We don't know if
+            # we checked all bounds yet.
+            Q = build_and_run_simulation(
+                num_classes=num_classes,
+                num_servers=num_servers,
+                arrival_rates=arrival_rates,
+                service_rates=service_rates,
+                class_change_rate_matrix=thetas,
+                max_simulation_time=max_simulation_time,
+            )
+
+            (
+                mean_custs,
+                variance_custs,
+                mean_waiting,
+                variance_waiting,
+                empty_probs,
+                mean_sojourn_times,
+            ) = get_simulation_performance_measures(
+                Q=Q,
+                num_servers=num_servers,
+                num_classes=num_classes,
+                max_simulation_time=max_simulation_time,
+                warmup_time=warmup_time,
+                cooldown_time=cooldown_time,
+            )
+
+            bound, reasonable_ratio, epsilon, max_hitting_probs = None, None, None, None
+
+    return (
+        max_simulation_time,
+        warmup_time,
+        cooldown_time,
+        bound,
+        reasonable_ratio,
+        epsilon,
+        num_classes,
+        arrival_rates,
+        service_rates,
+        thetas,
+        num_servers,
+        mean_custs,
+        variance_custs,
+        mean_waiting,
+        variance_waiting,
+        empty_probs,
+        mean_sojourn_times,
+        max_hitting_probs,
+    )
