@@ -407,6 +407,7 @@ def build_and_run_simulation(
     service_rates,
     class_change_rate_matrix,
     max_simulation_time,
+    progress_bar=True,
 ):
     """
     Builds and runs the simulation. Returns the simulation object after run.
@@ -433,7 +434,7 @@ def build_and_run_simulation(
     ciw.seed(0)
     Q = ciw.Simulation(N, tracker=ciw.trackers.NodeClassMatrix())
     Q.max_simulation_time = max_simulation_time
-    Q.simulate_until_max_time(max_simulation_time, progress_bar=True)
+    Q.simulate_until_max_time(max_simulation_time, progress_bar=progress_bar)
     return Q
 
 
@@ -479,6 +480,7 @@ def compare_mc_to_sim_states(
     max_simulation_time,
     warmup,
     max_state,
+    progress_bar=True,
 ):
     probs_mc = get_state_probabilities(
         num_classes=num_classes,
@@ -498,6 +500,7 @@ def compare_mc_to_sim_states(
         service_rates=service_rates,
         class_change_rate_matrix=thetas,
         max_simulation_time=max_simulation_time,
+        progress_bar=progress_bar,
     )
     probs_sim = get_state_probabilities_from_simulation(Q=Q, warmup=warmup)
     agg_probs_sim = aggregate_sim_states(probs_sim)
@@ -546,6 +549,7 @@ def compare_mc_to_sim_sojourn(
     bound,
     max_simulation_time,
     warmup,
+    progress_bar=True,
 ):
     probs = get_state_probabilities(
         num_classes=num_classes,
@@ -571,6 +575,7 @@ def compare_mc_to_sim_sojourn(
         service_rates=service_rates,
         class_change_rate_matrix=thetas,
         max_simulation_time=max_simulation_time,
+        progress_bar=progress_bar,
     )
     mean_sojourn_times_sim = find_mean_sojourn_time_by_class_from_simulation(
         Q, num_classes, warmup
@@ -918,8 +923,97 @@ def get_markov_perfromance_measures(
         mean_sojourn_times,
     )
 
+def flatten_thetas(thetas):
+    """
+    Flatten the thetas and remove the Nones.
+    e.g
+    >>> flatten_thetas([[None, 1], [2, None]])
+    [1, 2]
+    >>> flatten_thetas([[None, 2, 1], [3, None, 4], [5, 6, None]])
+    [1, 2, 3, 4, 5, 6]
+    """
+    flat_theta = [t for row in thetas for t in row]
+    return [t for t in flat_theta if t is not None]
 
-def write_row(
+
+def write_row_simulation(
+    num_classes,
+    arrival_rates,
+    service_rates,
+    num_servers,
+    thetas,
+    max_simulation_time,
+    warmup_time,
+    cooldown_time,
+    progress_bar=True,
+):
+    """
+    Get a row of the results from the simulation, that will be
+    written to the csv file.
+    The generated row consists of the following values:
+
+        Simulation time,
+        Warmup time,
+        Cooldown time,
+        Number of classes,
+        Arrival rates,
+        Service rates,
+        Thetas,
+        Number of servers,
+        Mean number of customers in the system,
+        Variance of the number of customers in the system,
+        Mean number of customers waiting,
+        Variance of the number of customers waiting,
+        Probability of the system being empty,
+        Mean sojourn time,
+    """
+    Q = build_and_run_simulation(
+        num_classes=num_classes,
+        num_servers=num_servers,
+        arrival_rates=arrival_rates,
+        service_rates=service_rates,
+        class_change_rate_matrix=thetas,
+        max_simulation_time=max_simulation_time,
+        progress_bar=progress_bar,
+    )
+
+    (
+        mean_custs,
+        variance_custs,
+        mean_waiting,
+        variance_waiting,
+        empty_probs,
+        mean_sojourn_times,
+    ) = get_simulation_performance_measures(
+        Q=Q,
+        num_servers=num_servers,
+        num_classes=num_classes,
+        max_simulation_time=max_simulation_time,
+        warmup_time=warmup_time,
+        cooldown_time=cooldown_time,
+    )
+
+    return [
+        max_simulation_time,
+        warmup_time,
+        cooldown_time,
+        num_classes,
+        *arrival_rates,
+        *service_rates,
+        *flatten_thetas(thetas),
+        num_servers,
+        *mean_custs,
+        *variance_custs,
+        *mean_waiting,
+        *variance_waiting,
+        *empty_probs,
+        *mean_sojourn_times,
+    ]
+
+
+
+
+def write_row_markov(
     num_classes,
     arrival_rates,
     service_rates,
@@ -928,21 +1022,12 @@ def write_row(
     bound,
     reasonable_ratio,
     epsilon,
-    max_simulation_time,
-    warmup_time,
-    cooldown_time,
-    force_simulation=False,
 ):
     """
-    Get a row of the results that will be written to the csv file. The function
-    first checks if force_simulation is set to True and runs the simulation if
-    so. Otherwise, it checks if the bound is big enough to run the Markov chain.
-    If not, it runs the simulation. Otherwise, it runs the Markov chain.
+    Get a row of the results from the Markov models that will be
+    written to the csv file.
     The generated row consists of the following values:
 
-        Simulation time,
-        Warmup time,
-        Cooldown time,
         Boundary,
         Reasonable ratio,
         Epsilon,
@@ -959,20 +1044,43 @@ def write_row(
         Mean sojourn time,
         Maximum hitting probability
 
-    Note that when the simulation is used Bound, Reasonable ratio and Epsilon are
-    set to None. In addtion when the Markov chain is used, Simulation time, Warmup
-    time and Cooldown time are set to None.
     """
-    if force_simulation:
-        Q = build_and_run_simulation(
-            num_classes=num_classes,
-            num_servers=num_servers,
-            arrival_rates=arrival_rates,
-            service_rates=service_rates,
-            class_change_rate_matrix=thetas,
-            max_simulation_time=max_simulation_time,
-        )
+    state_probs = get_state_probabilities(
+        num_classes=num_classes,
+        num_servers=num_servers,
+        arrival_rates=arrival_rates,
+        service_rates=service_rates,
+        thetas=thetas,
+        bound=bound,
+    )
 
+    (
+        state_space_sojourn,
+        transition_matrix_sojourn,
+    ) = build_state_space_and_transition_matrix_sojourn_mc(
+        num_classes=num_classes,
+        num_servers=num_servers,
+        arrival_rates=arrival_rates,
+        service_rates=service_rates,
+        thetas=thetas,
+        bound=bound,
+    )
+    max_hitting_probs = get_maximum_hitting_probs(
+        state_space=state_space_sojourn,
+        transition_matrix=transition_matrix_sojourn,
+        boundary=bound,
+        reasonable_ratio=reasonable_ratio,
+    )
+    use_markov = bound_check(
+        state_space=None,
+        transition_matrix=None,
+        boundary=None,
+        reasonable_ratio=None,
+        epsilon=epsilon,
+        max_hitting_prob=max_hitting_probs,
+    )
+
+    if use_markov:
         (
             mean_custs,
             variance_custs,
@@ -980,122 +1088,40 @@ def write_row(
             variance_waiting,
             empty_probs,
             mean_sojourn_times,
-        ) = get_simulation_performance_measures(
-            Q=Q,
-            num_servers=num_servers,
+        ) = get_markov_perfromance_measures(
+            arrival_rates=arrival_rates,
+            state_probs=state_probs,
+            state_space_sojourn=state_space_sojourn,
+            transition_matrix_sojourn=transition_matrix_sojourn,
             num_classes=num_classes,
-            max_simulation_time=max_simulation_time,
-            warmup_time=warmup_time,
-            cooldown_time=cooldown_time,
+            num_servers=num_servers,
+            bound=bound,
         )
-
-        bound, reasonable_ratio, epsilon, max_hitting_probs = None, None, None, None
-
     else:
-
-        state_probs = get_state_probabilities(
-            num_classes=num_classes,
-            num_servers=num_servers,
-            arrival_rates=arrival_rates,
-            service_rates=service_rates,
-            thetas=thetas,
-            bound=bound,
-        )
-
         (
-            state_space_sojourn,
-            transition_matrix_sojourn,
-        ) = build_state_space_and_transition_matrix_sojourn_mc(
-            num_classes=num_classes,
-            num_servers=num_servers,
-            arrival_rates=arrival_rates,
-            service_rates=service_rates,
-            thetas=thetas,
-            bound=bound,
-        )
-        max_hitting_probs = get_maximum_hitting_probs(
-            state_space=state_space_sojourn,
-            transition_matrix=transition_matrix_sojourn,
-            boundary=bound,
-            reasonable_ratio=reasonable_ratio,
-        )
-        use_markov = bound_check(
-            state_space=None,
-            transition_matrix=None,
-            boundary=None,
-            reasonable_ratio=None,
-            epsilon=epsilon,
-            max_hitting_prob=max_hitting_probs,
-        )
+            mean_custs,
+            variance_custs,
+            mean_waiting,
+            variance_waiting,
+            empty_probs,
+            mean_sojourn_times,
+        ) = (None, None, None, None, None, None)
 
-        if use_markov:
-            (
-                mean_custs,
-                variance_custs,
-                mean_waiting,
-                variance_waiting,
-                empty_probs,
-                mean_sojourn_times,
-            ) = get_markov_perfromance_measures(
-                arrival_rates=arrival_rates,
-                state_probs=state_probs,
-                state_space_sojourn=state_space_sojourn,
-                transition_matrix_sojourn=transition_matrix_sojourn,
-                num_classes=num_classes,
-                num_servers=num_servers,
-                bound=bound,
-            )
 
-            max_simulation_time, warmup_time, cooldown_time = None, None, None
-
-        else:
-            # I thinks this should not be here. It does not make sense to run
-            # the simulation if the Markov chain is not used. We don't know if
-            # we checked all bounds yet.
-            Q = build_and_run_simulation(
-                num_classes=num_classes,
-                num_servers=num_servers,
-                arrival_rates=arrival_rates,
-                service_rates=service_rates,
-                class_change_rate_matrix=thetas,
-                max_simulation_time=max_simulation_time,
-            )
-
-            (
-                mean_custs,
-                variance_custs,
-                mean_waiting,
-                variance_waiting,
-                empty_probs,
-                mean_sojourn_times,
-            ) = get_simulation_performance_measures(
-                Q=Q,
-                num_servers=num_servers,
-                num_classes=num_classes,
-                max_simulation_time=max_simulation_time,
-                warmup_time=warmup_time,
-                cooldown_time=cooldown_time,
-            )
-
-            bound, reasonable_ratio, epsilon, max_hitting_probs = None, None, None, None
-
-    return (
-        max_simulation_time,
-        warmup_time,
-        cooldown_time,
+    return [
         bound,
         reasonable_ratio,
         epsilon,
         num_classes,
-        arrival_rates,
-        service_rates,
-        thetas,
+        *arrival_rates,
+        *service_rates,
+        *flatten_thetas(thetas),
         num_servers,
-        mean_custs,
-        variance_custs,
-        mean_waiting,
-        variance_waiting,
-        empty_probs,
-        mean_sojourn_times,
+        *mean_custs,
+        *variance_custs,
+        *mean_waiting,
+        *variance_waiting,
+        *empty_probs,
+        *mean_sojourn_times,
         max_hitting_probs,
-    )
+    ]
