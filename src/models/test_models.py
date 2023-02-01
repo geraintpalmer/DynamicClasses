@@ -1277,3 +1277,87 @@ def test_get_mean_sojourn_times_using_simulation():
 
     for calculated, expected in zip(sojourn_times, expected_sojourn_times):
         assert round(calculated, 6) == round(expected, 6)
+
+def test_write_row_markov():
+    """
+    Tests the write row function ising the Markov chain.
+    Tests if the bound iterates correctly.
+
+    We know that the following parameters:
+        num_classes=2
+        arrival_rates=[5, 6]
+        service_rates=[8, 10]
+        num_servers=2
+        thetas=[[None, 1], [1, None]]
+    and the following hyperparameters:
+        reasonable_ratio=0.25
+        epsilon=0.01
+    needs a bound of 9.
+    """
+    # Tests it reaches and stops at 9 when using steps of 1
+    row = models.write_row_markov(
+        num_classes=2,
+        arrival_rates=[5, 6],
+        service_rates=[8, 10],
+        num_servers=2,
+        thetas=[[None, 1], [1, None]],
+        bound_initial=5,
+        bound_final=14,
+        bound_step=1,
+        reasonable_ratio=0.25,
+        epsilon=0.01,
+    )
+    assert row[0] == 9
+    assert row[-1] < 0.01
+    assert all(r is not None for r in row[11:-2])
+
+    # Tests it reaches 9 but stops at 11 when using steps of 3
+    row = models.write_row_markov(
+        num_classes=2,
+        arrival_rates=[5, 6],
+        service_rates=[8, 10],
+        num_servers=2,
+        thetas=[[None, 1], [1, None]],
+        bound_initial=5,
+        bound_final=14,
+        bound_step=3,
+        reasonable_ratio=0.25,
+        epsilon=0.01,
+    )
+    assert row[0] == 11
+    assert row[-1] < 0.01
+    assert all(r is not None for r in row[11:-2])
+
+    # Tests it reaches and stops at 12 when starting at 11
+    row = models.write_row_markov(
+        num_classes=2,
+        arrival_rates=[5, 6],
+        service_rates=[8, 10],
+        num_servers=2,
+        thetas=[[None, 1], [1, None]],
+        bound_initial=12,
+        bound_final=17,
+        bound_step=1,
+        reasonable_ratio=0.25,
+        epsilon=0.01,
+    )
+    assert row[0] == 12
+    assert row[-1] < 0.01
+    assert all(r is not None for r in row[11:-2])
+
+    # Tests it doesn't reach 9 maximum is 7
+    row = models.write_row_markov(
+        num_classes=2,
+        arrival_rates=[5, 6],
+        service_rates=[8, 10],
+        num_servers=2,
+        thetas=[[None, 1], [1, None]],
+        bound_initial=5,
+        bound_final=7,
+        bound_step=1,
+        reasonable_ratio=0.25,
+        epsilon=0.01,
+    )
+    assert row[0] == 7
+    assert row[-1] > 0.01
+    assert all(r is None for r in row[11:-2])

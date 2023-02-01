@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 
 plt.style.use("seaborn-whitegrid")
 
-
 def get_state_probabilities(
     num_classes, num_servers, arrival_rates, service_rates, thetas, bound
 ):
@@ -1019,7 +1018,9 @@ def write_row_markov(
     service_rates,
     num_servers,
     thetas,
-    bound,
+    bound_initial,
+    bound_final,
+    bound_step,
     reasonable_ratio,
     epsilon,
 ):
@@ -1045,68 +1046,71 @@ def write_row_markov(
         Maximum hitting probability
 
     """
-    state_probs = get_state_probabilities(
-        num_classes=num_classes,
-        num_servers=num_servers,
-        arrival_rates=arrival_rates,
-        service_rates=service_rates,
-        thetas=thetas,
-        bound=bound,
-    )
+    mean_custs = [None] * (num_classes + 1)
+    variance_custs = [None] * (num_classes + 1)
+    mean_waiting = [None] * (num_classes + 1)
+    variance_waiting = [None] * (num_classes + 1)
+    empty_probs = [None] * (num_classes + 1)
+    mean_sojourn_times = [None] * (num_classes + 1)
 
-    (
-        state_space_sojourn,
-        transition_matrix_sojourn,
-    ) = build_state_space_and_transition_matrix_sojourn_mc(
-        num_classes=num_classes,
-        num_servers=num_servers,
-        arrival_rates=arrival_rates,
-        service_rates=service_rates,
-        thetas=thetas,
-        bound=bound,
-    )
-    max_hitting_probs = get_maximum_hitting_probs(
-        state_space=state_space_sojourn,
-        transition_matrix=transition_matrix_sojourn,
-        boundary=bound,
-        reasonable_ratio=reasonable_ratio,
-    )
-    use_markov = bound_check(
-        state_space=None,
-        transition_matrix=None,
-        boundary=None,
-        reasonable_ratio=None,
-        epsilon=epsilon,
-        max_hitting_prob=max_hitting_probs,
-    )
-
-    if use_markov:
-        (
-            mean_custs,
-            variance_custs,
-            mean_waiting,
-            variance_waiting,
-            empty_probs,
-            mean_sojourn_times,
-        ) = get_markov_perfromance_measures(
-            arrival_rates=arrival_rates,
-            state_probs=state_probs,
-            state_space_sojourn=state_space_sojourn,
-            transition_matrix_sojourn=transition_matrix_sojourn,
+    sufficient_bound = False
+    current_bound = bound_initial
+    while (not sufficient_bound) and (current_bound <= bound_final):
+        bound = current_bound
+        state_probs = get_state_probabilities(
             num_classes=num_classes,
             num_servers=num_servers,
+            arrival_rates=arrival_rates,
+            service_rates=service_rates,
+            thetas=thetas,
             bound=bound,
         )
-    else:
-        (
-            mean_custs,
-            variance_custs,
-            mean_waiting,
-            variance_waiting,
-            empty_probs,
-            mean_sojourn_times,
-        ) = (None, None, None, None, None, None)
 
+        (
+            state_space_sojourn,
+            transition_matrix_sojourn,
+        ) = build_state_space_and_transition_matrix_sojourn_mc(
+            num_classes=num_classes,
+            num_servers=num_servers,
+            arrival_rates=arrival_rates,
+            service_rates=service_rates,
+            thetas=thetas,
+            bound=bound,
+        )
+        max_hitting_probs = get_maximum_hitting_probs(
+            state_space=state_space_sojourn,
+            transition_matrix=transition_matrix_sojourn,
+            boundary=bound,
+            reasonable_ratio=reasonable_ratio,
+        )
+        sufficient_bound = bound_check(
+            state_space=None,
+            transition_matrix=None,
+            boundary=None,
+            reasonable_ratio=None,
+            epsilon=epsilon,
+            max_hitting_prob=max_hitting_probs,
+        )
+
+        if sufficient_bound:
+            (
+                mean_custs,
+                variance_custs,
+                mean_waiting,
+                variance_waiting,
+                empty_probs,
+                mean_sojourn_times,
+            ) = get_markov_perfromance_measures(
+                arrival_rates=arrival_rates,
+                state_probs=state_probs,
+                state_space_sojourn=state_space_sojourn,
+                transition_matrix_sojourn=transition_matrix_sojourn,
+                num_classes=num_classes,
+                num_servers=num_servers,
+                bound=bound,
+            )
+        else:
+            current_bound += bound_step
 
     return [
         bound,
