@@ -628,7 +628,7 @@ def get_maximum_hitting_probs(
         state
         for state in state_space
         if state != "*"
-        if sum(s ** 2 for s in state[:-1]) ** (1 / 2) <= (boundary * reasonable_ratio)
+        if sum(s**2 for s in state[:-1]) ** (1 / 2) <= (boundary * reasonable_ratio)
     ]
     return max([hitting_probs[state] for state in reasonable_region])
 
@@ -888,10 +888,14 @@ def get_markov_perfromance_measures(
         state_probs=state_probs, num_classes=num_classes
     )
     variance_custs = get_variance_of_number_of_customers_from_state_probs(
-        state_probs=state_probs, average_in_system=mean_custs, num_classes=num_classes,
+        state_probs=state_probs,
+        average_in_system=mean_custs,
+        num_classes=num_classes,
     )
     mean_waiting = get_average_num_of_customers_waiting_from_state_probs(
-        state_probs=state_probs, num_servers=num_servers, num_classes=num_classes,
+        state_probs=state_probs,
+        num_servers=num_servers,
+        num_classes=num_classes,
     )
     variance_waiting = get_variance_of_customers_waiting_from_state_probs(
         state_probs=state_probs,
