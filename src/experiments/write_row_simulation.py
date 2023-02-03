@@ -16,6 +16,7 @@ Arguments
     cooldown     : the simulation cooldown time
 """
 import sys
+
 sys.path.append("..")
 import models
 from csv import writer
@@ -23,7 +24,7 @@ import pandas as pd
 
 if __name__ == "__main__":
     args = sys.argv
-    id_num = (args[1])
+    id_num = args[1]
     l1 = float(args[2])
     l2 = float(args[3])
     m1 = float(args[4])
@@ -44,10 +45,9 @@ if __name__ == "__main__":
         max_simulation_time=max_sim_time,
         warmup_time=warmup,
         cooldown_time=cooldown,
-        progress_bar=False
+        progress_bar=False,
     )
 
-    with open('test.csv', 'a') as f:
+    with open("test.csv", "a") as f:
         writer_object = writer(f)
         writer_object.writerow([id_num] + row)
-

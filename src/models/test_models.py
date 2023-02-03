@@ -1062,7 +1062,24 @@ def test_bound_check_bound_increase():
 
 
 def test_bound_check_reasonable_ratio_increase():
-    expected = [True, True, True, True, True, True, True, True, True, False, False, False, False, False, False, False]
+    expected = [
+        True,
+        True,
+        True,
+        True,
+        True,
+        True,
+        True,
+        True,
+        True,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+    ]
     for i, ratio in enumerate(np.arange(0.6, 0.9, 0.02)):
         state_space, transition_matrix = build_state_space_and_transition_matrix(
             boundary=9

@@ -18,6 +18,7 @@ Arguments
     epsilon          : the epsilon check
 """
 import sys
+
 sys.path.append("..")
 import models
 from csv import writer
@@ -25,7 +26,7 @@ import pandas as pd
 
 if __name__ == "__main__":
     args = sys.argv
-    id_num = (args[1])
+    id_num = args[1]
     l1 = float(args[2])
     l2 = float(args[3])
     m1 = float(args[4])
@@ -52,7 +53,6 @@ if __name__ == "__main__":
         epsilon=e,
     )
 
-    with open('test2.csv', 'a') as f:
+    with open("test2.csv", "a") as f:
         writer_object = writer(f)
         writer_object.writerow([id_num] + row)
-

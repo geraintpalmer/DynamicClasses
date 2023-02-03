@@ -632,6 +632,7 @@ def get_maximum_hitting_probs(
     ]
     return max([hitting_probs[state] for state in reasonable_region])
 
+
 def bound_check(
     state_space,
     transition_matrix,
