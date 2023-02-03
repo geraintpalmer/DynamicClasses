@@ -43,5 +43,8 @@ if __name__ == "__main__":
         "ik",
         "kJ",
         "pre",
+        "Dicky",
+        "ADF",
+        "stationarity",
     }
     main(path=path, known_words=known_words)
