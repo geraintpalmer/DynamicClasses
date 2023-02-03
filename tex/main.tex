@@ -538,7 +538,7 @@ rate and service rate $\lambda_k$ and  $\mu_k$ for customers of class $k$,
 respectively; then
 \begin{enumerate}
   \item it will reach steady state if $\sum_i \lambda_i < c \min_i \mu_i$ ,
-  \item it will never reach steady state if $\sum_i \lambda_i > c \max_i \mu_i$.
+  \item it will never reach steady state if $\sum_i \lambda_i \geq c \max_i \mu_i$.
 \end{enumerate}
 \end{theorem}
 
@@ -572,26 +572,80 @@ are two extreme cases, either:
   \item all customers in service are of the class with the fastest service rate.
   In this case the rate at which customers leave the queue is $c \max_i \mu_i$,
   which is the fastest possible rate at which customers can leave the queue.
-  If $\sum_i \lambda_i > c \max_i \mu_i$ then the rate at which customers enter
-  the queue is greater than the largest possible rate at which customers leave
-  the queue, and so will always be greater than the rate at which customers
-  leave the queue in all states. Therefore the system cannot reach steady state.
+  If $\sum_i \lambda_i \geq c \max_i \mu_i$ then the rate at which customers
+  enter the queue is greater than or equal to the largest possible rate at which
+  customers leave the queue, and so will always be greater or equal to than the
+  rate at which customers leave the queue in all states. Therefore the system
+  cannot reach steady state.
 \end{enumerate}
 \end{proof}
 
-If $c \min_i \mu_i < \sum_i \lambda_i < c \max_i \mu_i$ then more investigation
-is needed. In the case of dynamic priority classes the class change matrix
-$\Theta$ may be significant. For example the service rate of customers of one
-class may be very slow, however if the rate at which customers leave that class
-is sufficiently large then that service rate may not have an effect.
-Alternatively if the rate at which customers of the other classes change to that
-class is large, then that slow service rate could be a bottleneck for the
-system.
+If $c \min_i \mu_i \leq \sum_i \lambda_i < c \max_i \mu_i$ then more
+investigation is needed. In the case of dynamic priority classes the class
+change matrix $\Theta$ may be significant. For example the service rate of
+customers of one class may be very slow, however if the rate at which customers
+leave that class is sufficiently large then that service rate may not have an
+effect. Alternatively if the rate at which customers of the other classes change
+to that class is large, then that slow service rate could be a bottleneck for
+the system.
+
+We can however approximately test if a system reaches steady state or not using
+simulation. Consider the time series $x(t)$, representing the total number of
+customers in the system at time $t$. In Ciw, this can be empirically recorded
+using a state tracker object. If the system reaches steady state, then the
+$x(t)$ will be stochastic with non-increasing trend, therefore it would be a
+stationary time series. Conversely, if the system does not reach steady state,
+then $x(t)$ will be stochastic with increasing trend, therefore it would be a
+non-stationary time series.
+
+The Augmented Dicky-Fuller (ADF) test \cite{dickyfuller79} tests for the
+non-stationarity of a stochastic time series, and so can be utilised here to
+test if a simulation has reached steady state or not. Note here that the time
+series $x(t)$ recorded by Ciw has irregular gaps (time stamps are the discrete
+time points where a customer arrives or leaves the system), and the ADF test
+requires regularly spaced time stamps; therefore the Traces library
+\cite{traces} is used to take regularly-spaced moving averages before the
+hypothesis test is undertaken.
+
+Consider two examples:
+
+\begin{itemize}
+  \item Example 1, that is guaranteed to reach steady state by
+  Theorem~\ref{thrm:steadystate}: $\lambda_1 = 2$, $\lambda_2 = 1$,
+  $\mu_1 = 4$, $\mu_2 = 4$, $\theta_{12} = 1$, $\theta_{21} = 1$, $c = 1$;
+  \item Example 2, that is guaranteed not to reach steady state by
+  Theorem~\ref{thrm:steadystate}: $\lambda_1 = 2$, $\lambda_2 = 1$,
+  $\mu_1 = 1$, $\mu_2 = 1$, $\theta_{12} = 1$, $\theta_{21} = 1$, $c = 2$.
+\end{itemize}
+
+\begin{figure}[!htbp]
+  \begin{center}
+  \begin{subfigure}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{img/adf_test_steadystate.pdf}
+    \caption{State time series for Example 1.}
+    \label{fig:timeseries1}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{img/adf_test_not_steadystate.pdf}
+    \caption{State time series for Example 2.}
+    \label{fig:timeseries2}
+  \end{subfigure}
+  \end{center}
+\end{figure}
+
+
+Figures~\ref{fig:timeseries1} and~\ref{fig:timeseries2} shows their state time
+series' $x(t)$ respectively. It is clear that the state time series for
+Example~1 is stationary, and the state time series for Example~2 is
+non-stationary and increasing. When performing the ADF test on these, Example~1
+gives a p-value of 0.0004, rejecting the null hypothesis that the time series is
+non-stationary, while Example 2 gives a p-value of 0.9961, and the null
+hypothesis cannot be rejected.
+
 
 \todo[inline]{Add the above as numerical examples with plots?}
 
 \todo[inline]{Can we think of any way of investigating this?}
-
 
 
 

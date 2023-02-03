@@ -2,6 +2,8 @@ import numpy as np
 import itertools
 import ciw
 import matplotlib.pyplot as plt
+import traces
+from statsmodels.tsa.stattools import adfuller
 
 plt.style.use("seaborn-whitegrid")
 
@@ -792,6 +794,22 @@ def get_empty_probabilities_from_state_probs(state_probs, num_classes):
             if state[class_id] == 0:
                 empty_probs[class_id] += prob
     return empty_probs
+
+
+def adf_test_on_simulation(Q, max_simulation_time, warmup, cooldown):
+    """
+    Performs the ADF test on the simulation's state history time series.
+    The null hypothesis is that the time series is not stationary.
+    The alternative hypothesis is that the time series is stationary.
+    Returns a p-value.
+    """
+    series = traces.TimeSeries()
+    for timestamp, state in Q.statetracker.history:
+        series[timestamp] = sum(state[0])
+    S = series.moving_average(1, pandas=True)
+    S_within = S[(S.index > warmup) & (S.index < max_simulation_time - cooldown)]
+    p_value = adfuller(S_within)[1]
+    return p_value
 
 
 def get_mean_sojourn_times_using_simulation(

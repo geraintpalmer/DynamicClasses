@@ -1379,3 +1379,34 @@ def test_write_row_markov():
     assert row[0] == 9
     assert row[-1] > 0.01
     assert all(r is None for r in row[11:-2])
+
+
+def test_adf_test_on_simulation():
+    """
+    Tests the function that gives the ADF p-value
+    """
+    Q = models.build_and_run_simulation(
+        num_classes=2,
+        num_servers=1,
+        arrival_rates=[2, 1],
+        service_rates=[4, 4],
+        class_change_rate_matrix=[[None, 1], [1, None]],
+        max_simulation_time=400,
+        progress_bar=False,
+    )
+
+    p_value = models.adf_test_on_simulation(Q, 400, 50, 50)
+    assert round(p_value, 4) == 0.0004
+
+    Q = models.build_and_run_simulation(
+        num_classes=2,
+        num_servers=2,
+        arrival_rates=[2, 1],
+        service_rates=[1, 1],
+        class_change_rate_matrix=[[None, 1], [1, None]],
+        max_simulation_time=400,
+        progress_bar=False,
+    )
+
+    p_value = models.adf_test_on_simulation(Q, 400, 50, 50)
+    assert round(p_value, 4) == 0.9961
