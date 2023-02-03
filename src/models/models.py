@@ -879,6 +879,12 @@ def get_simulation_performance_measures(
         cooldown_time=cooldown_time,
         num_classes=num_classes,
     )
+    adf_pvalue = adf_test_on_simulation(
+        Q=Q,
+        max_simulation_time=max_simulation_time,
+        warmup=warmup_time,
+        cooldown=cooldown_time,
+    )
 
     return (
         mean_custs,
@@ -887,6 +893,7 @@ def get_simulation_performance_measures(
         variance_waiting,
         empty_probs,
         mean_sojourn_times,
+        adf_pvalue,
     )
 
 
@@ -1027,6 +1034,7 @@ def write_row_simulation(
         *variance_waiting,
         *empty_probs,
         *mean_sojourn_times,
+        adf_pvalue,
     ]
 
 
