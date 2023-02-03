@@ -1029,9 +1029,9 @@ def test_find_hitting_probs():
 
 def build_state_space_and_transition_matrix(boundary):
     classes = 2
-    num_of_servers = 3
+    num_of_servers = 2
     arrival_rates = [1, 2]
-    service_rates = [100, 100]
+    service_rates = [5, 8]
     thetas = [[None, 1], [10, None]]
     state_space = models.write_state_space_for_sojourn(
         num_classes=classes, bound=boundary
@@ -1050,20 +1050,20 @@ def build_state_space_and_transition_matrix(boundary):
 
 
 def test_bound_check_bound_increase():
-    expected = [False, False, False, False, False, True, True, True, True, True]
+    expected = [False, False, False, False, False, False, True, True, True, True]
     for i, boundary in enumerate(range(5, 15)):
         state_space, transition_matrix = build_state_space_and_transition_matrix(
             boundary=boundary
         )
         condition = models.bound_check(
-            state_space, transition_matrix, boundary, 0.63, 0.01
+            state_space, transition_matrix, boundary, 0.8, 0.01
         )
         assert condition == expected[i], (boundary, i)
 
 
 def test_bound_check_reasonable_ratio_increase():
-    expected = [True, True, True, False, False, False, False, False, False, False]
-    for i, ratio in enumerate(np.arange(0.6, 0.7, 0.01)):
+    expected = [True, True, True, True, True, True, True, True, True, False, False, False, False, False, False, False]
+    for i, ratio in enumerate(np.arange(0.6, 0.9, 0.02)):
         state_space, transition_matrix = build_state_space_and_transition_matrix(
             boundary=9
         )
@@ -1072,12 +1072,12 @@ def test_bound_check_reasonable_ratio_increase():
 
 
 def test_bound_check_epsilon_decrease():
-    expected = [False, False, False, False, True, True, True, True, True, True]
-    for i, epsilon in enumerate(np.arange(0.01, 0.1, 0.01)):
+    expected = [False, False, False, False, True, True, True, True, True]
+    for i, epsilon in enumerate(np.arange(0.01, 0.055, 0.005)):
         state_space, transition_matrix = build_state_space_and_transition_matrix(
             boundary=9
         )
-        condition = models.bound_check(state_space, transition_matrix, 9, 0.7, epsilon)
+        condition = models.bound_check(state_space, transition_matrix, 9, 0.88, epsilon)
         assert condition == expected[i]
 
 
@@ -1291,11 +1291,11 @@ def test_write_row_markov():
         num_servers=2
         thetas=[[None, 1], [1, None]]
     and the following hyperparameters:
-        reasonable_ratio=0.25
+        reasonable_ratio=0.6
         epsilon=0.01
-    needs a bound of 9.
+    needs a bound of 11.
     """
-    # Tests it reaches and stops at 9 when using steps of 1
+    # Tests it reaches and stops at 11 when using steps of 1
     row = models.write_row_markov(
         num_classes=2,
         arrival_rates=[5, 6],
@@ -1303,50 +1303,50 @@ def test_write_row_markov():
         num_servers=2,
         thetas=[[None, 1], [1, None]],
         bound_initial=5,
-        bound_final=14,
+        bound_final=16,
         bound_step=1,
-        reasonable_ratio=0.25,
-        epsilon=0.01,
-    )
-    assert row[0] == 9
-    assert row[-1] < 0.01
-    assert all(r is not None for r in row[11:-2])
-
-    # Tests it reaches 9 but stops at 11 when using steps of 3
-    row = models.write_row_markov(
-        num_classes=2,
-        arrival_rates=[5, 6],
-        service_rates=[8, 10],
-        num_servers=2,
-        thetas=[[None, 1], [1, None]],
-        bound_initial=5,
-        bound_final=14,
-        bound_step=3,
-        reasonable_ratio=0.25,
+        reasonable_ratio=0.6,
         epsilon=0.01,
     )
     assert row[0] == 11
     assert row[-1] < 0.01
     assert all(r is not None for r in row[11:-2])
 
-    # Tests it reaches and stops at 12 when starting at 11
+    # Tests it reaches 11 but stops at 13 when using steps of 3
     row = models.write_row_markov(
         num_classes=2,
         arrival_rates=[5, 6],
         service_rates=[8, 10],
         num_servers=2,
         thetas=[[None, 1], [1, None]],
-        bound_initial=12,
-        bound_final=17,
-        bound_step=1,
-        reasonable_ratio=0.25,
+        bound_initial=4,
+        bound_final=20,
+        bound_step=3,
+        reasonable_ratio=0.6,
         epsilon=0.01,
     )
-    assert row[0] == 12
+    assert row[0] == 13
     assert row[-1] < 0.01
     assert all(r is not None for r in row[11:-2])
 
-    # Tests it doesn't reach 9 maximum is 7
+    # Tests it reaches and stops at 13 when starting at 13
+    row = models.write_row_markov(
+        num_classes=2,
+        arrival_rates=[5, 6],
+        service_rates=[8, 10],
+        num_servers=2,
+        thetas=[[None, 1], [1, None]],
+        bound_initial=13,
+        bound_final=17,
+        bound_step=1,
+        reasonable_ratio=0.6,
+        epsilon=0.01,
+    )
+    assert row[0] == 13
+    assert row[-1] < 0.01
+    assert all(r is not None for r in row[11:-2])
+
+    # Tests it doesn't reach 11 maximum is 9
     row = models.write_row_markov(
         num_classes=2,
         arrival_rates=[5, 6],
@@ -1354,11 +1354,11 @@ def test_write_row_markov():
         num_servers=2,
         thetas=[[None, 1], [1, None]],
         bound_initial=5,
-        bound_final=7,
+        bound_final=9,
         bound_step=1,
-        reasonable_ratio=0.25,
+        reasonable_ratio=0.6,
         epsilon=0.01,
     )
-    assert row[0] == 7
+    assert row[0] == 9
     assert row[-1] > 0.01
     assert all(r is None for r in row[11:-2])

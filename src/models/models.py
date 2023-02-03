@@ -628,10 +628,9 @@ def get_maximum_hitting_probs(
         state
         for state in state_space
         if state != "*"
-        if sum(s**2 for s in state[:-1]) ** (1 / 2) <= (boundary * reasonable_ratio)
+        if sum(s for s in state[:-1]) + 1 <= (boundary * reasonable_ratio)
     ]
     return max([hitting_probs[state] for state in reasonable_region])
-
 
 def bound_check(
     state_space,
@@ -786,7 +785,7 @@ def get_empty_probabilities_from_state_probs(state_probs, num_classes):
     the probability of no customers at all
     """
     empty_probs = [0 for _ in range(num_classes + 1)]
-    empty_probs[-1] = state_probs[tuple(0 for _ in range(num_classes))]
+    empty_probs[-1] = state_probs.get(tuple(0 for _ in range(num_classes)), 0)
     for state, prob in state_probs.items():
         for class_id in range(num_classes):
             if state[class_id] == 0:
@@ -1057,15 +1056,6 @@ def write_row_markov(
     current_bound = bound_initial
     while (not sufficient_bound) and (current_bound <= bound_final):
         bound = current_bound
-        state_probs = get_state_probabilities(
-            num_classes=num_classes,
-            num_servers=num_servers,
-            arrival_rates=arrival_rates,
-            service_rates=service_rates,
-            thetas=thetas,
-            bound=bound,
-        )
-
         (
             state_space_sojourn,
             transition_matrix_sojourn,
@@ -1091,8 +1081,15 @@ def write_row_markov(
             epsilon=epsilon,
             max_hitting_prob=max_hitting_probs,
         )
-
         if sufficient_bound:
+            state_probs = get_state_probabilities(
+                num_classes=num_classes,
+                num_servers=num_servers,
+                arrival_rates=arrival_rates,
+                service_rates=service_rates,
+                thetas=thetas,
+                bound=bound,
+            )
             (
                 mean_custs,
                 variance_custs,
