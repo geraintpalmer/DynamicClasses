@@ -1,4 +1,8 @@
 import sys
+import os
+os.environ["MKL_NUM_THREADS"] = "1" 
+os.environ["NUMEXPR_NUM_THREADS"] = "1" 
+os.environ["OMP_NUM_THREADS"] = "1" 
 
 sys.path.append("..")
 import models
@@ -6,7 +10,8 @@ import tqdm
 from csv import writer
 import multiprocessing
 import argparse
-
+import pandas as pd
+import random
 
 def get_max_hitting_prob(
     num_classes, num_servers, arrival_rates, service_rates, thetas, bound, rr
@@ -32,19 +37,23 @@ def get_max_hitting_prob(
 
 
 def write_row(params, bound):
-    p = get_max_hitting_prob(
-        num_classes=params["num_classes"],
-        num_servers=params["num_servers"],
-        arrival_rates=params["arrival_rates"],
-        service_rates=params["service_rates"],
-        thetas=params["thetas"],
-        bound=bound,
-        rr=0.8,
-    )
-
-    with open("bound_hitting_prob_data.csv", "a") as f:
-        writer_object = writer(f)
-        writer_object.writerow([params["example_name"], bound, p])
+    done = pd.read_csv("bound_hitting_prob_data.csv")
+    current = done[(done["Example"]==params["example_name"])&(done["Bound"]==bound)]
+    if len(current) == 0:
+        print(f"Doing: {params['example_name']} with bound {bound}")
+        p = get_max_hitting_prob(
+            num_classes=params["num_classes"],
+            num_servers=params["num_servers"],
+            arrival_rates=params["arrival_rates"],
+            service_rates=params["service_rates"],
+            thetas=params["thetas"],
+            bound=bound,
+            rr=0.8,
+        )
+    
+        with open("bound_hitting_prob_data.csv", "a") as f:
+            writer_object = writer(f)
+            writer_object.writerow([params["example_name"], bound, p])
 
 
 if __name__ == "__main__":
@@ -52,7 +61,7 @@ if __name__ == "__main__":
     parser.add_argument("n_cores", help="Number of Cores to use")
     args = parser.parse_args()
     n_cores = int(args.n_cores)
-    bounds = list(range(6, 40))
+    bounds = list(range(6, 31))
 
     ### Examples
     example_A = {
@@ -97,4 +106,5 @@ if __name__ == "__main__":
         for bound in bounds
         for params in [example_A, example_B, example_C, example_D]
     ]
+    random.shuffle(func_arguments)
     pool.starmap(write_row, func_arguments)
