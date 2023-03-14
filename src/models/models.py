@@ -796,6 +796,21 @@ def get_empty_probabilities_from_state_probs(state_probs, num_classes):
     return empty_probs
 
 
+def use_theorem_on_lambdas_and_mus(lambdas, mus, num_servers):
+    """
+    Use Theorem 1 of the paper to find out which scenario the current parameters
+    fall into. There are three possible outputs of this function:
+    - True: The system definitely reaches a steady state
+    - False: The system definitely does not reach a steady state
+    - None: The system may or may not reach a steady state
+    """
+    if sum(lambdas) < num_servers * min(mus):
+        return True
+    if sum(lambdas) >= num_servers * max(mus):
+        return False
+    return None
+
+
 def adf_test_on_simulation(Q, max_simulation_time, warmup, cooldown):
     """
     Performs the ADF test on the simulation's state history time series.
@@ -1010,6 +1025,7 @@ def write_row_simulation(
         variance_waiting,
         empty_probs,
         mean_sojourn_times,
+        adf_pvalue
     ) = get_simulation_performance_measures(
         Q=Q,
         num_servers=num_servers,
@@ -1017,6 +1033,12 @@ def write_row_simulation(
         max_simulation_time=max_simulation_time,
         warmup_time=warmup_time,
         cooldown_time=cooldown_time,
+    )
+
+    theorem_outcome = use_theorem_on_lambdas_and_mus(
+        lambdas=arrival_rates,
+        mus=service_rates,
+        num_servers=num_servers
     )
 
     return [
@@ -1034,6 +1056,7 @@ def write_row_simulation(
         *variance_waiting,
         *empty_probs,
         *mean_sojourn_times,
+        theorem_outcome,
         adf_pvalue,
     ]
 
