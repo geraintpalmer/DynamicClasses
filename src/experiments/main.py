@@ -1,6 +1,7 @@
 from csv import writer
 import itertools
 import sys
+
 sys.path.append("..")
 
 import numpy as np
