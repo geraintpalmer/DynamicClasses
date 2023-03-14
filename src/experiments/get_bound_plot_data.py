@@ -1,8 +1,9 @@
 import sys
 import os
-os.environ["MKL_NUM_THREADS"] = "1" 
-os.environ["NUMEXPR_NUM_THREADS"] = "1" 
-os.environ["OMP_NUM_THREADS"] = "1" 
+
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["NUMEXPR_NUM_THREADS"] = "1"
+os.environ["OMP_NUM_THREADS"] = "1"
 
 sys.path.append("..")
 import models
@@ -12,6 +13,7 @@ import multiprocessing
 import argparse
 import pandas as pd
 import random
+
 
 def get_max_hitting_prob(
     num_classes, num_servers, arrival_rates, service_rates, thetas, bound, rr
@@ -38,7 +40,9 @@ def get_max_hitting_prob(
 
 def write_row(params, bound):
     done = pd.read_csv("bound_hitting_prob_data.csv")
-    current = done[(done["Example"]==params["example_name"])&(done["Bound"]==bound)]
+    current = done[
+        (done["Example"] == params["example_name"]) & (done["Bound"] == bound)
+    ]
     if len(current) == 0:
         print(f"Doing: {params['example_name']} with bound {bound}")
         p = get_max_hitting_prob(
@@ -50,7 +54,7 @@ def write_row(params, bound):
             bound=bound,
             rr=0.8,
         )
-    
+
         with open("bound_hitting_prob_data.csv", "a") as f:
             writer_object = writer(f)
             writer_object.writerow([params["example_name"], bound, p])

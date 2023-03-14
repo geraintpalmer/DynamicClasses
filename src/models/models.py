@@ -1025,7 +1025,7 @@ def write_row_simulation(
         variance_waiting,
         empty_probs,
         mean_sojourn_times,
-        adf_pvalue
+        adf_pvalue,
     ) = get_simulation_performance_measures(
         Q=Q,
         num_servers=num_servers,
@@ -1036,9 +1036,7 @@ def write_row_simulation(
     )
 
     theorem_outcome = use_theorem_on_lambdas_and_mus(
-        lambdas=arrival_rates,
-        mus=service_rates,
-        num_servers=num_servers
+        lambdas=arrival_rates, mus=service_rates, num_servers=num_servers
     )
 
     return [
