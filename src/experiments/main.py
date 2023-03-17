@@ -25,12 +25,12 @@ warmup_time = 2000
 cooldown_time = 200
 
 arrival_1 = 1
-arrival_2_proportions = [1/3, 1/2, 1, 2, 3]
-service_1_proportions = [1/3, 1/2, 1, 2, 3]
-service_2_proportions = [1/3, 1/2, 1, 2, 3]
+arrival_2_proportions = [1 / 3, 1 / 2, 1, 2, 3]
+service_1_proportions = [1 / 3, 1 / 2, 1, 2, 3]
+service_2_proportions = [1 / 3, 1 / 2, 1, 2, 3]
 num_servers_space = [1, 2, 3]
-theta_12_proportions = [1/3, 1/2, 1, 2, 3]
-theta_21_proportions = [1/3, 1/2, 1, 2, 3]
+theta_12_proportions = [1 / 3, 1 / 2, 1, 2, 3]
+theta_21_proportions = [1 / 3, 1 / 2, 1, 2, 3]
 
 for (
     arrival_2_ratio,
@@ -52,7 +52,7 @@ for (
     service_2 = arrival_1 * service_2_ratio
     theta_12 = arrival_1 * theta_12_ratio
     theta_21 = arrival_1 * theta_21_ratio
-    
+
     arrival_rates = [float(arrival_1), float(arrival_2)]
     service_rates = [float(service_1), float(service_2)]
     thetas = [[None, float(theta_12)], [float(theta_21), None]]
