@@ -52,15 +52,11 @@ for (
     theta_12 = arrival_1 * theta_12_ratio
     theta_21 = arrival_1 * theta_21_ratio
 
-    param_string = (
-        f"{arrival_1} {arrival_2} {service_1} {service_2} {theta_12} {theta_21} {num_servers} {max_simulation_time} {warmup_time} {cooldown_time}"
-    )
+    param_string = f"{arrival_1} {arrival_2} {service_1} {service_2} {theta_12} {theta_21} {num_servers} {max_simulation_time} {warmup_time} {cooldown_time}"
 
     hash_object = hashlib.md5(param_string.encode("utf-8"))
     pram_set_id = hash_object.hexdigest()
-    
-    command = (
-        f"python write_row_simulation.py {pram_set_id} {param_string}"
-    )
+
+    command = f"python write_row_simulation.py {pram_set_id} {param_string}"
     with open("commands.txt", "a") as f:
         f.write(command + "\n")
