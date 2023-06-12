@@ -17,7 +17,7 @@ Arguments
 """
 import sys
 
-sys.path.append("..")
+sys.path.append("../..")
 import models
 from csv import writer
 import pandas as pd
@@ -29,7 +29,7 @@ if __name__ == "__main__":
     l2 = float(args[3])
     m1 = float(args[4])
     m2 = float(args[5])
-    t1 = float(args[5])
+    t1 = float(args[6])
     t2 = float(args[7])
     c = int(args[8])
     max_sim_time = float(args[9])
@@ -48,6 +48,6 @@ if __name__ == "__main__":
         progress_bar=False,
     )
 
-    with open("test.csv", "a") as f:
+    with open("all_simulations.csv", "a", newline="") as f:
         writer_object = writer(f)
         writer_object.writerow([id_num] + row)
