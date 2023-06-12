@@ -1,6 +1,6 @@
 """
 Usage:
-    write_row_simulation.py <id> <l1> <l2> <m1> <m2> <t1> <t2> <c> <bound_initial> <bound_final> <bound_step> <reasonable_ratio> <epsilon>
+    write_row_markov.py <id> <l1> <l2> <m1> <m2> <t1> <t2> <c> <bound_initial> <bound_final> <bound_step> <reasonable_ratio> <epsilon>
 
 Arguments
     id               : ID number of the parameter set
@@ -19,7 +19,7 @@ Arguments
 """
 import sys
 
-sys.path.append("..")
+sys.path.append("../..")
 import models
 from csv import writer
 import pandas as pd
@@ -31,7 +31,7 @@ if __name__ == "__main__":
     l2 = float(args[3])
     m1 = float(args[4])
     m2 = float(args[5])
-    t1 = float(args[5])
+    t1 = float(args[6])
     t2 = float(args[7])
     c = int(args[8])
     bi = int(args[9])
@@ -53,6 +53,6 @@ if __name__ == "__main__":
         epsilon=e,
     )
 
-    with open("test2.csv", "a") as f:
+    with open("all_markov.csv", "a", newline="") as f:
         writer_object = writer(f)
         writer_object.writerow([id_num] + row)
