@@ -24,12 +24,12 @@ warmup_time = 2000
 cooldown_time = 2000
 
 arrival_1 = 1
-arrival_2_proportions = [1 / 3, 1 / 2, 1, 2, 3]
-service_1_proportions = [1 / 3, 1 / 2, 1, 2, 3]
-service_2_proportions = [1 / 3, 1 / 2, 1, 2, 3]
+arrival_2_proportions = [1 / 2, 2 / 3, 1, 1 / 2, 2]
+service_1_proportions = [1 / 2, 1, 2, 3, 4]
+service_2_proportions = [1 / 2, 1, 2, 3, 4]
 num_servers_space = [1, 2, 3]
-theta_12_proportions = [1 / 3, 1 / 2, 1, 2, 3]
-theta_21_proportions = [1 / 3, 1 / 2, 1, 2, 3]
+theta_12_proportions = [1 / 2, 2 / 3, 1, 1 / 2, 2]
+theta_21_proportions = [1 / 2, 2 / 3, 1, 1 / 2, 2]
 
 for (
     arrival_2_ratio,
