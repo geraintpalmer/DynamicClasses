@@ -19,9 +19,9 @@ import sys
 sys.path.append("../..")
 
 num_classes = 2
-max_simulation_time = 20000
-warmup_time = 2000
-cooldown_time = 2000
+max_simulation_time = 5000
+warmup_time = 200
+cooldown_time = 200
 
 arrival_1 = 1
 arrival_2_proportions = [1 / 2, 2 / 3, 1, 1 / 2, 2]
