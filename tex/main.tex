@@ -9,6 +9,8 @@
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amsthm}
+\usepackage{xfrac}
+\usepackage{enumitem}
 \usepackage[table]{xcolor}
 \usepackage{tikz}
 \usetikzlibrary{arrows}
@@ -77,10 +79,9 @@ one useful for considering customers' statistics such as average sojourn time.
 Section~\ref{sec:bound} explores a bounded approximation for numerically
 tractable analysis, and gives guidelines on choosing a large enough bound so as
 to sufficiently approximate an unbounded system.
-Section~\ref{sec:stationary} explores the parameter requirements for these
-systems to have steady state distributions, and not grow infinitely.
 Section~\ref{sec:behaviour} presents results from numerical experiments that
 give insight into the behaviour of the system under various parameters.
+
 
 
 
@@ -514,7 +515,7 @@ very large bound of $b = 200$).
 
 \begin{figure}
   \begin{center}
-    \includegraphics[width=0.9\textwidth]{img/check_hyperparameters_effect_summary.pdf}
+    \includegraphics[width=\textwidth]{img/check_hyperparameters_effect_summary.pdf}
   \end{center}
   \caption{Investigating the effect of the hyperparameters $\epsilon$ and $r$ on
   accuracy and model size.}
@@ -522,9 +523,39 @@ very large bound of $b = 200$).
 \end{figure}
 
 
+\section{Effect of Parameters on System Behaviour}\label{sec:behaviour}
+In order to explore the effect that the parameters have on system behaviour,
+numerical experiments we run. Table~\ref{tbl:parameter_sweep} gives the ranges
+of value for which simulation experiments were run. These experiments will be
+used to explore the models in the next subsections. For these simulations,
+upgraded individuals pre-empt individuals of a less prioritised class, and these
+pre-empted individuals have their service time re-sampled.
+
+\begin{table}
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Paramters & Values \\
+\midrule
+$\Lambda_1$ & $1$ \\
+$\Lambda_2$ & $\sfrac{1}{2}$, $\sfrac{2}{3}$, $1$, $\sfrac{3}{2}$, $2$ \\
+$\mu_1$ & $\sfrac{1}{2}$, $1$, $2$, $3$, $4$ \\
+$\mu_2$ & $\sfrac{1}{2}$, $1$, $2$, $3$, $4$ \\
+$\theta_{12}$ & $\sfrac{1}{2}$, $\sfrac{2}{3}$, $1$, $\sfrac{3}{2}$, $2$ \\
+$\theta_{21}$ & $\sfrac{1}{2}$, $\sfrac{2}{3}$, $1$, $\sfrac{3}{2}$, $2$ \\
+$c$ & $1$, $2$, $3$ \\
+\bottomrule
+\end{tabular}
+\caption{Table of parameters explored, for two classes of customer. Simulations
+         were run for $5000$ time units, with a warmup time of $200$ and cool
+         down time of $200$ time units.}
+\label{tbl:parameter_sweep}
+\end{center}
+\end{table}
 
 
-\section{Existence of Stationary Distributions}\label{sec:stationary}
+
+\subsection{Existence of Stationary Distributions}\label{sec:stationary}
 A key difference between using a bounded approximation to analysing infinite
 Markov chains is the existence of stationary distributions. All bounded
 approximations have steady state distributions, even if the corresponding
@@ -537,8 +568,10 @@ For an $M/M/c$ work conserving queue with $K$ classes of customer, with arrival
 rate and service rate $\lambda_k$ and  $\mu_k$ for customers of class $k$,
 respectively; then
 \begin{enumerate}
-  \item it will reach steady state if $\sum_i \lambda_i < c \min_i \mu_i$ ,
-  \item it will never reach steady state if $\sum_i \lambda_i \geq c \max_i \mu_i$.
+  \item it will reach steady state if
+  $\rho_{\max} = \frac{\sum_i \lambda_i}{c \min_i \mu_i} < 1$,
+  \item it will never reach steady state if
+  $\rho_{\min} = \frac{\sum_i \lambda_i}{c \max_i \mu_i} \geq 1$.
 \end{enumerate}
 \end{theorem}
 
@@ -642,11 +675,120 @@ gives a p-value of 0.0004, rejecting the null hypothesis that the time series is
 non-stationary, while Example 2 gives a p-value of 0.9961, and the null
 hypothesis cannot be rejected.
 
+This test is evidenced by the parameter sweep: Table~\ref{tbl:adf_pvals} gives
+the percentage of experiments with an ADF p-value less than a given value, for
+all those experiments with parameters that do or do not reach steady state
+according to Theorem~\ref{thrm:steadystate}. We see that all those that reach
+steady state produce low p-values, while very small proportions of those that
+do not reach steady state have low p-values, as expected from hypothesis
+testing.
 
-\section{Effect of $\Theta$ on System Behaviour}\label{sec:behaviour}
+\begin{table}
+\begin{center}
+\begin{tabular}{rrr}
+\toprule
+p-Value Threshold & Does Not Reach Steady state & Reaches Steady State \\
+\midrule
+0.001 & 0.75\% & 100\% \\
+0.005 & 1.25\% & 100\% \\
+0.01 & 1.44\% & 100\% \\
+0.05 & 3.38\% & 100\% \\
+0.1 & 5.25\% & 100\% \\
+\bottomrule
+\end{tabular}
+\caption{ADF test p-Values from numerical experiments for parameters sets that
+do and do not reach steady state according to Theorem~\ref{thrm:steadystate}.} 
+\label{tbl:adf_pvals}
+\end{center}
+\end{table}
 
-\todo[inline]{Design and run numerical experiments using checks above to keep
-the Markov chains accurate but of reasonable size.}
+This evidences that the p-value of the ADF test can be confidently used to
+determine if a parameter set is able to reach steady state or not.
+Figure~\ref{fig:adf_parametersweep} shows the mean and maximum ADF p-values
+obtained across the parameter sweep for pairs of $\rho_{\text{min}}$ or
+$\rho_{\text{max}}$, and $\Delta\theta = \theta_{12} - \theta_{21}$.
+This gives a strong indication that $\Delta\theta$ has no effect on whether
+the system reaches steady state, and thus the rate at which customers change
+class is of no consequence. It also heavily indicates that the condition for
+reaching steady state is simply $\rho_{\max} < 1$.
+
+\begin{figure}[!htbp]
+  \begin{center}
+  \begin{subfigure}[b]{\textwidth}
+    \includegraphics[width=\textwidth]{img/mean_adf.pdf}
+    \caption{Mean ADF.}
+  \end{subfigure}
+  \begin{subfigure}[b]{\textwidth}
+    \includegraphics[width=\textwidth]{img/max_adf.pdf}
+    \caption{Maximum ADF.}
+  \end{subfigure}
+  \end{center}
+  \caption{ADF p-values obtained across the parameter sweep, by
+  $\rho_{\text{min}}$ or $\rho_{\text{max}}$, and
+  $\Delta\theta = \theta_{12} - \theta_{21}$ pairs.}
+  \label{fig:adf_parametersweep}
+\end{figure}
+
+
+\subsection{Effect of $\Theta$ on Customer Experience}
+Figure~\ref{fig:theta_effect} shows the effect of $\Theta$ on the number of customers and sojourn times, broken down by customer class. For each $\theta_{12}$, $\theta_{21}$ pair, the plots show the average number of customers and average sojourn time obtained over all the experiments in the parameter sweep where $\rho_{\max} < 1$, that is those that reach steady state. We see that as $\theta_{21}$ increases, and $\theta_{12}$ decreases, that is more customers are being upgraded than downgraded, then:
+
+{
+\renewcommand{\theenumi}{E\arabic{enumi}}
+\begin{enumerate}
+  \item \label{enm:custs_1over2} the number of Class 1 customers present increases,
+  \item \label{enm:custs_2over1} the number of Class 2 customers present decreases,
+  \item \label{enm:custs_pronounced} this effect is more pronounced for customers of Class 1 than Class 2;
+  \item \label{enm:sojourn_1over2} the sojourn time of Class 1 customers increases,
+  \item \label{enm:sojourn_2over1} the sojourn time of Class 2 customers decreases,
+  \item \label{enm:sojourn_pronounced} this effect is more pronounced for customers of Class 2 than Class 1;
+\end{enumerate}
+
+
+also, as $\theta_{21}$ increases, independent of $\theta_{12}$
+
+
+\begin{enumerate}[resume]
+  \item \label{enm:custs} the overall number of customers present increases.
+\end{enumerate}
+}
+
+\begin{figure}[!htbp]
+  \begin{subfigure}[b]{\textwidth}
+    \begin{center}
+    \includegraphics[width=\textwidth]{img/theta_effect_cust_numbers.pdf}
+    \end{center}
+    \caption{Effect of $\Theta$ on customer numbers.}
+    \label{fig:theta_effect_custs}
+  \end{subfigure}
+  \begin{subfigure}[b]{\textwidth}
+    \begin{center}
+    \includegraphics[width=0.666\textwidth]{img/theta_effect_sojourn_times.pdf}
+    \end{center}
+    \caption{Effect of $\Theta$ on sojourn times.}
+    \label{fig:theta_effect_sojourn}
+  \end{subfigure}
+  \caption{Effect of $\Theta$ on customer experience.}
+  \label{fig:theta_effect}
+\end{figure}
+
+Effects~\ref{enm:custs_1over2} and~\ref{enm:custs_2over1} come directly from the
+fact that increasing $\theta_{21}$ and decreasing $\theta_{12}$ upgrades more
+customers than are downgraded. Effect~\ref{enm:custs} is explained by the
+pre-emption: when an interrupted individual restarts service their service time
+is resampled, causing more work for the system and causing a build-up of the
+queue.
+Effect~\ref{enm:sojourn_1over2} is a consequence of
+effects~\ref{enm:custs_1over2} and~\ref{enm:custs_2over1}, as there are more
+customers of Class 1 in the queue on average, their average sojourn time will
+increase, as stated by Little's Theorem \cite{little61}.
+Effect~\ref{enm:sojourn_2over1} however is due to upgrading customers at a
+higher rate, which effectively stops lower priority customers waiting a long
+time, as they will be upgraded before they end their service.
+This is more pronounced (effect~\ref{enm:sojourn_pronounced}), as it is
+accounting for effect~\ref{enm:sojourn_1over2} pushing the waiting times of
+customers of Class 2 up, allowing more time to upgrade them before they reach
+service.
 
 
 \bibliographystyle{plain}
