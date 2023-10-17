@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import traces
 from statsmodels.tsa.stattools import adfuller
 
-plt.style.use("seaborn-whitegrid")
+plt.style.use("seaborn-v0_8-whitegrid")
 
 
 def get_state_probabilities(
