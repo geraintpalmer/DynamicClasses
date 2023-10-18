@@ -81,6 +81,8 @@ tractable analysis, and gives guidelines on choosing a large enough bound so as
 to sufficiently approximate an unbounded system.
 Section~\ref{sec:behaviour} presents results from numerical experiments that
 give insight into the behaviour of the system under various parameters.
+Section~\ref{sec:fitting} uses these models to model scenarios where
+prioritisation rules are unknown.
 
 
 
@@ -789,6 +791,45 @@ This is more pronounced (effect~\ref{enm:sojourn_pronounced}), as it is
 accounting for effect~\ref{enm:sojourn_1over2} pushing the waiting times of
 customers of Class 2 up, allowing more time to upgrade them before they reach
 service.
+
+
+
+\section{Modelling Prioritisation Rules with $\Theta$}\label{sec:fitting}
+Often bespoke rules around prioritisation upgrades and downgrades are difficult
+to model, or even unknown. We propose using the model described in
+Section~\ref{sec:system} instead of modelling these bespoke rules, carefully
+choosing an appropriate $\Theta$ that will replicate the behaviour in question.
+This may allow models where other parameters, such as number of servers or
+demand levels, can be changed, and we may observe the affect of these under
+some prioritisation rules, despite not fully being able to understand those
+rules themselves.
+
+Let $\mathbf{X}_{\text{in}}$ be a vector of customer identifiers ordered by
+their arrival dates, and $\mathbf{A}$ be their exact arrival dates. Now let
+$\mathbf{X}_{\text{out}}$ be a vector of customer identifiers ordered by their
+service dates. The transform $\mathbf{X}_{\text{out}} = f\left(
+\mathbf{X}_{\text{in}}, \mathbf{A}, \Theta \right)$ represents the reordering of
+the customers when they go through the prioritisation and re-prioritisation
+process described in Section~\ref{sec:system}, given the unknown parameter
+$\Theta$. The transform $f$ can be approximated using the simulation framework
+outlined in Section~\ref{sec:simulation}.
+
+We aim to find an estimate, $\hat{\Theta}$, that approximates $f\left(
+\mathbf{X}_{\text{in}}, \mathbf{A}, \hat{\Theta} \right)$ as close to
+$\mathbf{X}_{\text{out}}$ as possible. We can measure the difference between the
+two orderings by using Kendall's Tau measure \cite{kendall38}, which ranges
+between 1, denoting identical orderings, and -1, denoting reversed orderings.
+We can then use a gradient-free optimiser to find $\hat{\Theta}$ that maximises
+this measure.
+
+
+\subsection{Proof of Concept}
+\todo[inline]{Use Ciw 3.0's service disciplines to generate data based on
+arbitrary rules, and see if we can find appropriate $\Theta$.}
+
+\subsection{Case Study}
+\todo[inline]{Use this to model surgery data, where surgeons use unknown
+prioritisation rules. With data from Lizzie.}
 
 
 \bibliographystyle{plain}
