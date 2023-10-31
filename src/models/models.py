@@ -414,6 +414,10 @@ def build_and_run_simulation(
     """
     Builds and runs the simulation. Returns the simulation object after run.
     """
+    class_change_dist_matrix = [
+        [ciw.dists.Exponential(rate) if rate is not None else None for rate in row]
+        for row in class_change_rate_matrix
+    ]
     N = ciw.create_network(
         arrival_distributions={
             "Class " + str(c): [ciw.dists.Exponential(arrival_rates[c])]
@@ -424,17 +428,23 @@ def build_and_run_simulation(
             for c in range(num_classes)
         },
         number_of_servers=[num_servers],
-        class_change_time_distributions=[
-            [ciw.dists.Exponential(rate) if rate is not None else None for rate in row]
-            for row in class_change_rate_matrix
-        ],
+        class_change_time_distributions={
+            "Class "
+            + str(c1): {"Class " + str(c2): dist for c2, dist in enumerate(row)}
+            for c1, row in enumerate(class_change_dist_matrix)
+        },
         priority_classes=(
             {"Class " + str(c): c for c in range(num_classes)},
             ["resample"],
         ),
     )
     ciw.seed(0)
-    Q = ciw.Simulation(N, tracker=ciw.trackers.NodeClassMatrix())
+    Q = ciw.Simulation(
+        N,
+        tracker=ciw.trackers.NodeClassMatrix(
+            ["Class " + str(c) for c in range(num_classes)]
+        ),
+    )
     Q.max_simulation_time = max_simulation_time
     Q.simulate_until_max_time(max_simulation_time, progress_bar=progress_bar)
     return Q
@@ -838,7 +848,7 @@ def get_mean_sojourn_times_using_simulation(
             [
                 q.waiting_time + q.service_time
                 for q in Q.get_all_records()
-                if q.customer_class == class_id
+                if q.customer_class == "Class " + str(class_id)
                 and q.arrival_date > warmup_time
                 and q.arrival_date < max_simulation_time - cooldown_time
             ]

@@ -152,24 +152,28 @@ def test_simulation_builds_and_terminates():
     assert isinstance(Q, ciw.Simulation)
     assert len(Q.transitive_nodes) == 1
     assert Q.nodes[1].c == num_servers
-    assert Q.service_times[1][0].rate == service_rates[0]
-    assert Q.service_times[1][1].rate == service_rates[1]
-    assert Q.inter_arrival_times[1][0].rate == arrival_rates[0]
-    assert Q.inter_arrival_times[1][1].rate == arrival_rates[1]
+    assert Q.service_times[1]["Class 0"].rate == service_rates[0]
+    assert Q.service_times[1]["Class 1"].rate == service_rates[1]
+    assert Q.inter_arrival_times[1]["Class 0"].rate == arrival_rates[0]
+    assert Q.inter_arrival_times[1]["Class 1"].rate == arrival_rates[1]
     assert (
-        Q.network.customer_classes[0].class_change_time_distributions[0]
+        Q.network.customer_classes["Class 0"].class_change_time_distributions["Class 0"]
         == class_change_rate_matrix[0][0]
     )
     assert (
-        Q.network.customer_classes[0].class_change_time_distributions[1].rate
+        Q.network.customer_classes["Class 0"]
+        .class_change_time_distributions["Class 1"]
+        .rate
         == class_change_rate_matrix[0][1]
     )
     assert (
-        Q.network.customer_classes[1].class_change_time_distributions[0].rate
+        Q.network.customer_classes["Class 1"]
+        .class_change_time_distributions["Class 0"]
+        .rate
         == class_change_rate_matrix[1][0]
     )
     assert (
-        Q.network.customer_classes[1].class_change_time_distributions[1]
+        Q.network.customer_classes["Class 1"].class_change_time_distributions["Class 1"]
         == class_change_rate_matrix[1][1]
     )
     assert len(inds) > 0
