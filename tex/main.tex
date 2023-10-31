@@ -142,7 +142,12 @@ Systems of this kind have been investigated previously:
       are served in order of the difference between their waiting time
         and urgency number (that is priorities increasing linearly over
         time). Solved by considering event probabilities at clock ticks.
-  \item \cite{holtzman71} (1971): Similar to the above, but treat each
+  \item \cite{kleinrock164} (1964): Another formulation giving the same
+      behaviour as \cite{jackson60}, but now for both non preemptive and
+        preemptive priorities, and multiple customer classes. Called `delay
+        dependent' or `time dependant' priorities, and recently by
+        `accumulating' priorities.
+  \item \cite{holtzman71} (1971): Similar to \cite{jackson60}, but treat each
       urgency number as a separate customer class, and not considering
         clock ticks. Upper and lower bounds on the waiting times, based
         on FIFO and static priorities.
@@ -152,7 +157,11 @@ Systems of this kind have been investigated previously:
       classes of customers, where priorities switch if the number from
         one class exceeds a given threshold. Lower priority customers
         have a finite waiting capacity, higher have infinite capacity.
-  \item \cite{knessl03} (2003): Similar to the above but with Markovian
+  \item \cite{vanmieghan95} (1995): Introduces the generalised $c\mu$-rule
+    (first conceived in \cite{smith56}), which applies a class- and waiting
+      time-dependant cost to each customer. This acts as a scheduling rule,
+      but can also model dynamic priorities amongst customers.
+  \item \cite{knessl03} (2003): Similar to \cite{fratini90} but with Markovian
       services and infinite waiting capacities for both customers.
   \item \cite{xie08} (2008): Preemptive n-priority-classes M/M/c with
       exponential upgrades. Customers only upgrade to the priority
@@ -161,10 +170,19 @@ Systems of this kind have been investigated previously:
       exponential upgrades. Customers cannot upgrade if the number of
         lower priority customers is below a given threshold. Holding
         costs considered.
-  \item \cite{he12} (2012): Extension of the above, allows batch
+  \item \cite{he12} (2012): Extension of \cite{down10}, allows batch
       arrivals, multiple classes, phase-type upgrades and services.
         Customers only upgrade to the priority immediately higher than
         themselves.
+  \item \cite{stanford14} (2014): Furthers the work of \cite{kleinrock164} to
+      look at the maximum priority of the waiting customers in a single server
+        queue as a stochastic process. This is extended in \cite{sharif14} to
+        multi-server queues.
+  \item \cite{klimenok20} (2020): Upgrades and downgrades after a random,
+      exponentially distributed, amount of time. Models two priority classes
+        in a single server, finite buffer system with batch arrivals. Extended
+        in \cite{dudin21} to include unreliable services and impatient
+        customers. 
   \item \cite{bilodeau22} (2022): Analytical (truncated) expressions for
       a two class delayed accumulating priority M/G/1 queue. Customer
         priorities increase linearly over time, at different rates
@@ -173,6 +191,12 @@ Systems of this kind have been investigated previously:
 
 \todo[inline]{Add more literature, flesh out as paragraphs.}
 
+\begin{itemize}
+  \item \cite{ding19} (2019): Evidence that in Canada that decision makers
+      often use their own discretion in deciding which patients to be seen,
+        rather than FIFO within each triage category. Fits prioritisation rules
+        to this discretionary behaviour.
+\end{itemize}
 
 
 \section{Simulation Model Logic}\label{sec:simulation}
@@ -819,6 +843,8 @@ We aim to find an estimate, $\hat{\Theta}$, that approximates $f\left(
 $\mathbf{X}_{\text{out}}$ as possible. We can measure the difference between the
 two orderings by using Kendall's Tau measure \cite{kendall38}, which ranges
 between 1, denoting identical orderings, and -1, denoting reversed orderings.
+If comparing the input ordering to many orderings, e.g. many trials of a
+simulation, then we can simply take the average Kendall Tau \cite{hays60}.
 We can then use a gradient-free optimiser to find $\hat{\Theta}$ that maximises
 this measure.
 
