@@ -30,7 +30,7 @@
 
 
 \title{Modelling Queues Where Customers Randomly Change Priority Classes While Waiting}
-\author{Geraint I. Palmer, Michalis Panayidis \& Vincent Knight}
+\author{Geraint I. Palmer, Michalis Panayidis, Vincent Knight \& Elizabeth Williams}
 \date{}
 
 \begin{document}
@@ -81,8 +81,8 @@ tractable analysis, and gives guidelines on choosing a large enough bound so as
 to sufficiently approximate an unbounded system.
 Section~\ref{sec:behaviour} presents results from numerical experiments that
 give insight into the behaviour of the system under various parameters.
-Section~\ref{sec:fitting} uses these models to model scenarios where
-prioritisation rules are unknown.
+Section~\ref{sec:validation} experimentally justifies the use of these models
+to model scenarios where prioritisation rules are unknown.
 
 
 
@@ -189,7 +189,6 @@ Systems of this kind have been investigated previously:
         according to class, after an initial fixed delay.
 \end{itemize}
 
-\todo[inline]{Add more literature, flesh out as paragraphs.}
 
 \begin{itemize}
   \item \cite{ding19} (2019): Evidence that in Canada that decision makers
@@ -270,9 +269,10 @@ time.
 Let
 $\underline{\mathbf{s}}_t = (s_{0,t}, s_{1,t}, \dots, s_{K-1,t}) \in \mathbb{N}^K$
 represent the state of the system at time step $t$, where $s_{k,t}$ represents
-the number of customers of class $k$ present at time step $t$.
+the number of customers of class $k$ present at time step $t$. Let $S$ denote
+set of all states $\underline{\mathbf{s}}_t$. 
 
-Then the rates of change between $\underline{\mathbf{s}}_t$ and
+The rates of change between $\underline{\mathbf{s}}_t$ and
 $\underline{\mathbf{s}}_{t+1}$ are given by Equation~\ref{eqn:transitions},
 where $\underline{\mathbf{\delta}} = \underline{\mathbf{s}}_{t+1} - \underline{\mathbf{s}}_t$,
 
@@ -294,11 +294,13 @@ is the number of servers.
 B_{k,t} =\min\left(c - \min\left(\sum_{i < k} s_{i,t}, c\right), s_{k,t}\right)
 \end{equation}
 
+Let $\pi_{\underline{\mathbf{s}}}$ denote the steady state probability of being
+in state $\underline{\mathbf{s}} \in S$.
 
 
 
 \subsection{Sojourn Time Markov Chain Formulation}\label{sec:sojourn_formulation}
-Let $\underline{\mathbf{z}}_t = (z_{0,t}, z_{1,t}, \dots, z_{n,t} \dots, z_{K-1,t}, m_t, n_t) \in \mathbb{N}^{K+2}$
+Let $\underline{\mathbf{z}}_t = (z_{0,t}, z_{1,t}, \dots, z_{n,t} \dots, z_{K-1,t}, m_t, n_t) \in \mathbb{N}^{K+2} \times (1, \dots, K - 1)$
 represent the state of a particular customer at time step $t$, where $n_t$
 represents that customer's class at time $t$; $z_{k,t} \; \forall \; k < n$
 represents the number of customers of class $k$ in front of the customer in the
@@ -308,6 +310,8 @@ represent the number of customers of class $n_t$ behind the customer in the
 queue at time $t$.
 Also let $\star$ represent an absorbing state, representing the state where that
 customer has finished service and left the system.
+Let $Z$ denote set of all states $\underline{\mathbf{z}}_t$ and $\star$. 
+
 
 Then the rates of change between $\underline{\mathbf{z}}_t$ and
 $\underline{\mathbf{z}}_{t+1}$ are given by Equation~\ref{eqn:transitions_sojourn},
@@ -348,204 +352,162 @@ A_{k,n,t} =
 \min\left(c, \sum_{i \leq n} z_{i,t} + 1 + z_{K,t}\right) - \min\left(c, \sum_{i \leq n} z_{i,t} + 1\right) \\
 \end{equation}
 
+Let $a_{\underline{\mathbf{z}}}$ denote the expected time to absorption
+from state $\underline{\mathbf{z}} \in Z$.
 
+
+\subsubsection{Mean sojourn time calculation}\label{sec:meansojourncalc}
 The expected time to absorption can be calculated from each state.
-Customers arrive in all states where $z_{K,t} = 0$, and their class can be
-determined by $n$. Combining these times to absorption with the state
-probabilities found in the previous section, the sojourn times for each customer
-class can be found.
+Customers arrive in all states where $z_K = 0$, and their class can be
+determined by $n$. First define
+$\tilde{Z} = \{\underline{\mathbf{z}} \in Z\setminus\{\star\} \; | \; z_K = m = 0\} \subset Z$
+as the set of all states where the newly arriving customer can can arrive.
+Let $c: \tilde{Z} \rightarrow S$ be a map between states in $\tilde{Z}$ and $S$,
+given in Equation~\ref{eqn:map_state}.
 
+\begin{equation}\label{eqn:map_state}
+c\left(\underline{\mathbf{z}} = (z_0, z_1, \dots, z_{K-1}, m, n) \right) = (z_0, z_1, \dots, z_{K-1})
+\end{equation}
+
+Note that $c$ is a surjective map, but not injective. In fact, for every element
+$\underline{\mathbf{s}} \in S$ exactly $K$ states in $\tilde{Z}$ map to it.
+These correspond to states at which each of the $K$ classes of customer can
+arrive. In each of these states, the probability of a customer from class $k$
+arriving is $\frac{\lambda_k}{\sum_{i=0}^{K-1} \lambda_i}$. Therefore, we can
+combine this to get the overall mean sojourn time in
+Equation~\ref{eqn:mean_sojourn}:
+
+\begin{equation}\label{eqn:mean_sojourn}
+\overline{\Psi} = \sum_{\underline{\mathbf{z}} \in \tilde{Z}} \sum_{k=0}^{K-1} \frac{\lambda_k}{\sum_{i=0}^{K-1} \lambda_i} \pi_{c(\underline{\mathbf{z}})} a_{\underline{\mathbf{z}}}
+\end{equation}
+
+Defining $\tilde{Z}_k = \{\underline{\mathbf{z}} \in \tilde{Z} \; | \; z_{K-1} = n = k\} \subset Z$
+as the states that customers of class $k$ arrive to, the mean sojourn times for
+customers who arrive as a given customer class $k$ is given by
+Equation~\ref{eqn:mean_sojourn_class_k}.
+
+\begin{equation}\label{eqn:mean_sojourn_class_k}
+\Psi_k = \sum_{\underline{\mathbf{z}} \in \tilde{Z}_k} \pi_{c(\underline{\mathbf{z}})} a_{\underline{\mathbf{z}}}
+\end{equation}
 
 
 
 \section{Bounded Approximation}\label{sec:bound}
 In order to analyse the above Markov chain models numerically, finite
-approximations can be made. Define $b$ as a bound, such that the maximum allowed
-number of customers of each priority class is $b$, with transitions to any
-states greater than this disallowed.
-Assuming the infinite system reaches a stationary distribution, then the
-probability of the number of customers of a particular customer class exceeding
-$b$ approaches zero as $b$ increases. Thus the finite approximations approaches
-a good approximation as $b$ increases, and any statistics found using a bounded
-approximation will approach their corresponding values of the infinite models as
-$b$ increases.
+approximations can be made. Let $b \in \mathbb{N}$, and define the $b$-bounded
+version of the infinite queueing system described in Section~\ref{sec:system},
+such that the maximum allowed number of customers of each priority class is $b$,
+and customer losses when that number is exceeded. The equivalent $b$-bounded
+Markov chains associated with this system are identical to those described in
+Sections~\ref{sec:state_formulation} and~\ref{sec:sojourn_formulation} except
+with bounded state spaces
+$\underline{\mathbf{s}}_t = (s_{0,t}, s_{1,t}, \dots, s_{K-1,t}) \in (0, 1, \dots, b)^K$ and
+$\underline{\mathbf{z}}_t = (z_{0,t}, z_{1,t}, \dots, z_{n,t} \dots, z_{K-1,t}, m_t, n_t) \in (0, 1, \dots, b)^{K+2}$
+respectively. These Markov chains are finite and so stationary.
 
-\todo[inline]{Reword this and justify better.}
+If the unbounded system is stationary, that is the system reaches steady state
+and has steady state probabilities $\underline{\pi}$, then the steady states of
+the $b$-bounded system, $\underline{\tilde{\pi}}$ is an approximation of
+$\underline{\pi}$. As $b$ increases the probability of the number of
+customers of a particular customer class in the unbounded system exceeding $b$
+approaches zero as $b$ increases. Therefore as $b$ increases the $b$-bounded
+system becomes a better and better approximation of the unbounded system.
 
 Choosing an appropriate value for $b$ is a trade off between accuracy and model
 size, and so computational time. An inefficient way to choose $b$ would be to
 sequentially build bounded models, increasing $b$ each time, calculating the
 statistics of interest, and observing when the relationship between $b$ and that
 statistic levels off.
-It would be more efficient to choose a $b$ and be able to immediately check if
-the accuracy is sufficient. We propose two checks, one for ergodic Markov
+It would be more efficient to choose a $b$ and be able to immediately measure if
+the accuracy is sufficient. We propose two measures, one for ergodic Markov
 chains (the model in Section~\ref{sec:state_formulation}), and one for absorbing
 Markov chains (the model in Section~\ref{sec:sojourn_formulation}).
 
 
+\subsection{Accuracy measure for the ergodic Markov chain}\label{sec:ergodic_check}
+Let $S_b = \{\underline{\mathbf{s}} \in S \;|\; b \in \underline{\mathbf{s}}\}$,
+the set of states that lie on the Markov chain boundary. We wish to choose $b$
+large enough that the boundary is irrelevant, that is that the Markov chain
+hardly ever reaches the boundary. Therefore we propose the \textit{relative}
+probability of being at the boundary, $\mathcal{Q}(b)$, to be a measure of
+accuracy; if this is sufficiently small, then the bound $b$ is large enough.
+This is given in Equation~\ref{eqn:relative_probability_boundary}, it is the
+ratio of the probability of being at the boundary in the $b$-bounded system, and
+the probability of being at the boundary if every state was equally likely. This
+is necessary as the larger $b$ is, the larger the state space is, meaning that
+the steady state probabilities are spread over more states and so are not
+comparable alone, whereas the relative probability of being at the boundary is
+comparable over different sizes of $b$.
 
-
-\subsection{Bound check for ergodic Markov chains}\label{sec:ergodic_check}
-Let $S_b = \{\underline{\mathbf{s}} \in S \;|\; b \in \underline{\mathbf{s}}\}$, the
-set of states that lie on the Markov chain boundary. We wish to choose $b$ large
-enough that the boundary is irrelevant, that is that the Markov chain hardly
-ever reaches the boundary. Consider
-$\max_{\underline{\mathbf{s}} \in S_b} \pi_{\underline{\mathbf{s}}}$, the
-largest of the steady-state probabilities of being at a state on the boundary.
-Choose a tolerance level $\epsilon > 0$. Now consider $b$ large enough if
-
-\begin{equation}
-\max_{\underline{\mathbf{s}} \in S_b} \pi_{\underline{\mathbf{s}}} < \epsilon.
+\begin{equation}\label{eqn:relative_probability_boundary}
+\mathcal{Q}(b) = \frac{|S|}{|S_b|} \sum_{s \in S_b} \tilde{\pi}_s
 \end{equation}
 
-As an example, consider a standard M/M/1 queue with arrival rate $\lambda = 4$
-and service rate $\mu = 5$.
-Here the set $S_b$ contains just one state, the state $b$.
-Figure~\ref{fig:ergodic_b7} shows the steady state probabilities obtained when
-$b=7$, while Figure~\ref{fig:ergodic_b39} shows the steady state probabilities
-obtained when $b=39$; both choosing $\epsilon=0.02$.
-Under the proposed check it can be seen that $b=7$ is not sufficient to
-approximate an infinite system as $\pi_7 > \epsilon$, while $b=39$ is sufficient
-as $\pi_{39} < \epsilon$.
+To demonstrate the effect of $b$ on $\mathcal{Q}(b)$ under different systems,
+consider the dynamic classes system with two customer classes,
+$\lambda_1 = \frac{1}{2}$, $\lambda_2 = \frac{1}{2}$, $c = 1$,
+$\mu_1 = \frac{1}{\rho}$, $\mu_2 = \frac{1}{\rho}$, $\theta_{12} = 1$, and
+$\theta_{21} = 1$; where $0 < \rho < 1$ is some given traffic intensity.
+Figure~\ref{fig:ergodic_check} shows the effect of $b$ on $\mathcal{Q}(b)$ for
+this system, for different values of $\rho$. In all cases as $b$ increases,
+$\mathcal{Q}(b)$ decreases, indicating greater accuracy of the bounded system.
+As expected, as $\rho$ increases, we expect more customers in the queue, and so
+the boundary $b$ needs to be much larger before it can be considered irrelevant.
 
 \begin{figure}[!htbp]
   \begin{center}
-  \begin{subfigure}[b]{0.65\textwidth}
-    \includegraphics[width=\textwidth]{img/example_mc_8states.pdf}
-    \caption{$b=7$}
-    \label{fig:ergodic_b7}
-  \end{subfigure}
-  \begin{subfigure}[b]{0.65\textwidth}
-    \includegraphics[width=\textwidth]{img/example_mc_40states.pdf}
-    \caption{$b=39$}
-    \label{fig:ergodic_b39}
-  \end{subfigure}
+    \includegraphics[width=0.6\textwidth]{img/quotient_check.pdf}
   \end{center}
-  \caption{Steady-state probabilities of bounded approximations of an M/M/1
-  queue.}
+  \caption{Demonstration of the effect of $b$ on $\mathcal{Q}(b)$}
   \label{fig:ergodic_check}
 \end{figure}
 
-\todo[inline]{Add a plot of max $\max \pi_s - \epsilon$ as a function of $b$.}
 
 
 
-\subsection{Bound check for absorbing Markov chains}\label{sec:absorbing_check}
+\subsection{Accuracy measure for the absorbing Markov chain}\label{sec:absorbing_check}
 The above check isn't possible for absorbing Markov chains as they will not
-reach steady state, so another check is required. This method assumed the
-absorbing Markov chain takes the same shape as defined in
-Section~\ref{sec:sojourn_formulation}, where states move further away from the
-absorbing state as their labels increase.
-
-Again let $S_b = \{\underline{\mathbf{s}} \;|\; b \in \underline{\mathbf{s}}\}$,
-the set of states that lie on the Markov chain boundary. Now define $h_{i,J}$ as
+reach steady state, so another check is required. Define $h_{i,J}$ as
 the hitting probabilities of a set of states $J$ from state $i$, that is, what
 is the probability of ever reaching any state in $J$ when starting from state
-$i$. These are defined recursively as:
+$i$. These are defined recursively by Equation~\ref{eqn:hitting_probs}.
 
-\begin{equation}
+\begin{equation}\label{eqn:hitting_probs}
 h_{iJ} = \begin{cases}
 \sum_k p_{ik} h_{kJ} & \text{if } i \notin J \\
 1 & \text{if } i \in J
 \end{cases}
 \end{equation}
 
-Now for the bounded approximation define a \textit{reasonable region}, $R$, of
-the state space, a region of states which we reasonable expect the infinite
-Markov chain to visit. Let it's complement be known as the \textit{unreasonable
-region}.
-Let us define $R$ by the percentage $r$ of the distance between the absorbing
-state and a boundary state, that is
-$R = \{\underline{\mathbf{s}} \;|\; \lVert \mathbf{s} \rVert < rb \text{ for all } s \in \underline{\mathbf{s}}\}$,
-where $\lVert \mathbf{x} \rVert = \sum_i x_i$.
+Relating this to the absorbing Markov chain described in
+Section~\ref{sec:sojourn_formulation}, and letting $Z_b \subset Z$ be the set of
+boundary states such that
+$Z_b = \{\underline{\mathbf{z}} \in Z \; | \; b \in \underline{\mathbf{z}}\}$,
+then if a customer arrives to state $i$, the probability of that customer's
+state reaching the boundary is $h_{iS_b}$. Therefore we propose the probability
+of an arriving customer hitting the boundary, $\mathcal{P}(b)$, to be a measure
+of accuracy; if this is sufficiently small, then the bound $b$ is large enough.
+This is calculated in a similar way to the mean sojourn time in
+Section~\ref{sec:meansojourncalc}, and given in Equation~\ref{eqn:hitting_measure}.
 
-Now as above, choose a tolerance level $\epsilon > 0$. Now consider $b$ large
-enough if
-
-\begin{equation}
-\max_{\underline{\mathbf{s}} \in R} h_{\underline{\mathbf{s}} S_b} < \epsilon.
+\begin{equation}\label{eqn:hitting_measure}
+\mathcal{P}(b) = \sum_{\underline{\mathbf{z}} \in \tilde{Z}} \sum_{k=0}^{K-1} \frac{\lambda_k}{\sum_{i=0}^{K-1} \lambda_i} \pi_{c(\underline{\mathbf{z}})} h_{\underline{\mathbf{z}}, Z_b}
 \end{equation}
 
-As an example, consider a standard M/M/1 queue, with arrival rate $\lambda = 4$
-and service rate $\mu = 5$, but with arrivals rejected if the queue is empty.
-That is the state $0$ is an absorbing state, see Figure~\ref{fig:mm1_absorbing}.
-Here the set $S_b$ contains just one state, the state $b$.
-Figure~\ref{fig:absorbing_b7} shows the hitting probabilities from each state to
-$b$ obtained when $b=7$, while Figure~\ref{fig:absorbing_b39} shows the hitting
-probabilities obtained when $b=39$; both choosing $\epsilon=0.05$ and $r=0.75$.
-Under the proposed check it can be seen that $b=7$ is not sufficient to
-approximate an infinite system as $h_{5,7} > \epsilon$, while $b=39$ is
-sufficient as $h_{29, 39} < \epsilon$.
-
-\begin{figure}
-\includestandalone[width=\textwidth]{img/absorbing_mm1}
-\caption{An M/M/1 queue with absorbing state.}
-\label{fig:mm1_absorbing}
-\end{figure}
+To demonstrate the effect of $b$ on $\mathcal{P}(b)$ under different system,
+consider the same dynamic classes system with two customer classes used in the
+previous demonstration. Figure~\ref{fig:hitting_measure} shows the effect of $b$
+on $\mathcal{P}(b)$ for this system, for different values of $\rho$. Again, in
+all cases as $b$ increases, $\mathcal{P}(b)$ decreases, indicating greater
+accuracy of the bounded system; and similarly as $\rho$ increases the boundary
+$b$ needs to be larger before it can be considered irrelevant.
 
 \begin{figure}[!htbp]
   \begin{center}
-  \begin{subfigure}[b]{0.65\textwidth}
-    \includegraphics[width=\textwidth]{img/example_absorbingmc_8states.pdf}
-    \caption{$b=7$}
-    \label{fig:absorbing_b7}
-  \end{subfigure}
-  \begin{subfigure}[b]{0.65\textwidth}
-    \includegraphics[width=\textwidth]{img/example_absorbingmc_40states.pdf}
-    \caption{$b=39$}
-    \label{fig:absorbing_b39}
-  \end{subfigure}
+    \includegraphics[width=0.6\textwidth]{img/hitting_check.pdf}
   \end{center}
-  \caption{Hitting probabilities of bounded approximations of an absorbing
-  M/M/1 queue.}
-  \label{fig:absorbing_check}
-\end{figure}
-
-\todo[inline]{Add a plot of max $\max h - \epsilon$ as a function of $b$.}
-
-
-The hyperparameters choices of $\epsilon$ and $r$ can greatly effect the
-effectiveness of this check, and aren't as intuitive as the boundary hitting
-tolerance hyperparameter of Section~\ref{sec:ergodic_check}. In general,
-increasing $r$ increases the relative size of the reasonable region, and so a
-larger bound would be needed to ensure a low hitting probability from this
-region to the boundary. Decreasing $\epsilon$ forces the probability of hitting
-the boundary from the reasonable region to be smaller, and so a larger boundary
-would be needed.
-
-To investigate, consider an arbitrarily chosen statistic for the example system
-described above, the mean time to absorption from state 6.
-Figure~\ref{fig:investigate_hyperparameters} shows this calculated value using
-different values of the boundaries $b$, and highlights the boundaries that were
-accepted or rejected by this check for combinations of $\epsilon = 0.01, 0.02$
-and $0.05$, and $r = 0.6, 0.7, 0.8$ and $0.9$.
-As the mean time to absorption levels off we can be confident that the bound is
-large enough to approximate the infinite system; and as both $r$ and $\epsilon$
-increase the check will only accept bounds that are large enough.
-
-\begin{figure}
-  \begin{center}
-    \includegraphics[width=0.8\textwidth]{img/check_hyperparameters_effect.pdf}
-  \end{center}
-  \caption{Investigating the effect of the hyperparameters $\epsilon$ and $r$.}
-  \label{fig:investigate_hyperparameters}
-\end{figure}
-
-However this is a trade-off between accuracy and model size.
-This is highlighted further in Figure~\ref{fig:summary_hyperparameters}.
-This plot on the left shows the minimum $b$ required to pass the check with the
-given hyperparameters $\epsilon$ and $r$; and the plot on the right shows the
-absolute error between the result obtained from using that minimum bound and the
-infinite system (the infinite system here is modelled as a bounded system with a
-very large bound of $b = 200$).
-
-\begin{figure}
-  \begin{center}
-    \includegraphics[width=\textwidth]{img/check_hyperparameters_effect_summary.pdf}
-  \end{center}
-  \caption{Investigating the effect of the hyperparameters $\epsilon$ and $r$ on
-  accuracy and model size.}
-  \label{fig:summary_hyperparameters}
+  \caption{Demonstration of the effect of $b$ on $\mathcal{P}(b)$}
+  \label{fig:hitting_measure}
 \end{figure}
 
 
@@ -757,7 +719,13 @@ reaching steady state is simply $\rho_{\max} < 1$.
 
 
 \subsection{Effect of $\Theta$ on Customer Experience}
-Figure~\ref{fig:theta_effect} shows the effect of $\Theta$ on the number of customers and sojourn times, broken down by customer class. For each $\theta_{12}$, $\theta_{21}$ pair, the plots show the average number of customers and average sojourn time obtained over all the experiments in the parameter sweep where $\rho_{\max} < 1$, that is those that reach steady state. We see that as $\theta_{21}$ increases, and $\theta_{12}$ decreases, that is more customers are being upgraded than downgraded, then:
+Figure~\ref{fig:theta_effect} shows the effect of $\Theta$ on the number of
+customers and sojourn times, broken down by customer class. For each
+$\theta_{12}$, $\theta_{21}$ pair, the plots show the average number of
+customers and average sojourn time obtained over all the experiments in the
+parameter sweep where $\rho_{\max} < 1$, that is those that reach steady state.
+We see that as $\theta_{21}$ increases, and $\theta_{12}$ decreases, that is
+more customers are being upgraded than downgraded, then:
 
 {
 \renewcommand{\theenumi}{E\arabic{enumi}}
@@ -816,46 +784,7 @@ accounting for effect~\ref{enm:sojourn_1over2} pushing the waiting times of
 customers of Class 2 up, allowing more time to upgrade them before they reach
 service.
 
-
-
-\section{Modelling Prioritisation Rules with $\Theta$}\label{sec:fitting}
-Often bespoke rules around prioritisation upgrades and downgrades are difficult
-to model, or even unknown. We propose using the model described in
-Section~\ref{sec:system} instead of modelling these bespoke rules, carefully
-choosing an appropriate $\Theta$ that will replicate the behaviour in question.
-This may allow models where other parameters, such as number of servers or
-demand levels, can be changed, and we may observe the affect of these under
-some prioritisation rules, despite not fully being able to understand those
-rules themselves.
-
-Let $\mathbf{X}_{\text{in}}$ be a vector of customer identifiers ordered by
-their arrival dates, and $\mathbf{A}$ be their exact arrival dates. Now let
-$\mathbf{X}_{\text{out}}$ be a vector of customer identifiers ordered by their
-service dates. The transform $\mathbf{X}_{\text{out}} = f\left(
-\mathbf{X}_{\text{in}}, \mathbf{A}, \Theta \right)$ represents the reordering of
-the customers when they go through the prioritisation and re-prioritisation
-process described in Section~\ref{sec:system}, given the unknown parameter
-$\Theta$. The transform $f$ can be approximated using the simulation framework
-outlined in Section~\ref{sec:simulation}.
-
-We aim to find an estimate, $\hat{\Theta}$, that approximates $f\left(
-\mathbf{X}_{\text{in}}, \mathbf{A}, \hat{\Theta} \right)$ as close to
-$\mathbf{X}_{\text{out}}$ as possible. We can measure the difference between the
-two orderings by using Kendall's Tau measure \cite{kendall38}, which ranges
-between 1, denoting identical orderings, and -1, denoting reversed orderings.
-If comparing the input ordering to many orderings, e.g. many trials of a
-simulation, then we can simply take the average Kendall Tau \cite{hays60}.
-We can then use a gradient-free optimiser to find $\hat{\Theta}$ that maximises
-this measure.
-
-
-\subsection{Proof of Concept}
-\todo[inline]{Use Ciw 3.0's service disciplines to generate data based on
-arbitrary rules, and see if we can find appropriate $\Theta$.}
-
-\subsection{Case Study}
-\todo[inline]{Use this to model surgery data, where surgeons use unknown
-prioritisation rules. With data from Lizzie.}
+\section{Experimental Validation}\label{sec:validation}
 
 
 \bibliographystyle{plain}
