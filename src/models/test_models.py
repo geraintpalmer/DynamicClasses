@@ -1031,7 +1031,7 @@ def test_find_hitting_probs():
     assert round(probs[5], 6) == 0.263158
 
 
-def build_state_space_and_transition_matrix(boundary):
+def build_state_space_and_transition_matrix_sojourn(boundary):
     classes = 2
     num_of_servers = 2
     arrival_rates = [1, 2]
@@ -1052,54 +1052,88 @@ def build_state_space_and_transition_matrix(boundary):
     )
     return state_space, transition_matrix
 
+def build_state_space_and_transition_matrix_state(boundary):
+    classes = 2
+    num_of_servers = 2
+    arrival_rates = [1, 2]
+    service_rates = [5, 8]
+    thetas = [[None, 1], [10, None]]
+    state_space = models.write_state_space_for_states(
+        num_classes=classes, bound=boundary
+    )
+    transition_matrix = models.write_transition_matrix(
+        State_Space=state_space,
+        transition_function=models.find_transition_rates_for_states,
+        non_zero_pair_function=models.get_all_pairs_of_non_zero_entries_states,
+        num_servers=num_of_servers,
+        arrival_rates=arrival_rates,
+        service_rates=service_rates,
+        thetas=thetas,
+        bound=boundary,
+    )
+    return state_space, transition_matrix
 
-def test_bound_check_bound_increase():
-    expected = [False, False, False, False, False, False, True, True, True, True]
-    for i, boundary in enumerate(range(5, 15)):
-        state_space, transition_matrix = build_state_space_and_transition_matrix(
-            boundary=boundary
+def test_get_relative_prob_at_boundary():
+    boundary = 4
+    state_space_S, transition_matrix_S = build_state_space_and_transition_matrix_state(
+        boundary=boundary
+    )
+    probs = models.solve_probabilities(state_space_S, transition_matrix_S)
+    relative_prob = models.get_relative_prob_at_boundary(
+        probs, boundary
+    )
+    assert round(relative_prob, 6) == 0.026011
+
+def test_relative_prob_decreases_with_b():
+    relative_probs = []
+    for b in range(2, 7):
+        state_space_S, transition_matrix_S = build_state_space_and_transition_matrix_state(
+            boundary=b
         )
-        condition = models.bound_check(
-            state_space, transition_matrix, boundary, 0.8, 0.01
+        probs = models.solve_probabilities(state_space_S, transition_matrix_S)
+        relative_prob = models.get_relative_prob_at_boundary(probs, b)
+        relative_probs.append(relative_prob)
+    assert round(relative_probs[0], 6) == 0.444444
+    assert round(relative_probs[1], 6) == 0.081691
+    assert round(relative_probs[2], 6) == 0.026011
+    assert round(relative_probs[3], 6) == 0.008779
+    assert round(relative_probs[4], 6) == 0.002951
+
+def test_get_probability_of_hitting_boundary():
+    boundary = 4
+    arrival_rates = [1, 2]
+    state_space_S, transition_matrix_S = build_state_space_and_transition_matrix_state(
+        boundary=boundary
+    )
+    probs = models.solve_probabilities(state_space_S, transition_matrix_S)
+    state_space_Z, transition_matrix_Z = build_state_space_and_transition_matrix_sojourn(
+        boundary=boundary
+    )
+    prob_hit_boundary = models.get_probability_of_hitting_boundary(
+        state_space_Z, transition_matrix_Z, boundary, arrival_rates, probs
+    )
+    assert round(prob_hit_boundary, 6) == 0.019527
+
+def test_bound_prob_hit_bound_decreases_with_b():
+    probs_hit_boundary = []
+    for b in range(2, 7):
+        arrival_rates = [1, 2]
+        state_space_S, transition_matrix_S = build_state_space_and_transition_matrix_state(
+            boundary=b
         )
-        assert condition == expected[i], (boundary, i)
-
-
-def test_bound_check_reasonable_ratio_increase():
-    expected = [
-        True,
-        True,
-        True,
-        True,
-        True,
-        True,
-        True,
-        True,
-        True,
-        False,
-        False,
-        False,
-        False,
-        False,
-        False,
-        False,
-    ]
-    for i, ratio in enumerate(np.arange(0.6, 0.9, 0.02)):
-        state_space, transition_matrix = build_state_space_and_transition_matrix(
-            boundary=9
+        probs = models.solve_probabilities(state_space_S, transition_matrix_S)
+        state_space_Z, transition_matrix_Z = build_state_space_and_transition_matrix_sojourn(
+            boundary=b
         )
-        condition = models.bound_check(state_space, transition_matrix, 9, ratio, 0.01)
-        assert condition == expected[i]
-
-
-def test_bound_check_epsilon_decrease():
-    expected = [False, False, False, False, True, True, True, True, True]
-    for i, epsilon in enumerate(np.arange(0.01, 0.055, 0.005)):
-        state_space, transition_matrix = build_state_space_and_transition_matrix(
-            boundary=9
+        prob_hit_boundary = models.get_probability_of_hitting_boundary(
+            state_space_Z, transition_matrix_Z, b, arrival_rates, probs
         )
-        condition = models.bound_check(state_space, transition_matrix, 9, 0.88, epsilon)
-        assert condition == expected[i]
+        probs_hit_boundary.append(prob_hit_boundary)
+    assert round(probs_hit_boundary[0], 6) == 0.518519
+    assert round(probs_hit_boundary[1], 6) == 0.07572
+    assert round(probs_hit_boundary[2], 6) == 0.019527
+    assert round(probs_hit_boundary[3], 6) == 0.005312
+    assert round(probs_hit_boundary[4], 6) == 0.001517
 
 
 def test_num_of_customers_from_state_probs():
@@ -1302,7 +1336,7 @@ def test_get_mean_sojourn_times_using_simulation():
 
 def test_write_row_markov():
     """
-    Tests the write row function ising the Markov chain.
+    Tests the write row function using the Markov chain.
     Tests if the bound iterates correctly.
 
     We know that the following parameters:
@@ -1312,9 +1346,8 @@ def test_write_row_markov():
         num_servers=2
         thetas=[[None, 1], [1, None]]
     and the following hyperparameters:
-        reasonable_ratio=0.6
         epsilon=0.01
-    needs a bound of 11.
+    needs a bound of 12.
     """
     # Tests it reaches and stops at 11 when using steps of 1
     row = models.write_row_markov(
@@ -1326,10 +1359,9 @@ def test_write_row_markov():
         bound_initial=5,
         bound_final=16,
         bound_step=1,
-        reasonable_ratio=0.6,
         epsilon=0.01,
     )
-    assert row[0] == 11
+    assert row[0] == 12
     assert row[-1] < 0.01
     assert all(r is not None for r in row[11:-2])
 
@@ -1343,7 +1375,6 @@ def test_write_row_markov():
         bound_initial=4,
         bound_final=20,
         bound_step=3,
-        reasonable_ratio=0.6,
         epsilon=0.01,
     )
     assert row[0] == 13
@@ -1360,7 +1391,6 @@ def test_write_row_markov():
         bound_initial=13,
         bound_final=17,
         bound_step=1,
-        reasonable_ratio=0.6,
         epsilon=0.01,
     )
     assert row[0] == 13
@@ -1377,7 +1407,6 @@ def test_write_row_markov():
         bound_initial=5,
         bound_final=9,
         bound_step=1,
-        reasonable_ratio=0.6,
         epsilon=0.01,
     )
     assert row[0] == 9

@@ -595,6 +595,15 @@ def compare_mc_to_sim_sojourn(
     return {"Markov Chain": mean_sojourn_times_mc, "Simulation": mean_sojourn_times_sim}
 
 
+def get_relative_prob_at_boundary(probs, boundary):
+    """
+    Gets the steady state probability of being at the boundary,
+    relative to all states being uniform.
+    """
+    boundary_probs = [probs[s] for s in probs.keys() if (boundary - 1) in s]
+    return sum(boundary_probs) * len(probs) / len(boundary_probs)
+
+
 def find_hitting_probs(state_space, transition_matrix, boundary_region):
     """
     Finds the maximum probability of ever reaching a state in the boundary_region
@@ -622,11 +631,11 @@ def find_hitting_probs(state_space, transition_matrix, boundary_region):
     return hitting_probabilities
 
 
-def get_maximum_hitting_probs(
-    state_space, transition_matrix, boundary, reasonable_ratio
+def get_probability_of_hitting_boundary(
+    state_space, transition_matrix, boundary, arrival_rates, probs,
 ):
     """
-    Gets the maximum hitting probability within the reasonable region
+    Gets the probability of hitting the boundary
     """
     boundary_region = [
         state for state in state_space if state != "*" if (boundary - 1) in state
@@ -636,59 +645,12 @@ def get_maximum_hitting_probs(
         transition_matrix=transition_matrix,
         boundary_region=boundary_region,
     )
-    reasonable_region = [
-        state
-        for state in state_space
-        if state != "*"
-        if sum(s for s in state[:-1]) + 1 <= (boundary * reasonable_ratio)
-    ]
-    return max([hitting_probs[state] for state in reasonable_region])
-
-
-def bound_check(
-    state_space,
-    transition_matrix,
-    boundary,
-    reasonable_ratio,
-    epsilon,
-    max_hitting_prob=None,
-):
-    """
-    Bound check for absorbing Markov chains. Checks wherther the maximum hitting
-    probability for within the reasonable region to the boundary region is less
-    than epsilon. This assumes that the Markov chain has a specific structure,
-    where the head is the absorbing state and all other states go further away
-    from the absorbing state as the elements of the states increase towards the
-    boundary.
-
-    Parameters
-    ----------
-    state_space : list
-        List of states where each state is a tuple of numbers and the absorbing
-        state is the first element of the list. The last number is a label
-        representing what state you are currently in and does not contribute
-        towards the distance from the absorbing state.
-    transition_matrix : np.array
-        Transition matrix for the state space.
-    boundary : int
-        The largest element of any state.
-    reasonable_ratio : float [0, 1]
-        The ratio of the of the state space that is considered in the reasonable
-        region.
-    epsilon : float > 0
-        The tolerance for which the condition is satisfied.
-
-    Returns
-    -------
-    bool
-        True if the condition is satisfied.
-    """
-    if max_hitting_prob is None:
-        max_hitting_prob = get_maximum_hitting_probs(
-            state_space, transition_matrix, boundary, reasonable_ratio
-        )
-    condition = max_hitting_prob < epsilon
-    return condition
+    return sum(
+        [
+            (arrival_rates[state[-2]] / sum(arrival_rates)) * probs[state[:-2]] * hitting_probs[state]
+            for state in list(hitting_probs.keys())[:-1] if state[-2] == 0
+        ]
+    )
 
 
 def get_mean_sojourn_times(
@@ -856,7 +818,7 @@ def get_mean_sojourn_times_using_simulation(
         for class_id in range(num_classes)
     ]
 
-    overall_mean_sojour_time = np.mean(
+    overall_mean_sojourn_time = np.mean(
         [
             q.waiting_time + q.service_time
             for q in Q.get_all_records()
@@ -865,7 +827,7 @@ def get_mean_sojourn_times_using_simulation(
         ]
     )
 
-    return mean_sojourn_time_by_class + [overall_mean_sojour_time]
+    return mean_sojourn_time_by_class + [overall_mean_sojourn_time]
 
 
 def get_simulation_performance_measures(
@@ -1078,7 +1040,6 @@ def write_row_markov(
     bound_initial,
     bound_final,
     bound_step,
-    reasonable_ratio,
     epsilon,
 ):
     """
@@ -1087,7 +1048,6 @@ def write_row_markov(
     The generated row consists of the following values:
 
         Boundary,
-        Reasonable ratio,
         Epsilon,
         Number of classes,
         Arrival rates,
@@ -1100,7 +1060,8 @@ def write_row_markov(
         Variance of the number of customers waiting,
         Probability of the system being empty,
         Mean sojourn time,
-        Maximum hitting probability
+        Relative probability at boundary,
+        Probabilty of hitting boundary,
 
     """
     mean_custs = [None] * (num_classes + 1)
@@ -1125,20 +1086,23 @@ def write_row_markov(
             thetas=thetas,
             bound=bound,
         )
-        max_hitting_probs = get_maximum_hitting_probs(
+        probs = get_state_probabilities(
+            num_classes=num_classes,
+            num_servers=num_servers,
+            arrival_rates=arrival_rates,
+            service_rates=service_rates,
+            thetas=thetas,
+            bound=bound,
+        )
+        relative_prob_at_boundary = get_relative_prob_at_boundary(probs, bound)
+        prob_hit_boundary = get_probability_of_hitting_boundary(
             state_space=state_space_sojourn,
             transition_matrix=transition_matrix_sojourn,
             boundary=bound,
-            reasonable_ratio=reasonable_ratio,
+            arrival_rates=arrival_rates,
+            probs=probs,
         )
-        sufficient_bound = bound_check(
-            state_space=None,
-            transition_matrix=None,
-            boundary=None,
-            reasonable_ratio=None,
-            epsilon=epsilon,
-            max_hitting_prob=max_hitting_probs,
-        )
+        sufficient_bound = max(relative_prob_at_boundary, prob_hit_boundary) < epsilon
         if sufficient_bound:
             state_probs = get_state_probabilities(
                 num_classes=num_classes,
@@ -1169,7 +1133,6 @@ def write_row_markov(
 
     return [
         bound,
-        reasonable_ratio,
         epsilon,
         num_classes,
         *arrival_rates,
@@ -1182,5 +1145,6 @@ def write_row_markov(
         *variance_waiting,
         *empty_probs,
         *mean_sojourn_times,
-        max_hitting_probs,
+        relative_prob_at_boundary,
+        prob_hit_boundary,
     ]
