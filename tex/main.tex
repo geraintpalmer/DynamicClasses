@@ -23,10 +23,8 @@
 \usetikzlibrary{decorations.text}
 \usetikzlibrary{arrows.meta}
 
-\usepackage{todonotes} %% for TODO notes
 
-
-\newtheorem{theorem}{Theorem}
+\newtheorem{prop}{Proposition}
 
 
 \title{Modelling Queues Where Customers Randomly Change Priority Classes While Waiting}
@@ -79,6 +77,8 @@ one useful for considering customers' statistics such as average sojourn time.
 Section~\ref{sec:bound} explores a bounded approximation for numerically
 tractable analysis, and gives guidelines on choosing a large enough bound so as
 to sufficiently approximate an unbounded system.
+Section~\ref{sec:stationary} explores the existence or otherwise of systems that
+can reach steady state.
 Section~\ref{sec:behaviour} presents results from numerical experiments that
 give insight into the behaviour of the system under various parameters.
 Section~\ref{sec:validation} experimentally justifies the use of these models
@@ -511,47 +511,17 @@ $b$ needs to be larger before it can be considered irrelevant.
 \end{figure}
 
 
-\section{Effect of Parameters on System Behaviour}\label{sec:behaviour}
-In order to explore the effect that the parameters have on system behaviour,
-numerical experiments we run. Table~\ref{tbl:parameter_sweep} gives the ranges
-of value for which simulation experiments were run. These experiments will be
-used to explore the models in the next subsections. For these simulations,
-upgraded individuals pre-empt individuals of a less prioritised class, and these
-pre-empted individuals have their service time re-sampled.
-
-\begin{table}
-\begin{center}
-\begin{tabular}{ll}
-\toprule
-Parameters & Values \\
-\midrule
-$\Lambda_1$ & $1$ \\
-$\Lambda_2$ & $\sfrac{1}{2}$, $\sfrac{2}{3}$, $1$, $\sfrac{3}{2}$, $2$ \\
-$\mu_1$ & $\sfrac{1}{2}$, $1$, $2$, $3$, $4$ \\
-$\mu_2$ & $\sfrac{1}{2}$, $1$, $2$, $3$, $4$ \\
-$\theta_{12}$ & $\sfrac{1}{2}$, $\sfrac{2}{3}$, $1$, $\sfrac{3}{2}$, $2$ \\
-$\theta_{21}$ & $\sfrac{1}{2}$, $\sfrac{2}{3}$, $1$, $\sfrac{3}{2}$, $2$ \\
-$c$ & $1$, $2$, $3$ \\
-\bottomrule
-\end{tabular}
-\caption{Table of parameters explored, for two classes of customer. Simulations
-         were run for $5000$ time units, with a warm-up time of $200$ and cool
-         down time of $200$ time units.}
-\label{tbl:parameter_sweep}
-\end{center}
-\end{table}
 
 
 
-\subsection{Existence of Stationary Distributions}\label{sec:stationary}
-A key difference between using a bounded approximation to analysing infinite
-Markov chains is the existence of stationary distributions. All bounded
-approximations have steady state distributions, even if the corresponding
-infinite Markov chain does not, leading to spurious results in these cases.
-Theorem~\ref{thrm:steadystate} gives a naive check for the existence or
-non-existence of steady states, but does not cover all possibilities.
 
-\begin{theorem}\label{thrm:steadystate}
+\section{Existence of Stationary Distributions}\label{sec:stationary}
+It is useful to know whether a dynamic classes system is stationary, that is,
+will it reach steady state or not. Proposition~\ref{thrm:steadystate} gives a
+naive check for the existence or non-existence of steady states, but does not
+cover all possibilities.
+
+\begin{prop}\label{thrm:steadystate}
 For an $M/M/c$ work conserving queue with $K$ classes of customer, with arrival
 rate and service rate $\lambda_k$ and  $\mu_k$ for customers of class $k$,
 respectively; then
@@ -561,7 +531,7 @@ respectively; then
   \item it will never reach steady state if
   $\rho_{\min} = \frac{\sum_i \lambda_i}{c \max_i \mu_i} \geq 1$.
 \end{enumerate}
-\end{theorem}
+\end{prop}
 
 Note that this result does not assume any particular service discipline such as
 first-in-first-out or prioritised classes, but holds for any work conserving
@@ -610,7 +580,7 @@ effect. Alternatively if the rate at which customers of the other classes change
 to that class is large, then that slow service rate could be a bottleneck for
 the system.
 
-We can however approximately test if a system reaches steady state or not using
+We can however approximately test if a system is stationary or not using
 simulation. Consider the time series $x(t)$, representing the total number of
 customers in the system at time $t$. In Ciw, this can be empirically recorded
 using a state tracker object. If the system reaches steady state, then the
@@ -618,7 +588,6 @@ $x(t)$ will be stochastic with non-increasing trend, therefore it would be a
 stationary time series. Conversely, if the system does not reach steady state,
 then $x(t)$ will be stochastic with increasing trend, therefore it would be a
 non-stationary time series.
-
 The Augmented Dicky-Fuller (ADF) test \cite{dickyfuller79} tests for the
 non-stationarity of a stochastic time series, and so can be utilised here to
 test if a simulation has reached steady state or not. Note here that the time
@@ -628,14 +597,14 @@ requires regularly spaced time stamps; therefore the Traces library
 \cite{traces} is used to take regularly-spaced moving averages before the
 hypothesis test is undertaken.
 
-Consider two examples:
+To demonstrate this, consider two examples:
 
 \begin{itemize}
   \item Example 1, that is guaranteed to reach steady state by
-  Theorem~\ref{thrm:steadystate}: $\lambda_1 = 2$, $\lambda_2 = 1$,
+  Proposition~\ref{thrm:steadystate}: $\lambda_1 = 2$, $\lambda_2 = 1$,
   $\mu_1 = 4$, $\mu_2 = 4$, $\theta_{12} = 1$, $\theta_{21} = 1$, $c = 1$;
   \item Example 2, that is guaranteed not to reach steady state by
-  Theorem~\ref{thrm:steadystate}: $\lambda_1 = 2$, $\lambda_2 = 1$,
+  Proposition~\ref{thrm:steadystate}: $\lambda_1 = 2$, $\lambda_2 = 1$,
   $\mu_1 = 1$, $\mu_2 = 1$, $\theta_{12} = 1$, $\theta_{21} = 1$, $c = 2$.
 \end{itemize}
 
@@ -663,62 +632,86 @@ gives a p-value of 0.0004, rejecting the null hypothesis that the time series is
 non-stationary, while Example 2 gives a p-value of 0.9961, and the null
 hypothesis cannot be rejected.
 
-This test is evidenced by the parameter sweep: Table~\ref{tbl:adf_pvals} gives
-the percentage of experiments with an ADF p-value less than a given value, for
-all those experiments with parameters that do or do not reach steady state
-according to Theorem~\ref{thrm:steadystate}. We see that all those that reach
-steady state produce low p-values, while very small proportions of those that
-do not reach steady state have low p-values, as expected from hypothesis
-testing.
+There is a gap in Proposition~\ref{thrm:steadystate} for systems where
+$c \min_i \mu_i \leq \sum_i \lambda_i < c \max_i \mu_i$. This is where the
+dynamic priority classes can influence the stationarity of the system. Consider
+a two class system with $\lambda_1 = 2$, $\lambda_2 = 2$, $c = 1$. For the
+service rates of each customer class, consider two cases:
 
-\begin{table}
-\begin{center}
-\begin{tabular}{rrr}
-\toprule
-p-Value Threshold & Does Not Reach Steady state & Reaches Steady State \\
-\midrule
-0.001 & 0.75\% & 100\% \\
-0.005 & 1.25\% & 100\% \\
-0.01 & 1.44\% & 100\% \\
-0.05 & 3.38\% & 100\% \\
-0.1 & 5.25\% & 100\% \\
-\bottomrule
-\end{tabular}
-\caption{ADF test p-Values from numerical experiments for parameters sets that
-do and do not reach steady state according to Theorem~\ref{thrm:steadystate}.} 
-\label{tbl:adf_pvals}
-\end{center}
-\end{table}
+\begin{itemize}
+  \item $\mu_1 = 3$ and $\mu_2 = 5$: here $\rho_{\text{max}} > 1$ and
+  $\rho_{\text{min}} < 1$, and the prioritised class receive a slower
+  service rate;
+  \item $\mu_1 = 5$ and $\mu_2 = 3$: here $\rho_{\text{max}} > 1$ and
+  $\rho_{\text{min}} < 1$, and the prioritised class receive a faster
+  service rate.
+\end{itemize}
 
-This evidences that the p-value of the ADF test can be confidently used to
-determine if a parameter set is able to reach steady state or not.
-Figure~\ref{fig:adf_parametersweep} shows the mean and maximum ADF p-values
-obtained across the parameter sweep for pairs of $\rho_{\text{min}}$ or
-$\rho_{\text{max}}$, and $\Delta\theta = \theta_{12} - \theta_{21}$.
-This gives a strong indication that $\Delta\theta$ has no effect on whether
-the system reaches steady state, and thus the rate at which customers change
-class is of no consequence. It also heavily indicates that the condition for
-reaching steady state is simply $\rho_{\max} < 1$.
+In each of these cases, we can consider three other cases pertaining to the
+class change rate matrix $\Theta$:
+
+\begin{itemize}
+  \item $\theta_{12} = 1$ and $\theta_{21} = 0$: downgrades but no upgrades;
+  \item $\theta_{12} = 1$ and $\theta_{21} = 1$: bother downgrades and upgrades;
+  \item $\theta_{12} = 0$ and $\theta_{21} = 1$: upgrades but no upgrades.
+\end{itemize}
+
+All these cases are not covered by Proposition~\ref{thrm:steadystate}, so we
+experimentally investigate their stationarity using the Ciw simulation and ADF
+test. Figure~\ref{fig:adf_gap} shows the results. Here we see that three of the
+six cases are stationary, (a), (e), and (f), while the others are not. In all
+three we see that there is possibility of a customer from the class with the
+slower service rate transitioning to a class with the quicker service rate. In
+two of the non-stationary cases, (c) and (d), customers with the slower service
+rate have no possibility of transitioning out of their class, and so the queue
+builds up indefinitely.
+It is interesting to compare cases (b) and (e), in which both customer classes
+can transition to the other customer class. Here one case is stationary, and the
+other is non-stationary, with the only difference being whether the prioritised
+class has the quicker service rate or not. This evidences the interesting
+interplay between service rate, priority class, and class change rates.
 
 \begin{figure}[!htbp]
   \begin{center}
-  \begin{subfigure}[b]{\textwidth}
-    \includegraphics[width=\textwidth]{img/mean_adf.pdf}
-    \caption{Mean ADF.}
-  \end{subfigure}
-  \begin{subfigure}[b]{\textwidth}
-    \includegraphics[width=\textwidth]{img/max_adf.pdf}
-    \caption{Maximum ADF.}
-  \end{subfigure}
+    \includegraphics[width=\textwidth]{img/adf_theorem_gap.pdf}
+    \caption{Investigating the stationarity under six cases not covered by
+    Proposition~\ref{thrm:steadystate}.}
+    \label{fig:adf_gap}
   \end{center}
-  \caption{ADF p-values obtained across the parameter sweep, by
-  $\rho_{\text{min}}$ or $\rho_{\text{max}}$, and
-  $\Delta\theta = \theta_{12} - \theta_{21}$ pairs.}
-  \label{fig:adf_parametersweep}
 \end{figure}
 
 
-\subsection{Effect of $\Theta$ on Customer Experience}
+\section{Effect of $\Theta$ on Customer Experience}\label{sec:behaviour}
+In order to explore the effect that the parameters have on system behaviour and
+customer experience, numerical experiments we run.
+Table~\ref{tbl:parameter_sweep} gives the ranges of value for which simulation
+experiments were run. These experiments will be used to explore the models in
+the next subsections. For these simulations, upgraded individuals pre-empt
+individuals of a less prioritised class, and these pre-empted individuals have
+their service time re-sampled.
+
+\begin{table}
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Parameters & Values \\
+\midrule
+$\Lambda_1$ & $1$ \\
+$\Lambda_2$ & $\sfrac{1}{2}$, $\sfrac{2}{3}$, $1$, $\sfrac{3}{2}$, $2$ \\
+$\mu_1$ & $\sfrac{1}{2}$, $1$, $2$, $3$, $4$ \\
+$\mu_2$ & $\sfrac{1}{2}$, $1$, $2$, $3$, $4$ \\
+$\theta_{12}$ & $\sfrac{1}{2}$, $\sfrac{2}{3}$, $1$, $\sfrac{3}{2}$, $2$ \\
+$\theta_{21}$ & $\sfrac{1}{2}$, $\sfrac{2}{3}$, $1$, $\sfrac{3}{2}$, $2$ \\
+$c$ & $1$, $2$, $3$ \\
+\bottomrule
+\end{tabular}
+\caption{Table of parameters explored, for two classes of customer. Simulations
+         were run for $5000$ time units, with a warm-up time of $200$ and cool
+         down time of $200$ time units.}
+\label{tbl:parameter_sweep}
+\end{center}
+\end{table}
+
 Figure~\ref{fig:theta_effect} shows the effect of $\Theta$ on the number of
 customers and sojourn times, broken down by customer class. For each
 $\theta_{12}$, $\theta_{21}$ pair, the plots show the average number of
@@ -738,9 +731,7 @@ more customers are being upgraded than downgraded, then:
   \item \label{enm:sojourn_pronounced} this effect is more pronounced for customers of Class 2 than Class 1;
 \end{enumerate}
 
-
 also, as $\theta_{21}$ increases, independent of $\theta_{12}$
-
 
 \begin{enumerate}[resume]
   \item \label{enm:custs} the overall number of customers present increases.
@@ -783,6 +774,7 @@ This is more pronounced (effect~\ref{enm:sojourn_pronounced}), as it is
 accounting for effect~\ref{enm:sojourn_1over2} pushing the waiting times of
 customers of Class 2 up, allowing more time to upgrade them before they reach
 service.
+
 
 \section{Experimental Validation}\label{sec:validation}
 
