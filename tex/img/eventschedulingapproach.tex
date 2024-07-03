@@ -11,35 +11,41 @@
 
 \begin{tikzpicture}
 
-\node[align=center] (start) [style={minimum size=2cm, text width=1.8cm, draw=black,fill=black!10,text=black,shape=circle}] at (0, 19) {Start};
-\node[align=center] (initial) [style={minimum width=5cm, minimum height=1cm, text width=4.8cm, draw=black,fill=black!10,text=black,shape=rectangle}] at (0, 16.5) {\small{Initialise Simulation}};
-\node[align=center] (Aphase) [style={minimum width=5cm, minimum height=1cm, text width=4.8cm, draw=black,fill=black!10,text=black,shape=rectangle}] at (0, 14.5) {\small{\textbf{A}-Phase}};
-\node[align=center] (Bphase) [style={minimum width=5cm, minimum height=1cm, text width=4.8cm, draw=black,fill=black!10,text=black,shape=rectangle}] at (0, 12.5) {\small{\textbf{B}-Phase}};
-\node[align=center] (Cphase) [style={minimum width=5cm, minimum height=1cm, text width=4.8cm, draw=black,fill=black!10,text=black,shape=rectangle}] at (0, 10.5) {\small{\textbf{C}-Phase}};
-\node[align=center] (anymoreC) [style={minimum size=2cm, text width=1.8cm, draw=black,fill=black!10,text=black,shape=diamond, aspect=2}] at (0, 8) {\small{Any more \textbf{C}-Events?}};
-\node[align=center] (anymoreB) [style={minimum size=2cm, text width=1.8cm, draw=black,fill=black!10,text=black,shape=diamond, aspect=2}] at (0, 5) {\small{Any more \textbf{B}-Events?}};
-\node[align=center] (isend) [style={minimum size=2cm, text width=1.8cm, draw=black,fill=black!10,text=black,shape=diamond, aspect=2}] at (0, 2) {\small{Simulation Complete?}};
-\node[align=center] (stop) [style={minimum size=2cm, text width=1.8cm, draw=black,fill=black!10,text=black,shape=circle}] at (0, -1) {\small{Stop}};
+\node[align=center] (start) [style={minimum size=2cm, text width=1.8cm, draw=black,fill=black!5,text=black,shape=ellipse}] at (0, 7) {\large{Start}};
 
-\draw[ultra thick, -triangle 90] (start) -- (initial);
-\draw[ultra thick, -triangle 90] (initial) -- (Aphase);
-\draw[ultra thick, -triangle 90] (Aphase) -- (Bphase);
-\draw[ultra thick, -triangle 90] (Bphase) -- (Cphase);
-\draw[ultra thick, -triangle 90] (Cphase) -- (anymoreC);
-\draw[ultra thick, -triangle 90] (anymoreC) -- (anymoreB);
-\draw[ultra thick, -triangle 90] (anymoreB) -- (isend);
-\draw[ultra thick, -triangle 90] (isend) -- (stop);
 
-\draw[ultra thick, -triangle 90] (anymoreC) -- (-4, 8) -- (-4, 10.5) -- (Cphase);
-\draw[ultra thick, -triangle 90] (anymoreB) -- (-4.75, 5) -- (-4.75, 12.5) -- (Bphase);
-\draw[ultra thick, -triangle 90] (isend) -- (-5.5, 2) -- (-5.5, 14.5) -- (Aphase);
+\node[align=center] (initial) [style={minimum width=3.5cm, minimum height=1cm, text width=4cm, draw=black,fill=black!5,text=black,shape=rectangle}] at (0, 4) {\small{Initialise Simulation}};
 
-\node at (0.5, 6.8) {No};
-\node at (-5, 2.5) {No};
-\node at (0.5, 3.8) {No};
-\node at (-3.5, 8.5) {Yes};
-\node at (-4.25, 5.5) {Yes};
-\node at (0.5, 0.8) {Yes};
+\node[align=center] (Aphase) [style={minimum width=3.5cm, minimum height=1cm, text width=4cm, draw=black,fill=black!5,text=black,shape=rectangle}] at (7, 4) {\large{\textbf{A}-Phase}};
+\node[align=center] (Bphase) [style={minimum width=3.5cm, minimum height=1cm, text width=4cm, draw=black,fill=black!5,text=black,shape=rectangle}] at (14, 4) {\large{\textbf{B}-Phase}};
+\node[align=center] (Cphase) [style={minimum width=3.5cm, minimum height=1cm, text width=4cm, draw=black,fill=black!5,text=black,shape=rectangle}] at (21, 4) {\large{\textbf{C}-Phase}};
+
+\node[align=center] (anymoreC) [style={minimum size=2cm, text width=1.8cm, draw=black,fill=black!5,text=black,shape=diamond, aspect=2}] at (21, 0) {\small{Any more \textbf{C}-Events?}};
+\node[align=center] (anymoreB) [style={minimum size=2cm, text width=1.8cm, draw=black,fill=black!5,text=black,shape=diamond, aspect=2}] at (14, 0) {\small{Any more \textbf{B}-Events?}};
+\node[align=center] (isend) [style={minimum size=2cm, text width=1.8cm, draw=black,fill=black!5,text=black,shape=diamond, aspect=2}] at (7, 0) {\small{Simulation Complete?}};
+
+\node[align=center] (stop) [style={minimum size=2cm, text width=1.8cm, draw=black,fill=black!5,text=black,shape=ellipse}] at (0, 0) {\large{Stop}};
+
+\draw[draw=none] (0, 0) -- (0, -2);
+
+\draw[thick, -triangle 45] (start) -- (initial);
+\draw[thick, -triangle 45] (initial) -- (Aphase);
+\draw[thick, -triangle 45] (Aphase) -- (Bphase);
+\draw[thick, -triangle 45] (Bphase) -- (Cphase);
+\draw[thick, -triangle 45] (anymoreC) -- (Cphase);
+\draw[thick, -triangle 45] (anymoreC) -- (anymoreB);
+\draw[thick, -triangle 45] (anymoreB) -- (isend);
+\draw[thick, -triangle 45] (isend) -- (stop);
+\draw[thick, -triangle 45] (Cphase) -- (25, 4) -- (25, 0) -- (anymoreC);
+\draw[thick, -triangle 45] (anymoreB) -- (Bphase);
+\draw[thick, -triangle 45] (isend) -- (Aphase);
+
+\node at (3.5, 0.25) {Yes};
+\node at (10.5, 0.25) {No};
+\node at (17.5, 0.25) {No};
+\node at (7.4, 2) {No};
+\node at (14.4, 2) {Yes};
+\node at (21.4, 2) {Yes};
 
 
 
