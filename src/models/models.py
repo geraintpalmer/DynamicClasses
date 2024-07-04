@@ -410,6 +410,7 @@ def build_and_run_simulation(
     class_change_rate_matrix,
     max_simulation_time,
     progress_bar=True,
+    seed=0
 ):
     """
     Builds and runs the simulation. Returns the simulation object after run.
@@ -438,7 +439,7 @@ def build_and_run_simulation(
             ["resample"],
         ),
     )
-    ciw.seed(0)
+    ciw.seed(seed)
     Q = ciw.Simulation(
         N,
         tracker=ciw.trackers.NodeClassMatrix(
