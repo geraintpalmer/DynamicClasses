@@ -49,6 +49,14 @@ if __name__ == "__main__":
         "empt",
         "empted",
         "emption",
+        "emptive",
         "rrr",
+        'Wasserstein',
+        'accuracies',
+        'injective',
+        'memoryless',
+        'surjective',
+        'CAVUHB',
+        "de"
     }
     main(path=path, known_words=known_words)

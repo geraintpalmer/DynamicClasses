@@ -483,8 +483,8 @@ is the probability of ever reaching any state in $J$ when starting from state
 $i$. These are defined recursively by Equation~\ref{eqn:hitting_probs}.
 
 \begin{equation}\label{eqn:hitting_probs}
-h_{iJ} = \begin{cases}
-\sum_k p_{ik} h_{kJ} & \text{if } i \notin J \\
+h_{i,J} = \begin{cases}
+\sum_k p_{i,k} h_{k,J} & \text{if } i \notin J \\
 1 & \text{if } i \in J
 \end{cases}
 \end{equation}
@@ -494,7 +494,7 @@ Section~\ref{sec:sojourn_formulation}, and letting $Z_b \subset Z$ be the set of
 boundary states such that
 $Z_b = \{\underline{\mathbf{z}} \in Z \; | \; b \in \underline{\mathbf{z}}\}$,
 then if a customer arrives to state $i$, the probability of that customer's
-state reaching the boundary is $h_{iS_b}$. Therefore we propose the probability
+state reaching the boundary is $h_{i,S_b}$. Therefore we propose the probability
 of an arriving customer hitting the boundary, $\mathcal{P}(b)$, to be a measure
 of accuracy; if this is sufficiently small, then the bound $b$ is large enough.
 This is calculated in a similar way to the mean sojourn time in
@@ -818,8 +818,8 @@ state, hinting that dynamic priorities were at play here.
 
 According to the observed data referrals roughly follow a Poisson distribution
 with rate 0.463 a day. Service rate data is estimated to be around 0.5
-endoscopies a day. To determine the appropriateness of the dynamic priority
-classes model here, we model the system as a two class system, with
+endoscopy procedures a day. To determine the appropriateness of the dynamic
+priority classes model here, we model the system as a two class system, with
 $\lambda_1 = 0.463$ and $\lambda_2 = 0$, and $\mu_1 = \mu_2 = 0.5$ and $c = 1$,
 that is all referrals are of the most urgent, with customers able to be
 downgraded and then de-downgraded during their waiting time. We simulate this

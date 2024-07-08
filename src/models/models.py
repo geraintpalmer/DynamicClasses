@@ -410,7 +410,7 @@ def build_and_run_simulation(
     class_change_rate_matrix,
     max_simulation_time,
     progress_bar=True,
-    seed=0
+    seed=0,
 ):
     """
     Builds and runs the simulation. Returns the simulation object after run.
@@ -633,7 +633,11 @@ def find_hitting_probs(state_space, transition_matrix, boundary_region):
 
 
 def get_probability_of_hitting_boundary(
-    state_space, transition_matrix, boundary, arrival_rates, probs,
+    state_space,
+    transition_matrix,
+    boundary,
+    arrival_rates,
+    probs,
 ):
     """
     Gets the probability of hitting the boundary
@@ -648,8 +652,11 @@ def get_probability_of_hitting_boundary(
     )
     return sum(
         [
-            (arrival_rates[state[-2]] / sum(arrival_rates)) * probs[state[:-2]] * hitting_probs[state]
-            for state in list(hitting_probs.keys())[:-1] if state[-2] == 0
+            (arrival_rates[state[-2]] / sum(arrival_rates))
+            * probs[state[:-2]]
+            * hitting_probs[state]
+            for state in list(hitting_probs.keys())[:-1]
+            if state[-2] == 0
         ]
     )
 

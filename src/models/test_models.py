@@ -1052,6 +1052,7 @@ def build_state_space_and_transition_matrix_sojourn(boundary):
     )
     return state_space, transition_matrix
 
+
 def build_state_space_and_transition_matrix_state(boundary):
     classes = 2
     num_of_servers = 2
@@ -1073,22 +1074,22 @@ def build_state_space_and_transition_matrix_state(boundary):
     )
     return state_space, transition_matrix
 
+
 def test_get_relative_prob_at_boundary():
     boundary = 4
     state_space_S, transition_matrix_S = build_state_space_and_transition_matrix_state(
         boundary=boundary
     )
     probs = models.solve_probabilities(state_space_S, transition_matrix_S)
-    relative_prob = models.get_relative_prob_at_boundary(
-        probs, boundary
-    )
+    relative_prob = models.get_relative_prob_at_boundary(probs, boundary)
     assert round(relative_prob, 6) == 0.026011
+
 
 def test_relative_prob_decreases_with_b():
     relative_probs = []
     for b in range(2, 7):
-        state_space_S, transition_matrix_S = build_state_space_and_transition_matrix_state(
-            boundary=b
+        state_space_S, transition_matrix_S = (
+            build_state_space_and_transition_matrix_state(boundary=b)
         )
         probs = models.solve_probabilities(state_space_S, transition_matrix_S)
         relative_prob = models.get_relative_prob_at_boundary(probs, b)
@@ -1099,6 +1100,7 @@ def test_relative_prob_decreases_with_b():
     assert round(relative_probs[3], 6) == 0.008779
     assert round(relative_probs[4], 6) == 0.002951
 
+
 def test_get_probability_of_hitting_boundary():
     boundary = 4
     arrival_rates = [1, 2]
@@ -1106,24 +1108,25 @@ def test_get_probability_of_hitting_boundary():
         boundary=boundary
     )
     probs = models.solve_probabilities(state_space_S, transition_matrix_S)
-    state_space_Z, transition_matrix_Z = build_state_space_and_transition_matrix_sojourn(
-        boundary=boundary
+    state_space_Z, transition_matrix_Z = (
+        build_state_space_and_transition_matrix_sojourn(boundary=boundary)
     )
     prob_hit_boundary = models.get_probability_of_hitting_boundary(
         state_space_Z, transition_matrix_Z, boundary, arrival_rates, probs
     )
     assert round(prob_hit_boundary, 6) == 0.019527
 
+
 def test_bound_prob_hit_bound_decreases_with_b():
     probs_hit_boundary = []
     for b in range(2, 7):
         arrival_rates = [1, 2]
-        state_space_S, transition_matrix_S = build_state_space_and_transition_matrix_state(
-            boundary=b
+        state_space_S, transition_matrix_S = (
+            build_state_space_and_transition_matrix_state(boundary=b)
         )
         probs = models.solve_probabilities(state_space_S, transition_matrix_S)
-        state_space_Z, transition_matrix_Z = build_state_space_and_transition_matrix_sojourn(
-            boundary=b
+        state_space_Z, transition_matrix_Z = (
+            build_state_space_and_transition_matrix_sojourn(boundary=b)
         )
         prob_hit_boundary = models.get_probability_of_hitting_boundary(
             state_space_Z, transition_matrix_Z, b, arrival_rates, probs
