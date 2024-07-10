@@ -586,11 +586,13 @@ The above check isn't possible for absorbing Markov chains as they will not
 reach steady state, so another check is required. Define $h_{i,J}$ as
 the hitting probabilities of a set of states $J$ from state $i$, that is, what
 is the probability of ever reaching any state in $J$ when starting from state
-$i$. These are defined recursively by Equation~\ref{eqn:hitting_probs}.
+$i$. These are defined recursively by Equation~\ref{eqn:hitting_probs}, where
+$q_{i,k}$ is the transition rate from state $i$ to state $j$ defined in
+Equation~\ref{eqn:transitions_sojourn}.
 
 \begin{equation}\label{eqn:hitting_probs}
 h_{i,J} = \begin{cases}
-\sum_k p_{i,k} h_{k,J} & \text{if } i \notin J \\
+\sum_k q_{i,k} h_{k,J} & \text{if } i \notin J \\
 1 & \text{if } i \in J
 \end{cases}
 \end{equation}
