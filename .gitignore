@@ -11,3 +11,4 @@ slides/*
 *.bbl
 *.blg
 *env/
+*/_minted-main/*

@@ -6,12 +6,14 @@
 \usepackage{booktabs}
 \usepackage{subcaption}
 \usepackage{hyperref}
+\usepackage{xurl}
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amsthm}
 \usepackage{xfrac}
 \usepackage{enumitem}
 \usepackage[table]{xcolor}
+\usepackage{minted}
 \usepackage{tikz}
 \usetikzlibrary{arrows}
 \usetikzlibrary{decorations.pathreplacing}
@@ -23,6 +25,14 @@
 \usetikzlibrary{decorations.text}
 \usetikzlibrary{arrows.meta}
 
+\definecolor{codebg}{RGB}{255, 255, 230}
+\setminted[python]{
+    frame=single,
+    framesep=2mm,
+    bgcolor=codebg,
+    framerule=0.5mm,
+    fontsize=\normalfont,
+}
 
 \newtheorem{prop}{Proposition}
 
@@ -66,81 +76,54 @@ These Markov chains give some insights into the behaviour of the systems under
 different combinations of parameters; and numerical experiments give further
 behaviours.
 
-This paper is structured as follows:
-Section~\ref{sec:system} defines the system under consideration in detail.
-Section~\ref{sec:related} highlights some previous and related work.
-Section~\ref{sec:simulation} discusses the contribution to the Ciw library and
-the logic required to simulate this system.
-Section~\ref{sec:makovchains} defines two Markov chain models of the system, one
-useful for considering system-wide statistics such as state probabilities, and
-one useful for considering customers' statistics such as average sojourn time.
-Section~\ref{sec:bound} explores a bounded approximation for numerically
-tractable analysis, and gives guidelines on choosing a large enough bound so as
-to sufficiently approximate an unbounded system.
-Section~\ref{sec:stationary} explores the existence or otherwise of systems that
-can reach steady state.
-Section~\ref{sec:behaviour} presents results from numerical experiments that
-give insight into the behaviour of the system under various parameters.
-Section~\ref{sec:validation} experimentally justifies the use of these models
-to model scenarios where prioritisation rules are unknown.
+% This paper is structured as follows:
+% Section~\ref{sec:system} defines the system under consideration in detail.
+% Section~\ref{sec:related} highlights some previous and related work.
+% Section~\ref{sec:simulation} discusses the contribution to the Ciw library and
+% the logic required to simulate this system.
+% Section~\ref{sec:makovchains} defines two Markov chain models of the system, one
+% useful for considering system-wide statistics such as state probabilities, and
+% one useful for considering customers' statistics such as average sojourn time.
+% Section~\ref{sec:bound} explores a bounded approximation for numerically
+% tractable analysis, and gives guidelines on choosing a large enough bound so as
+% to sufficiently approximate an unbounded system.
+% Section~\ref{sec:stationary} explores the existence or otherwise of systems that
+% can reach steady state.
+% Section~\ref{sec:behaviour} presents results from numerical experiments that
+% give insight into the behaviour of the system under various parameters.
+% Section~\ref{sec:modelling} experimentally justifies the use of these models
+% to model scenarios where prioritisation rules are unknown.
 
+\subsection{Motivating Case Study}\label{sec:casestudy}
+We consider first attempt to model the queueing process for a particular
+surgical procedure; we consider and investigate the waiting list of a surgical
+endoscopy procedure carried out in the Cardiff and Value University Health Board
+(CAVUHB) over the period 1st January to 31st December 2021.
 
-
-
-
-\section{System Under Consideration}\label{sec:system}
-Consider an $M/M/c$ queue with $K$ classes of customer labelled
-$0, 1, 2, \dots, K-1$.
-Let:
-
-\begin{itemize}
-  \item $\lambda_k$ be the arrival rate of customers of class $k$,
-  \item $\mu_k$ be the service rate of customers of class $k$,
-  \item $\theta_{i,j}$ be the rate at which customers of class $i$ change
-  to customers of class $j$ while they are waiting in line.
-\end{itemize}
-
-Customers of class $i$ have priority over customers of class $j$ if $i < j$.
-Customers of the same class are served in the order they arrived to that class.
-Figure~\ref{fig:twoclass_example} shows an example with two classes of customer.
-
-\begin{figure}
-\begin{center}
-\includestandalone[width=0.7\textwidth]{img/priority_queue}
-\end{center}
-\caption{An example of a two-class priority queue.}
-\label{fig:twoclass_example}
-\end{figure}
-
-The key feature here is the $K \times K$ class change matrix
-$\Theta = (\theta_{i,j})$. All elements $\theta_{i,j}$ where $i \neq j$ are
-rates, and so are non-negative real numbers, if customers of class $i$ cannot
-change to customers of class $j$ directly, then $\theta_{i,j} = 0$. The diagonal
-values $\theta_{i,i}$ are unused as customers cannot change to their own class.
-All elements $\theta_{i,i-1}$ represent the direct upgrade rates; all elements
-$\theta_{i,i+1}$ represent the direct downgrade rates, while all other elements
-can be thought of as `skip-grades`.
-This is shown in Figure~\ref{fig:skipgrades}.
+It is clear from examining the data that a first-in-first-out (FIFO) service
+discipline was not used. To show this, we assign each patient in the data set
+an arrival rank, the order in which they were referred for an endoscopy, and a
+service rank, the order in which they received their endoscopy. The difference
+in the two ranks corresponds to the net number of patients that they `overtook'
+in the queue: a negative number indicates more customers overtook them, that is
+they were `bumped down'the queue; while a positive number indicates that they
+overtook more people, and where `bumped up' the queue. During the observation
+period, 169 patients received an endoscopy, and
+Figure~\ref{fig:motivating_overtakes} shows the distribution of the rank
+differences, and the distribution of waiting times by those who were bumped up
+or down the queue. No patient had a waiting time of zero, indicating that no
+patient was referred to the queue in a prioritised state, hinting that patients
+may have priorities that change over time.
 
 \begin{figure}
-\begin{center}
-\includestandalone[width=0.65\textwidth]{img/skipgrades}
-\end{center}
-\caption{Representations of parts of the matrix $\Theta$. Example when $K=5$.}
-\label{fig:skipgrades}
+  \begin{center}
+    \includegraphics[width=\textwidth]{img/motivating_overtakes.pdf}
+  \end{center}
+  \caption{Distribution of overtakes in a CAVUHB endoscopy waiting list.}
+  \label{fig:motivating_overtakes}
 \end{figure}
 
-The priorities are pre-emptive, that is if a newly arriving customer has a
-higher priority than a customer in service, or if a waiting customer changes
-priority class to a higher priority than a customer is service, then that new
-customer displaces the lowest priority customer that is in service. The
-displaced customer rejoins the queue, before all other customers of their own or
-lower priority classes, but behind all other customers of higher priority
-classes. When that displaced customer eventually enters service again, their
-service time can either be resumed, re-started, or re-sampled.
-
-
-\section{Related Work}\label{sec:related}
+\subsection{Related Work}\label{sec:related}
 Systems of this kind have been investigated previously:
 
 \begin{itemize}
@@ -204,13 +187,110 @@ Systems of this kind have been investigated previously:
 \end{itemize}
 
 
+
+
+\section{System Under Consideration}\label{sec:system}
+Consider an $M/M/c$ queue with $K$ classes of customer labelled
+$0, 1, 2, \dots, K-1$.
+Let:
+
+\begin{itemize}
+  \item $\lambda_k$ be the arrival rate of customers of class $k$,
+  \item $\mu_k$ be the service rate of customers of class $k$,
+  \item $\theta_{i,j}$ be the rate at which customers of class $i$ change
+  to customers of class $j$ while they are waiting in line.
+\end{itemize}
+
+Customers of class $i$ have priority over customers of class $j$ if $i < j$.
+Customers of the same class are served in the order they arrived to that class.
+Figure~\ref{fig:twoclass_example} shows an example with two classes of customer.
+
+\begin{figure}
+\begin{center}
+\includestandalone[width=0.7\textwidth]{img/priority_queue}
+\end{center}
+\caption{An example of a two-class priority queue.}
+\label{fig:twoclass_example}
+\end{figure}
+
+The key feature here is the $K \times K$ class change matrix
+$\Theta = (\theta_{i,j})$. All elements $\theta_{i,j}$ where $i \neq j$ are
+rates, and so are non-negative real numbers, if customers of class $i$ cannot
+change to customers of class $j$ directly, then $\theta_{i,j} = 0$. The diagonal
+values $\theta_{i,i}$ are unused as customers cannot change to their own class.
+All elements $\theta_{i,i-1}$ represent the direct upgrade rates; all elements
+$\theta_{i,i+1}$ represent the direct downgrade rates, while all other elements
+can be thought of as `skip-grades`.
+This is shown in Figure~\ref{fig:skipgrades}.
+
+\begin{figure}
+\begin{center}
+\includestandalone[width=0.65\textwidth]{img/skipgrades}
+\end{center}
+\caption{Representations of parts of the matrix $\Theta$. Example when $K=5$.}
+\label{fig:skipgrades}
+\end{figure}
+
+The priorities are pre-emptive, that is if a newly arriving customer has a
+higher priority than a customer in service, or if a waiting customer changes
+priority class to a higher priority than a customer is service, then that new
+customer displaces the lowest priority customer that is in service. The
+displaced customer rejoins the queue, before all other customers of their own or
+lower priority classes, but behind all other customers of higher priority
+classes. When that displaced customer eventually enters service again, their
+service time can either be resumed, re-started, or re-sampled.
+
+The next two sections outline and compare a discrete devent simulation and
+Markov chain formulations for modelling this setup.
+
+
+
 \section{Simulation Model Logic}\label{sec:simulation}
 The Ciw library \cite{palmer19} is an open-source Python library for
 discrete-event simulation of open queueing networks. A key contribution of this
 work is the adaptation of the library's logic to facilitate the type of
 dynamically changing priority classes described in Section~\ref{sec:system}.
-This adaptation is released in version Ciw v2.3.0, with usage documentation at
-\url{https://ciw.readthedocs.io/en/latest/Guides/change-class-while-queueing.html}.
+This adaptation was first released in version Ciw v2.3.0, with usage
+documentation at
+\url{https://ciw.readthedocs.io/en/latest/Guides/CustomerClasses/change-class-while-queueing.html}.
+Figure~\ref{fig:ciwcode} shows the Ciw code
+required to simulate the system with two classes of customer, $\lambda_1 = 1$,
+$\lambda_2 = 3$, $\mu_1 = 3$, $\mu_2 = 2$, $c = 1$, $\theta_{12} =1.5$, and
+$\theta_{21} = 0.5$, for 365 time units. Here the key parameters are
+\mintinline{python}{priority_classes}, which takes a tuple containing a Python
+dictionary that maps
+customer class labels to priority rankings, and a list of pre-emption options
+for each node; and \mintinline{python}{class_change_time_distributions},
+defining the time distributions used to describe the time it takes to transfer
+from one customer class to another. Note here that the simulation framework is
+general enough to define any probability distribution here, and is not
+restricted to Exponential distributions.
+
+\begin{figure}
+\begin{minted}{python}
+>>> import ciw
+>>> N = ciw.create_network(
+...     arrival_distributions={
+...         'C0': [ciw.dists.Exponential(rate=1)],
+...         'C1': [ciw.dists.Exponential(rate=3)]
+...     },
+...     service_distributions={
+...         'C0': [ciw.dists.Exponential(rate=3)],
+...         'C1': [ciw.dists.Exponential(rate=2)],
+...     },
+...     number_of_servers=[1],
+...     priority_classes=({'C0': 0, 'C1': 1}, ["resample"]),
+...     class_change_time_distributions={
+...         'C0': {'C1': ciw.dists.Exponential(rate=1.5)},
+...         'C1': {'C0': ciw.dists.Exponential(rate=0.5)}
+...     }
+... )
+>>> Q = ciw.Simulation(network=N)
+>>> Q.simulate_until_max_time(max_simulation_time=365)
+\end{minted}
+\caption{Example Ciw code to simulate an M/M/1 queue with dynamic priorities.}
+\label{fig:ciwcode}
+\end{figure}
 
 The core of Ciw's logic is the event scheduling approach, described in
 \cite{robinson14}. This is a variant of the three-phase approach, with an
@@ -222,7 +302,8 @@ a flow diagram of the logic of the event scheduling approach.
 \begin{figure}
     \centering
     \includestandalone[width=\textwidth]{img/eventschedulingapproach}
-    \caption{Flow diagram of the event scheduling approach used by Ciw, adapted from \cite{palmer18}.}
+    \caption{Flow diagram of the event scheduling approach used by Ciw, adapted
+    from \cite{palmer18}.}
     \label{fig:eventscheduling}
 \end{figure}
 
@@ -255,7 +336,6 @@ can be chosen, or custom distributions can also be input. For the systems
 described in this paper, we choose Exponential distributions with rates
 determined by the class change matrix $\Theta$. Ciw allows options letting
 pre-empted customers resume, re-start, or re-sample their service time.
-
 
 
 
@@ -402,7 +482,7 @@ Equation~\ref{eqn:mean_sojourn_class_k}.
 
 
 
-\section{Bounded Approximation}\label{sec:bound}
+\subsection{Bounded Approximation}\label{sec:bound}
 In order to analyse the above Markov chain models numerically, finite
 approximations can be made. Let $b \in \mathbb{N}$, and define the $b$-bounded
 version of the infinite queueing system described in Section~\ref{sec:system},
@@ -424,17 +504,44 @@ approaches zero as $b$ increases. Therefore as $b$ increases the $b$-bounded
 system becomes a better and better approximation of the unbounded system.
 
 Choosing an appropriate value for $b$ is a trade off between accuracy and model
-size, and so computational time. An inefficient way to choose $b$ would be to
+size, and so computational time. One way to choose $b$ would be to
 sequentially build bounded models, increasing $b$ each time, calculating the
 statistics of interest, and observing when the relationship between $b$ and that
-statistic levels off.
-It would be more efficient to choose a $b$ and be able to immediately measure if
-the accuracy is sufficient. We propose two measures, one for ergodic Markov
-chains (the model in Section~\ref{sec:state_formulation}), and one for absorbing
-Markov chains (the model in Section~\ref{sec:sojourn_formulation}).
+statistic levels off. This is shown in Figures~\ref{fig:kpi_approaches_numcusts}
+and~\ref{fig:kpi_approaches_sojourn}, which show that for a particular system
+(two customer classes, $\lambda_1=\frac{2}{3}$, $\lambda_2=\frac{1}{3}$,
+$\mu_1=\frac{3}{2}$, $\mu_2=\frac{5}{2}$, $\theta_{12}=3$, $\theta_{21}=1$,
+$c=1$), the expected number of customers of each class in the simulation, and
+the expected sojourn time for each class, approaches that found using a long run
+simulation (400,000 simulated time units with a warmup and cooldown time of 3000
+time units) as $b$ increases.
+
+\begin{figure}
+  \begin{center}
+    \includegraphics[width=0.6\textwidth]{img/queue_size_bound_approaches.pdf}
+    \caption{Demonstrating that as $b$ increases, the expected number of
+    customers of each class approaches that found using a long run simulation.}
+    \label{fig:kpi_approaches_numcusts}
+  \end{center}
+\end{figure}
+
+\begin{figure}
+  \begin{center}
+    \includegraphics[width=0.6\textwidth]{img/sojourn_time_bound_approaches.pdf}
+    \caption{Demonstrating that as $b$ increases, the expected sojourn time of
+    customers of each class approaches that found using a long run simulation.}
+    \label{fig:kpi_approaches_sojourn}
+  \end{center}
+\end{figure}
+
+This is an inefficient way of determining the accuracy of the bounded
+approximation. It would be more efficient to choose a $b$ and be able to
+immediately measure if the accuracy is sufficient. We propose two measures, one
+for the ergodic Markov chains of Section~\ref{sec:state_formulation}, and one
+for the absorbing Markov chains of Section~\ref{sec:sojourn_formulation}).
 
 
-\subsection{Accuracy measure for the ergodic Markov chain}\label{sec:ergodic_check}
+\subsubsection{Accuracy measure for the ergodic Markov chain}\label{sec:ergodic_accuracy}
 Let $S_b = \{\underline{\mathbf{s}} \in S \;|\; b \in \underline{\mathbf{s}}\}$,
 the set of states that lie on the Markov chain boundary. We wish to choose $b$
 large enough that the boundary is irrelevant, that is that the Markov chain
@@ -454,28 +561,27 @@ comparable over different sizes of $b$.
 \end{equation}
 
 To demonstrate the effect of $b$ on $\mathcal{Q}(b)$ under different systems,
-consider the dynamic classes system with two customer classes,
+consider the dynamic priorities system with two customer classes,
 $\lambda_1 = \frac{1}{2}$, $\lambda_2 = \frac{1}{2}$, $c = 1$,
 $\mu_1 = \frac{1}{\rho}$, $\mu_2 = \frac{1}{\rho}$, $\theta_{12} = 1$, and
 $\theta_{21} = 1$; where $0 < \rho < 1$ is some given traffic intensity.
-Figure~\ref{fig:ergodic_check} shows the effect of $b$ on $\mathcal{Q}(b)$ for
-this system, for different values of $\rho$. In all cases as $b$ increases,
+Figure~\ref{fig:ergodic_accuracy} shows the effect of $b$ on $\mathcal{Q}(b)$
+for this system, for different values of $\rho$. In all cases as $b$ increases,
 $\mathcal{Q}(b)$ decreases, indicating greater accuracy of the bounded system.
 As expected, as $\rho$ increases, we expect more customers in the queue, and so
 the boundary $b$ needs to be much larger before it can be considered irrelevant.
 
-\begin{figure}[!htbp]
+\begin{figure}
   \begin{center}
-    \includegraphics[width=0.6\textwidth]{img/quotient_check.pdf}
+    \includegraphics[width=0.6\textwidth]{img/quotient_accuracy.pdf}
   \end{center}
   \caption{Demonstration of the effect of $b$ on $\mathcal{Q}(b)$}
-  \label{fig:ergodic_check}
+  \label{fig:ergodic_accuracy}
 \end{figure}
 
 
 
-
-\subsection{Accuracy measure for the absorbing Markov chain}\label{sec:absorbing_check}
+\subsubsection{Accuracy measure for the absorbing Markov chain}\label{sec:absorbing_accuracy}
 The above check isn't possible for absorbing Markov chains as they will not
 reach steady state, so another check is required. Define $h_{i,J}$ as
 the hitting probabilities of a set of states $J$ from state $i$, that is, what
@@ -505,28 +611,25 @@ Section~\ref{sec:meansojourncalc}, and given in Equation~\ref{eqn:hitting_measur
 \end{equation}
 
 To demonstrate the effect of $b$ on $\mathcal{P}(b)$ under different system,
-consider the same dynamic classes system with two customer classes used in the
-previous demonstration. Figure~\ref{fig:hitting_measure} shows the effect of $b$
-on $\mathcal{P}(b)$ for this system, for different values of $\rho$. Again, in
-all cases as $b$ increases, $\mathcal{P}(b)$ decreases, indicating greater
-accuracy of the bounded system; and similarly as $\rho$ increases the boundary
-$b$ needs to be larger before it can be considered irrelevant.
+consider the same dynamic priorities system with two customer classes used in
+the previous demonstration. Figure~\ref{fig:hitting_accuracy} shows the effect
+of $b$ on $\mathcal{P}(b)$ for this system, for different values of $\rho$.
+Again, in all cases as $b$ increases, $\mathcal{P}(b)$ decreases, indicating
+greater accuracy of the bounded system; and similarly as $\rho$ increases the
+boundary $b$ needs to be larger before it can be considered irrelevant.
 
-\begin{figure}[!htbp]
+\begin{figure}
   \begin{center}
-    \includegraphics[width=0.6\textwidth]{img/hitting_check.pdf}
+    \includegraphics[width=0.6\textwidth]{img/hitting_accuracy.pdf}
   \end{center}
   \caption{Demonstration of the effect of $b$ on $\mathcal{P}(b)$}
-  \label{fig:hitting_measure}
+  \label{fig:hitting_accuracy}
 \end{figure}
 
 
 
-
-
-
-\section{Existence of Stationary Distributions}\label{sec:stationary}
-It is useful to know whether a dynamic classes system is stationary, that is,
+\subsection{Existence of Stationary Distributions}\label{sec:stationary}
+It is useful to know whether a dynamic priorities system is stationary, that is,
 will it reach steady state or not. Proposition~\ref{thrm:steadystate} gives a
 naive check for the existence or non-existence of steady states, but does not
 cover all possibilities.
@@ -618,7 +721,7 @@ To demonstrate this, consider two examples:
   $\mu_1 = 1$, $\mu_2 = 1$, $\theta_{12} = 1$, $\theta_{21} = 1$, $c = 2$.
 \end{itemize}
 
-\begin{figure}[!htbp]
+\begin{figure}
   \begin{center}
   \begin{subfigure}[b]{0.45\textwidth}
     \includegraphics[width=\textwidth]{img/adf_test_steadystate.pdf}
@@ -630,6 +733,8 @@ To demonstrate this, consider two examples:
     \caption{State time series for Example 2.}
     \label{fig:timeseries2}
   \end{subfigure}
+  \caption{Demonstration of the ADF test on states that do and do not reach
+  steady state according to Proposition~\ref{thrm:steadystate}.}
   \end{center}
 \end{figure}
 
@@ -681,7 +786,7 @@ other is non-stationary, with the only difference being whether the prioritised
 class has the quicker service rate or not. This evidences the interesting
 interplay between service rate, priority class, and class change rates.
 
-\begin{figure}[!htbp]
+\begin{figure}
   \begin{center}
     \includegraphics[width=\textwidth]{img/adf_theorem_gap.pdf}
     \caption{Investigating the stationarity under six cases not covered by
@@ -691,7 +796,48 @@ interplay between service rate, priority class, and class change rates.
 \end{figure}
 
 
-\section{Effect of $\Theta$ on Customer Experience}\label{sec:behaviour}
+\section{Modelling unknown service disciplines}\label{sec:modelling}
+The dynamic priority classes model presented in Section~\ref{sec:system} may be
+used to model situations where FIFO is not appropriate, but specific service
+disciplines may not be known. Recall now the movitating example
+discussed in Section~\ref{sec:casestudy}, where it was established that FIFO was
+not appropriate but service discipline unknown, here we attempt to use the
+dynamic priorities setup to model the endoscopies waiting list.
+
+According to the observed data referrals roughly follow a Poisson distribution
+with rate 0.463 a day. Service rate data is estimated to be around 0.5
+endoscopy procedures a day. To determine the appropriateness of the dynamic
+priority classes model here, we model the system as a two class system, with
+$\lambda_1 = 0.463$ and $\lambda_2 = 0$, and $\mu_1 = \mu_2 = 0.5$ and $c = 1$,
+that is all referrals are of the most urgent, with customers able to be
+downgraded and then de-downgraded during their waiting time. We simulate this
+system under different parameters of $\theta_{12}$ and $\theta_{21}$, observe
+one year of referrals, and compare the distribution of rank differences, or
+overtakes, with that of the original system with indeterminate service
+discipline. The Wasserstein distance metric \cite{mostafaei11} between the
+modelled and actual distributions is calculated to measure the models'
+accuracies in approximating the indeterminate service discipline.
+Figure~\ref{fig:fitting_theta} compares the modelled and actual distributions of
+net rank difference, along with the Wasserstein metric $W$, for all pairs
+$\left(\theta_{12}, \theta_{21}\right) \in \{1, 2, 3\}\times\{0, 1, 2\}$. From
+this it can be seen that a combination of downgrades and upgrades is required to
+fit a good distribution of overtakes, and of the parameters tested
+$\theta_{12}=3$, $\theta_{21}=1$ produces the best fit. This indicates that,
+with further parameter tuning, these dynamic priority classes models can be used
+to model unknown service disciplines.
+
+\begin{figure}
+  \begin{center}
+    \includegraphics[width=\textwidth]{img/fitting_theta.pdf}
+  \end{center}
+  \caption{Comparison between simulated and observed overtakes for different
+  values of $\theta_{12}$ and $\theta_{21}$.}
+  \label{fig:fitting_theta}
+\end{figure}
+
+
+
+\subsection{Effect of $\Theta$ on Customer Experience}\label{sec:behaviour}
 In order to explore the effect that the parameters have on system behaviour and
 customer experience, numerical experiments we run.
 Table~\ref{tbl:parameter_sweep} gives the ranges of value for which simulation
@@ -748,7 +894,7 @@ also, as $\theta_{21}$ increases, independent of $\theta_{12}$
 \end{enumerate}
 }
 
-\begin{figure}[!htbp]
+\begin{figure}
   \begin{subfigure}[b]{\textwidth}
     \begin{center}
     \includegraphics[width=\textwidth]{img/theta_effect_cust_numbers.pdf}
@@ -786,66 +932,7 @@ customers of Class 2 up, allowing more time to upgrade them before they reach
 service.
 
 
-\section{Experimental Validation}\label{sec:validation}
-The dynamic priority classes model presented in Section~\ref{sec:system} may be
-used to model situations where first in first out (FIFO) is not appropriate, but
-specific service disciplines may not be known. As a case study, we consider the
-waiting list of a particular surgical endoscopy procedure carried out in the
-Cardiff and Value University Health Board (CAVUHB) over the period 1st January
-to 31st December 2021.
-
-It is clear from examining the data that a FIFO service discipline was not used.
-To show this, we assign each patient in the data set an arrival rank, the order
-in which they were referred for an endoscopy, and a service rank, the order in
-which they received their endoscopy. The difference in the two ranks corresponds
-to the net number of patients that they `overtook' in the queue: a negative
-number indicates more customers overtook them, that is they were `bumped down'
-the queue; while a positive number indicates that they overtook more people, and
-where `bumped up' the queue. During the observation period, 169 patients
-received an endoscopy, and Figure~\ref{fig:motivating_overtakes} shows the
-distribution of the rank differences, and the distribution of waiting times by
-those who were bumped up or down the queue. No patient had a waiting time of
-zero, indicating that no patient was referred to the queue in a prioritised
-state, hinting that dynamic priorities were at play here. 
-
-\begin{figure}[!htbp]
-  \begin{center}
-    \includegraphics[width=\textwidth]{img/motivating_overtakes.pdf}
-  \end{center}
-  \caption{Distribution of overtakes in a CAVUHB endoscopy waiting list.}
-  \label{fig:motivating_overtakes}
-\end{figure}
-
-According to the observed data referrals roughly follow a Poisson distribution
-with rate 0.463 a day. Service rate data is estimated to be around 0.5
-endoscopy procedures a day. To determine the appropriateness of the dynamic
-priority classes model here, we model the system as a two class system, with
-$\lambda_1 = 0.463$ and $\lambda_2 = 0$, and $\mu_1 = \mu_2 = 0.5$ and $c = 1$,
-that is all referrals are of the most urgent, with customers able to be
-downgraded and then de-downgraded during their waiting time. We simulate this
-system under different parameters of $\theta_{12}$ and $\theta_{21}$, observe
-one year of referrals, and compare the distribution of rank differences, or
-overtakes, with that of the original system with indeterminate service
-discipline. The Wasserstein distance metric \cite{mostafaei11} between the
-modelled and actual distributions is calculated to measure the models'
-accuracies in approximating the indeterminate service discipline.
-Figure~\ref{fig:fitting_theta} compares the modelled and actual distributions of
-net rank difference, along with the Wasserstein metric $W$, for all pairs
-$\left(\theta_{12}, \theta_{21}\right) \in \{1, 2, 3\}\times\{0, 1, 2\}$. From
-this it can be seen that a combination of downgrades and upgrades is required to
-fit a good distribution of overtakes, and of the parameters tested
-$\theta_{12}=3$, $\theta_{21}=1$ produces the best fit. This indicates that,
-with further parameter tuning, these dynamic priority classes models can be used
-to model unknown service disciplines.
-
-\begin{figure}[!htbp]
-  \begin{center}
-    \includegraphics[width=\textwidth]{img/fitting_theta.pdf}
-  \end{center}
-  \caption{Comparison between simulated and observed overtakes for different
-  values of $\theta_{12}$ and $\theta_{21}$.}
-  \label{fig:fitting_theta}
-\end{figure}
+\section{Conclusions}
 
 
 \bibliographystyle{plain}
