@@ -481,7 +481,9 @@ def find_mean_sojourn_time_by_class_from_simulation(Q, num_classes, warmup):
             ]
         )
     overall_mean = np.mean([r.waiting_time + r.service_time for r in recs])
-    return [mean_sojourn_times_by_class[clss] for clss in range(num_classes)] + [overall_mean]
+    return [mean_sojourn_times_by_class[clss] for clss in range(num_classes)] + [
+        overall_mean
+    ]
 
 
 def compare_mc_to_sim_states(
@@ -517,7 +519,9 @@ def compare_mc_to_sim_states(
         max_simulation_time=max_simulation_time,
         progress_bar=progress_bar,
     )
-    probs_sim = get_state_probabilities_from_simulation(Q=Q, warmup=warmup, cooldown=cooldown_time)
+    probs_sim = get_state_probabilities_from_simulation(
+        Q=Q, warmup=warmup, cooldown=cooldown_time
+    )
     agg_probs_sim = aggregate_states(probs_sim)
     agg_probs_by_class_sim = aggregate_states_by_class(probs_sim, num_classes)
 
