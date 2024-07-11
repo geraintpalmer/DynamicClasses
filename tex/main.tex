@@ -45,6 +45,18 @@
 \begin{document}
 \maketitle
 
+\begin{abstract}
+In this paper a generalised model of dynamically changing priorities within an
+M/M/c queue is presented. A simulation and Markov chain models are given that
+describes the behaviour of such systems, and their stationarity is explored.
+Bounded approximations of the Markov models are given, and measures of their
+accuracy in approximating the infinite versions given. Finally the models are
+used to model the waiting list for surgical endoscopies, with unknown service
+disciplines, fitting system parameters to reflect the queue behaviour. An
+exploration of behaviour under different class change parameters is given for a
+better understanding of the system. 
+\end{abstract}
+
 \section{Introduction}
 There are a number of situations in which a customer's priority in a queue might
 change during their time queueing, or equivalently where their priority depends
@@ -62,7 +74,7 @@ already then they might be passed over for a newly referred patient who will
 gain more benefit from the intervention. In this case a patient's priority is
 downgraded the longer they wait.
 
-In this paper a single $M/M/c$ queue is modelled, with multiple classes of
+In this paper a single M/M/c queue is modelled, with multiple classes of
 customer of different priorities. While waiting in the queue customers change
 their class to any other class at specific rates. Thus upgrades, downgrades, and
 `skip-grades' (moving to a priority class not immediately above or below the
@@ -77,23 +89,23 @@ These Markov chains give some insights into the behaviour of the systems under
 different combinations of parameters; and numerical experiments give further
 behaviours.
 
-% This paper is structured as follows:
-% Section~\ref{sec:system} defines the system under consideration in detail.
-% Section~\ref{sec:related} highlights some previous and related work.
-% Section~\ref{sec:simulation} discusses the contribution to the Ciw library and
-% the logic required to simulate this system.
-% Section~\ref{sec:makovchains} defines two Markov chain models of the system, one
-% useful for considering system-wide statistics such as state probabilities, and
-% one useful for considering customers' statistics such as average sojourn time.
-% Section~\ref{sec:bound} explores a bounded approximation for numerically
-% tractable analysis, and gives guidelines on choosing a large enough bound so as
-% to sufficiently approximate an unbounded system.
-% Section~\ref{sec:stationary} explores the existence or otherwise of systems that
-% can reach steady state.
-% Section~\ref{sec:behaviour} presents results from numerical experiments that
-% give insight into the behaviour of the system under various parameters.
-% Section~\ref{sec:modelling} experimentally justifies the use of these models
-% to model scenarios where prioritisation rules are unknown.
+This paper is structured as follows:
+Section~\ref{sec:casestudy} gives a motivating example from a healthcare
+setting demonstrating the need for this type of model.
+Section~\ref{sec:related} highlights some previous and related work.
+Section~\ref{sec:system} defines the system under consideration in detail.
+Section~\ref{sec:simulation} discusses the contribution to the Ciw library and
+the logic required to simulate this system.
+Section~\ref{sec:makovchains} defines two Markov chain models of the system, one
+useful for considering system-wide statistics such as state probabilities, and
+one useful for considering customers' statistics such as average sojourn time.
+This includes exploring a bounded approximation for numerically tractable
+analysis, presents measures of accuracy for these bounded approximations, and
+the existence or otherwise of systems that can reach steady state.
+Section~\ref{sec:modelling} experimentally justifies the use of these models
+presented to model scenarios where prioritisation rules are unknown, using the
+aforementioned case study as an example; an exploration of the system behaviour
+under different parameters is given.
 
 \subsection{Motivating Case Study}\label{sec:casestudy}
 We consider first attempt to model the queueing process for a particular
