@@ -53,6 +53,7 @@ if __name__ == "__main__":
         "emption",
         "emptive",
         "rrrrrr",
+        "rrrrrrrr",
         "Wasserstein",
         "accuracies",
         "injective",
@@ -69,6 +70,6 @@ if __name__ == "__main__":
         "unprioritised",
         "warmup",
         "cooldown",
-        "RGB"
+        "RGB",
     }
     main(path=path, known_words=known_words)
