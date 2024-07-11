@@ -14,6 +14,7 @@
 \usepackage{enumitem}
 \usepackage[table]{xcolor}
 \usepackage{minted}
+\usepackage{xfrac}
 \usepackage{tikz}
 \usetikzlibrary{arrows}
 \usetikzlibrary{decorations.pathreplacing}
@@ -840,99 +841,122 @@ to model unknown service disciplines.
 
 
 \subsection{Effect of $\Theta$ on Customer Experience}\label{sec:behaviour}
-In order to explore the effect that the parameters have on system behaviour and
-customer experience, numerical experiments we run.
-Table~\ref{tbl:parameter_sweep} gives the ranges of value for which simulation
-experiments were run. These experiments will be used to explore the models in
-the next subsections. For these simulations, upgraded individuals pre-empt
-individuals of a less prioritised class, and these pre-empted individuals have
-their service time re-sampled.
+Now that it is established that some service disciplines can be modelled as
+dynamically changing priorities with a class change matrix $\Theta$, we want to
+investigate the effect of this matrix on customer experience. This would be
+important for the modelling process, and also for controllers of the system who
+might be able to influence the rates and improve customer experience or system
+outcomes.
+
+We first define two scenarios that we will use to investigate the effect of
+$\Theta$, defined in Table~\ref{tbl:scenarios}. Both have two classes of
+customer, in Scenario A prioritised customers have a slower service rate than
+unprioritised customer, while in Scenario B prioritised customers have a faster
+service rate than prioritised customers. The Markov chain models of
+Section~\ref{sec:makovchains} are build with these parameters, and all values
+of $\theta_{12}$ and $\theta_{21}$ from 0 to 3, in steps of 0.2, with a bound of
+16 (all producing accuracy measures $\mathcal{Q}(16), \mathcal{P}(16) < 0.012$),
+and customer experience KPIs are found and compared.
 
 \begin{table}
 \begin{center}
-\begin{tabular}{ll}
+\begin{tabular}{rrrrrr}
 \toprule
-Parameters & Values \\
+Scenario & $\lambda_1$ & $\lambda_2$ & $c$ & $\mu_1$ & $\mu_2$ \\
 \midrule
-$\Lambda_1$ & $1$ \\
-$\Lambda_2$ & $\sfrac{1}{2}$, $\sfrac{2}{3}$, $1$, $\sfrac{3}{2}$, $2$ \\
-$\mu_1$ & $\sfrac{1}{2}$, $1$, $2$, $3$, $4$ \\
-$\mu_2$ & $\sfrac{1}{2}$, $1$, $2$, $3$, $4$ \\
-$\theta_{12}$ & $\sfrac{1}{2}$, $\sfrac{2}{3}$, $1$, $\sfrac{3}{2}$, $2$ \\
-$\theta_{21}$ & $\sfrac{1}{2}$, $\sfrac{2}{3}$, $1$, $\sfrac{3}{2}$, $2$ \\
-$c$ & $1$, $2$, $3$ \\
+A & 1 & 1 & 1& $\sfrac{5}{2}$ & $\sfrac{7}{2}$\\ 
+B & 1 & 1 & 1& $\sfrac{7}{2}$ & $\sfrac{5}{2}$\\
 \bottomrule
 \end{tabular}
-\caption{Table of parameters explored, for two classes of customer. Simulations
-         were run for $5000$ time units, with a warm-up time of $200$ and cool
-         down time of $200$ time units.}
-\label{tbl:parameter_sweep}
 \end{center}
+\caption{Parameters used in experiments that investigate the effect of $\Theta$.}
+\label{tbl:scenarios}
 \end{table}
 
-Figure~\ref{fig:theta_effect} shows the effect of $\Theta$ on the number of
-customers and sojourn times, broken down by customer class. For each
-$\theta_{12}$, $\theta_{21}$ pair, the plots show the average number of
-customers and average sojourn time obtained over all the experiments in the
-parameter sweep where $\rho_{\max} < 1$, that is those that reach steady state.
-We see that as $\theta_{21}$ increases, and $\theta_{12}$ decreases, that is
-more customers are being upgraded than downgraded, then:
-
-{
-\renewcommand{\theenumi}{E\arabic{enumi}}
-\begin{enumerate}
-  \item \label{enm:custs_1over2} the number of Class 1 customers present increases,
-  \item \label{enm:custs_2over1} the number of Class 2 customers present decreases,
-  \item \label{enm:custs_pronounced} this effect is more pronounced for customers of Class 1 than Class 2;
-  \item \label{enm:sojourn_1over2} the sojourn time of Class 1 customers increases,
-  \item \label{enm:sojourn_2over1} the sojourn time of Class 2 customers decreases,
-  \item \label{enm:sojourn_pronounced} this effect is more pronounced for customers of Class 2 than Class 1;
-\end{enumerate}
-
-also, as $\theta_{21}$ increases, independent of $\theta_{12}$
-
-\begin{enumerate}[resume]
-  \item \label{enm:custs} the overall number of customers present increases.
-\end{enumerate}
-}
+Figures~\ref{fig:meancusts_A} and~\ref{fig:meancusts_B} give the steady-state
+average number of customers of each class, for all pairs of $\theta_{12}$ and
+$\theta_{21}$, under Scenarios A and B respectively. In general it can be seen
+that as $\theta_{12}$ increases in comparison to $\theta_{21}$ then we expect
+less customers of class 1 and more of class 2, and the opposite is true as
+$\theta_{21}$ increases in comparison to $\theta_{12}$.
+At first it seems that when $\theta_{12} \approx \theta_{21}$ the magnitude of
+the rate does not have a big effect of the number of customers of each class
+present, however further investigation shows this not to be the case.
+Figure~\ref{fig:theta_magnitude} shows the mean number of class 1 and class 2
+customers when $\theta_{12} = \theta_{21} = \tilde{\theta}$, under Scenarios A
+and B, as the magnitude $\tilde{\theta}$ changes. In Scenario A, where
+prioritised customers have a slower service rate, increasing the priority change
+rate increases the prioritised customers present, and decreases the number of
+unprioritised customers. In Scenario B the opposite trend it true. Looking at
+the effect of $\tilde{\theta}$ on the overall number of customers present, in
+Figure~\ref{fig:theta_magnitude_overall}, we see that a higher rate of priority
+changes increases the number of customers in Scenario A, but decreases the
+number of customers in Scenario B. This may be because as the rate of priority
+changes increases, each customer is more likely to be served as a prioritised
+customer, and in Scenario B prioritised customers are processed quicker.
 
 \begin{figure}
-  \begin{subfigure}[b]{\textwidth}
-    \begin{center}
-    \includegraphics[width=\textwidth]{img/theta_effect_cust_numbers.pdf}
-    \end{center}
-    \caption{Effect of $\Theta$ on customer numbers.}
-    \label{fig:theta_effect_custs}
+  \begin{center}
+  \begin{subfigure}[b]{0.49\textwidth}
+    \includegraphics[width=\textwidth]{img/vary_thetas_meancusts_scen1.pdf}
+    \caption{Scenario A.}
+    \label{fig:meancusts_A}
   \end{subfigure}
-  \begin{subfigure}[b]{\textwidth}
-    \begin{center}
-    \includegraphics[width=0.666\textwidth]{img/theta_effect_sojourn_times.pdf}
-    \end{center}
-    \caption{Effect of $\Theta$ on sojourn times.}
-    \label{fig:theta_effect_sojourn}
+  \begin{subfigure}[b]{0.49\textwidth}
+    \includegraphics[width=\textwidth]{img/vary_thetas_meancusts_scen2.pdf}
+    \caption{Scenario B.}
+    \label{fig:meancusts_B}
   \end{subfigure}
-  \caption{Effect of $\Theta$ on customer experience.}
-  \label{fig:theta_effect}
+  \caption{Average number of customers of each class, as $\Theta$ changes.}
+  \end{center}
 \end{figure}
 
-Effects~\ref{enm:custs_1over2} and~\ref{enm:custs_2over1} come directly from the
-fact that increasing $\theta_{21}$ and decreasing $\theta_{12}$ upgrades more
-customers than are downgraded. Effect~\ref{enm:custs} is explained by the
-pre-emption: when an interrupted individual restarts service their service time
-is re-sampled, causing more work for the system and causing a build-up of the
-queue.
-Effect~\ref{enm:sojourn_1over2} is a consequence of
-effects~\ref{enm:custs_1over2} and~\ref{enm:custs_2over1}, as there are more
-customers of Class 1 in the queue on average, their average sojourn time will
-increase, as stated by Little's Theorem \cite{little61}.
-Effect~\ref{enm:sojourn_2over1} however is due to upgrading customers at a
-higher rate, which effectively stops lower priority customers waiting a long
-time, as they will be upgraded before they end their service.
-This is more pronounced (effect~\ref{enm:sojourn_pronounced}), as it is
-accounting for effect~\ref{enm:sojourn_1over2} pushing the waiting times of
-customers of Class 2 up, allowing more time to upgrade them before they reach
-service.
+\begin{figure}
+  \begin{center}
+    \includegraphics[width=0.7\textwidth]{img/mean_custs_equal_theta.pdf}
+  \end{center}
+  \caption{Average number of customers of each class, as $\tilde{\theta}$
+  changes.}
+  \label{fig:theta_magnitude}
+\end{figure}
 
+\begin{figure}
+  \begin{center}
+    \includegraphics[width=0.7\textwidth]{img/mean_custs_equal_theta_overall.pdf}
+  \end{center}
+  \caption{Average number of customers overall as $\tilde{\theta}$ changes.}
+  \label{fig:theta_magnitude_overall}
+\end{figure}
+
+Figures~\ref{fig:sojourn_A} and~\ref{fig:sojourn_B} give the steady-state
+average sojourn time of customers beginning in each class, for all pairs of
+$\theta_{12}$ and $\theta_{21}$, under Scenarios A and B respectively. The mean
+sojourn time for class 1 customers are hardly effected by the size of
+$\theta_{12}$, but is more effected by the size of $\theta_{21}$, likely due to
+an increased number of class 1 customers present when they join the queue. The
+effect of $\theta_{21}$ on the mean sojourn time of class 2 customers depends on
+the scenario: in Scenario A the higher $\theta_{21}$, the more likely a class 2
+customer is to be served as a class 1 customer, that with the slower service
+rate, and so a longer sojourn time; while in Scenario B they are more likely to
+be served as a class 1 customer with higher service rate, and so shorter sojourn
+time.
+
+\begin{figure}
+  \begin{center}
+  \begin{subfigure}[b]{0.49\textwidth}
+    \includegraphics[width=\textwidth]{img/vary_thetas_sojourn_scen1.pdf}
+    \caption{Scenario A.}
+    \label{fig:sojourn_A}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.49\textwidth}
+    \includegraphics[width=\textwidth]{img/vary_thetas_sojourn_scen2.pdf}
+    \caption{Scenario B.}
+    \label{fig:sojourn_B}
+  \end{subfigure}
+  \caption{Average sojourn time for customers beginning in each class, as
+  $\Theta$ changes.}
+  \end{center}
+\end{figure}
 
 \section{Conclusions}
 
