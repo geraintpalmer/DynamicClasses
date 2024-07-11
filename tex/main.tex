@@ -604,9 +604,9 @@ boundary states such that
 $Z_b = \{\underline{\mathbf{z}} \in Z \; | \; b \in \underline{\mathbf{z}}\}$,
 then if a customer arrives to state $i$, the probability of that customer's
 state reaching the boundary is $h_{i,S_b}$. Therefore we propose the probability
-of an arriving customer hitting the boundary, $\mathcal{P}(b)$, to be a measure
-of accuracy; if this is sufficiently small, then the bound $b$ is large enough.
-This is calculated in a similar way to the mean sojourn time in
+of an arriving customer experiencing the boundary, $\mathcal{P}(b)$, to be a
+measure of accuracy; if this is sufficiently small, then the bound $b$ is large
+enough. This is calculated in a similar way to the mean sojourn time in
 Section~\ref{sec:meansojourncalc}, and given in Equation~\ref{eqn:hitting_measure}.
 
 \begin{equation}\label{eqn:hitting_measure}
@@ -799,10 +799,10 @@ interplay between service rate, priority class, and class change rates.
 \end{figure}
 
 
-\section{Modelling unknown service disciplines}\label{sec:modelling}
+\section{Modelling Unknown Service Disciplines}\label{sec:modelling}
 The dynamic priority classes model presented in Section~\ref{sec:system} may be
 used to model situations where FIFO is not appropriate, but specific service
-disciplines may not be known. Recall now the movitating example
+disciplines may not be known. Recall now the motivating example
 discussed in Section~\ref{sec:casestudy}, where it was established that FIFO was
 not appropriate but service discipline unknown, here we attempt to use the
 dynamic priorities setup to model the endoscopies waiting list.
@@ -958,8 +958,43 @@ time.
   \end{center}
 \end{figure}
 
-\section{Conclusions}
 
+\section{Conclusions}
+In this paper a generalised model of dynamically changing priorities within an
+M/M/c queue is presented. The general formulation was given in
+Section~\ref{sec:system}, while two methodologies for modelling it was given,
+first by simulation, with contributions to the Ciw library, and second by two
+separate Markov chains used in conjunction to find state probabilities and
+customer sojourn times. In order to use the Markov chains we present bounded
+approximations, and importantly we present two accuracy measures to immediately
+determine how well the bounded Markov chain approximates its infinite version:
+$\mathcal{Q}(b)$ the relative probability steady state probability of being at
+the boundary, and $\mathcal{P}(b)$ the probability of an arriving customer
+experiencing the boundary.
+
+This work is motivated by modelling a healthcare situation, a surgical endoscopy
+waiting list, where modelling as FIFO is inappropriate. We show that modelling
+as dynamically changing priorities can approximate the queue behaviour somewhat,
+with a sufficient choice of class change rate matrix $\Theta$. We then explore
+the effect of this matrix on customer experience, namely mean number of
+customers of each priority in the system, and mean sojourn time for each
+customer class. This exploration may be useful is queue controllers, that is
+waiting list managers, can influence or tweak the class change matrix - for
+example if prioritised customers have a faster service rate, then the queue is
+manages better when the priority change rate is higher, though at the expense of
+the prioritised customers themselves.
+
+Although much of the work in this paper concentrated on two classes of customer
+and two prioritisation levels, the formulation is generalised to any number of
+customer classes, offering greater flexibility in modelling unknown service
+disciplines. Similarly, the simulation methodology, implemented and available
+out-of-the-box in an open-source Python package, is generalised and can model
+non-Markovian priority changes too. For example a deterministic distribution,
+that is one that samples the same number each time, is equivalent to a time
+cut-off for priority changes.
+
+All code and computational work used to produce this paper is openly available
+at \url{https://github.com/geraintpalmer/DynamicClasses}.
 
 \bibliographystyle{plain}
 \bibliography{refs}
