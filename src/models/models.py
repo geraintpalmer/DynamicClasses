@@ -528,18 +528,31 @@ def compare_mc_to_sim_states(
     fig, axarr = plt.subplots(1, 3, figsize=(17, 5))
     states = range(max_state)
     axarr[0].plot(
-        states, [agg_probs_mc.get(s, 0) for s in states], label="Markov Chain"
+        states,
+        [agg_probs_mc.get(s, 0) for s in states],
+        label="Markov Chain",
+        c="black",
+        linestyle="solid",
     )
-    axarr[0].plot(states, [agg_probs_sim.get(s, 0) for s in states], label="Simulation")
+    axarr[0].plot(
+        states,
+        [agg_probs_sim.get(s, 0) for s in states],
+        label="Simulation",
+        c="black",
+        linestyle="dotted",
+    )
     axarr[0].set_xlabel("Number of Customers", fontsize=14)
     axarr[0].set_ylabel("Probability", fontsize=14)
     axarr[0].legend(fontsize=14, frameon=True)
+
+    colours = plt.cm.viridis(np.linspace(0.1, 0.9, num_classes))
 
     for clss in range(num_classes):
         axarr[1].plot(
             states,
             [agg_probs_by_class_mc[clss].get(s, 0) for s in states],
             label=f"Class {clss}",
+            c=colours[clss],
         )
     axarr[1].set_title("Markov Chain", fontsize=16)
     axarr[1].legend(fontsize=14, frameon=True)
@@ -551,6 +564,7 @@ def compare_mc_to_sim_states(
             states,
             [agg_probs_by_class_sim[clss].get(s, 0) for s in states],
             label=f"Class {clss}",
+            c=colours[clss],
         )
     axarr[2].set_title("Simulation", fontsize=16)
     axarr[2].legend(fontsize=14, frameon=True)

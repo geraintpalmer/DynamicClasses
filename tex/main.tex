@@ -396,7 +396,7 @@ q_{\underline{\mathbf{s}}_t, \underline{\mathbf{s}}_{t+1}} =
 \begin{cases}
 \lambda_k & \text{if } \delta_k = 1 \text{ and } \delta_i = 0 \; \forall \; i \neq k, \\
 B_{k,t} \mu_k & \text{if } \delta_k = 1 \text{ and } \delta_i = 0 \; \forall \; i \neq k \text{ and } \sum_{i < k} s_{i,t} < c, \\
-(s_{k,t} - B_{k,t}) \theta_{k,\mathcal{l}} & \text{if } \delta_{k} = -1 \text{ and } \delta_{\mathcal{l}} = 1 \text{ and } \delta_i = 0 \; \forall \; i \neq k, \mathcal{l}, \\
+(s_{k,t} - B_{k,t}) \theta_{k,\ell} & \text{if } \delta_{k} = -1 \text{ and } \delta_{\ell} = 1 \text{ and } \delta_i = 0 \; \forall \; i \neq k, \ell, \\
 0 & \text{otherwise,}
 \end{cases}
 \end{equation}
@@ -406,7 +406,7 @@ service at time step $t$, is given by Equation~\ref{eqn:inservice}, where $c$
 is the number of servers.
 
 \begin{equation}\label{eqn:inservice}
-B_{k,t} =\min\left(c - \min\left(\sum_{i < k} s_{i,t}, c\right), s_{k,t}\right)
+B_{k,t} =\min\left(c - \min\left(c, \sum_{i < k} s_{i,t}\right), s_{k,t}\right)
 \end{equation}
 
 Let $\pi_{\underline{\mathbf{s}}}$ denote the steady state probability of being
@@ -452,7 +452,7 @@ $q_{\underline{\mathbf{z}}_t, \underline{\mathbf{z}}_{t+1}} =
 \lambda_k & \text{if } \delta_k = 1 \text{ and } \delta_i = 0 \; \forall \; i \neq k \text{ and } k \neq n,\\
 A_{k,n,t} \mu_k & \text{if } \delta_k = -1 \text{ and } \delta_i = 0 \; \forall \; i \neq k \text{ and } k < K,\\
 \tilde{A}_{n,t} \mu_n & \text{if } \delta_K = -1 \text{ and } \delta_i = 0 \; \forall \; i \neq K,\\
-(z_{k,t} - A_{k,n,t}) \theta_{k,\mathcal{l}} & \text{if } \delta_{k} = -1 \text{ and } \delta_{\mathcal{l}} = 1 \text{ and } \delta_i = 0 \; \forall \; i \neq k, \mathcal{l} \text{ and } k < K \text{ and } \mathcal{l} \neq n, K, K+1, \\
+(z_{k,t} - A_{k,n,t}) \theta_{k,\ell} & \text{if } \delta_{k} = -1 \text{ and } \delta_{\ell} = 1 \text{ and } \delta_i = 0 \; \forall \; i \neq k, \ell \text{ and } k < K \text{ and } \ell \neq n, K, K+1, \\
 (z_{K,t} - \tilde{A}_{n,t}) \theta_{n,k} & \text{if } \delta_K = -1 \text{ and } \delta_{k} = 1 \text{ and } \delta_i = 0 \; \forall \; i \neq k, n \text{ and } k < K, \\
 (z_{k,t} - A_{k,n,t}) \theta_{k,n} & \text{if } \delta_k = -1 \text{ and } \delta_K = 1 \text{ and } \delta_i = 0 \; \forall \; i \neq k, K, \\
 \theta_{n, k} & \text{if } \delta_n = z_{K,t} \text{ and } \delta_K = -z_{K,t} \text{ and } \delta_{K+1} = n - k \text{ and } \delta_i = 0 \text{ otherwise, and } \sum_{k \leq n} z_{k, t} < c, \\
@@ -468,8 +468,8 @@ and~\ref{eqn:inservice_adapt_tilde} respectively.
 \begin{equation}\label{eqn:inservice_adapt}
 A_{k,n,t} =
 \begin{cases}
-\min\left(c, \sum_{i \leq k} z_{i,t}\right) - \min\left(c \sum_{i < k} z_{i,t}\right) & \text{if } k \leq n \\
-\min\left(c, \sum_{i \leq k} z_{i,t} + 1 + z_{K,t}\right) - \min\left(c \sum_{i < k} z_{i,t} + 1 + z_{K,t}\right) & \text{if } n < k < K
+\min\left(c, \sum_{i \leq k} z_{i,t}\right) - \min\left(c, \sum_{i < k} z_{i,t}\right) & \text{if } k \leq n \\
+\min\left(c, \sum_{i \leq k} z_{i,t} + 1 + z_{K,t}\right) - \min\left(c, \sum_{i < k} z_{i,t} + 1 + z_{K,t}\right) & \text{if } n < k < K
 \end{cases}
 \end{equation}
 
@@ -487,7 +487,7 @@ The expected time to absorption can be calculated from each state.
 Customers arrive in all states where $z_K = 0$, and their class can be
 determined by $n$. First define
 $\tilde{Z} = \{\underline{\mathbf{z}} \in Z\setminus\{\star\} \; | \; z_K = m = 0\} \subset Z$
-as the set of all states where the newly arriving customer can can arrive.
+as the set of all states where the newly arriving customer can arrive.
 Let $f: \tilde{Z} \rightarrow S$ be a map between states in $\tilde{Z}$ and $S$,
 given in Equation~\ref{eqn:map_state}.
 
@@ -610,7 +610,7 @@ the boundary $b$ needs to be much larger before it can be considered irrelevant.
 
 \begin{figure}
   \begin{center}
-    \includegraphics[width=0.6\textwidth]{img/quotient_accuracy.pdf}
+    \includegraphics[width=0.8\textwidth]{img/quotient_accuracy.pdf}
   \end{center}
   \caption{Demonstration of the effect of $b$ on $\mathcal{Q}(b)$}
   \label{fig:ergodic_accuracy}
@@ -659,13 +659,15 @@ boundary $b$ needs to be larger before it can be considered irrelevant.
 
 \begin{figure}
   \begin{center}
-    \includegraphics[width=0.6\textwidth]{img/hitting_accuracy.pdf}
+    \includegraphics[width=0.8\textwidth]{img/hitting_accuracy.pdf}
   \end{center}
   \caption{Demonstration of the effect of $b$ on $\mathcal{P}(b)$}
   \label{fig:hitting_accuracy}
 \end{figure}
 
-
+Appendix~\ref{apx:more_priority_classes} shows examples where the simulation and
+Markov chains given the state probabilities, for $K = 2$, $K = 3$, and $K = 4$
+priority classes.
 
 \subsection{Existence of Stationary Distributions}\label{sec:stationary}
 In all cases, the $b$-bounded system will only be an approximation of the
@@ -1052,5 +1054,52 @@ at \url{https://github.com/geraintpalmer/DynamicClasses}.
 
 \bibliographystyle{plain}
 \bibliography{refs}
+
+\newpage
+\appendix
+
+\section{Further Experiments}\label{apx:more_priority_classes}
+
+\begin{figure}[h!]
+  \begin{center}
+  \begin{subfigure}[b]{\textwidth}
+    \includegraphics[width=\textwidth]{img/appendix_2class.pdf}
+    \caption{
+        $K = 2$
+        $\begin{array}{c}\lambda_1 = 3\\\lambda_2 = 4\end{array}$
+        $\begin{array}{c}\mu_1 = 4\\\mu_2 = 5\end{array}$
+        $\begin{array}{c}c=2\\b=24\end{array}$
+        $\Theta = \begin{pmatrix}0 & 7\\12 & 0\end{pmatrix}$
+        $\begin{array}{c}\text{Simulation time} = 200000\\\text{warm-up} = 5000\end{array}$
+    }
+  \end{subfigure}
+  \vspace{3mm}
+  \begin{subfigure}[b]{\textwidth}
+    \includegraphics[width=\textwidth]{img/appendix_3class.pdf}
+    \caption{
+        $K = 3$
+        $\begin{array}{c}\lambda_1 = 2\\\lambda_2 = 1\\\lambda_3 = 4\end{array}$
+        $\begin{array}{c}\mu_1 = 4\\\mu_2 = 4.5\\\mu_3 = 5\end{array}$
+        $\begin{array}{c}c=2\\b=18\end{array}$
+        $\Theta = \begin{pmatrix}0 & 2 & 4\\1 & 0 & 5\\1 & 3 & 0\end{pmatrix}$
+        $\begin{array}{c}\text{Simulation time} = 200000\\\text{warm-up} = 5000\end{array}$
+    }
+  \end{subfigure}
+  \vspace{3mm}
+  \begin{subfigure}[b]{\textwidth}
+    \includegraphics[width=\textwidth]{img/appendix_4class.pdf}
+    \caption{
+        $K = 4$
+        $\begin{array}{c}\lambda_1 = 0.5\\\lambda_2 = 1.5\\\lambda_3 = 1\\\lambda_4 = 3\end{array}$
+        $\begin{array}{c}\mu_1 = 3.5\\\mu_2 = 4\\\mu_3 = 3.5\\\mu_4 = 5\end{array}$
+        $\begin{array}{c}c=2\\b=10\end{array}$
+        $\Theta = \begin{pmatrix}0 & 2 & 4 & 1\\1 & 0 & 5 & 1\\1 & 3 & 0 & 3\\2 & 1 & 1 & 0\end{pmatrix}$
+        $\begin{array}{c}\text{Simulation time} = 200000\\\text{warm-up} = 5000\end{array}$
+    }
+  \end{subfigure}
+  \caption{Simulation and Markov chain methods for finding state probabilities
+  for 2, 3, and 4 priority classes.}
+  \end{center}
+\end{figure}
 
 \end{document}
