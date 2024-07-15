@@ -38,7 +38,7 @@
 \newtheorem{prop}{Proposition}
 
 
-\title{Modelling Queues Where Customers Randomly Change Priority Classes While Waiting}
+\title{Priority Multi Server Queue Under Stochastic Customer Class Switching}
 \author{Geraint I. Palmer, Michalis Panayidis, Vincent Knight \& Elizabeth Williams}
 \date{}
 
@@ -47,7 +47,7 @@
 
 \begin{abstract}
 In this paper a generalised model of dynamically changing priorities within an
-M/M/c queue is presented. Simulation and Markov chain models are given that
+\(M/M/c\) queue is presented. Simulation and Markov chain models are given that
 describe the behaviour of such systems, and their stationarity is explored.
 Bounded approximations of the Markov models are given, and measures of their
 accuracy in approximating the infinite versions given. Finally the models are
@@ -55,6 +55,9 @@ used to model a waiting list for surgical endoscopy with unknown service
 disciplines, fitting system parameters to reflect the queue behaviour. An
 exploration of behaviour under different class change parameters is given for a
 better understanding of the system. 
+
+% TODO I would flip this around.
+% Let me read the paper and see if I agree with myself...
 \end{abstract}
 
 \section{Introduction}
@@ -63,8 +66,14 @@ change during their time queueing, or equivalently where their priority depends
 on the amount of time they have already spent in the queue.
 Classic examples arise in healthcare systems, for example when a patient's
 medical urgency increases the longer they spend waiting due to health
-degeneration. Another example would be a prioritisation scheme that attempts a
+degeneration. 
+%TODO Add a citation here to justify this?
+% I thought it would be easy to do so but I found two papers:
+% 1.  https://pubmed.ncbi.nlm.nih.gov/29052082/: "here were no relationships between the duration of participants' wait for hernia repair and the change in patients' self-reported health for hernia-specific outcomes or overall health-related quality of life."
+% 2.  https://pubmed.ncbi.nlm.nih.gov/10411289/: "Neither general quality of life nor condition-specific health appeared to worsen with the duration of wait [...]"
+Another example would be a prioritisation scheme that attempts a
 trade-off between medical need and waiting times.
+% TODO A reference here would help.
 These are both examples where a patient's priority has the chance to upgrade
 over time while in the queue.
 However there also might be situations in which a patient's priority can
@@ -73,9 +82,10 @@ patient's outcome if caught early, if a patient has been waiting a long time
 already then they might be passed over for a newly referred patient who will
 gain more benefit from the intervention. In this case a patient's priority is
 downgraded the longer they wait.
+% TODO This needs a reference
 
 In this paper a single M/M/c queue is modelled, with multiple classes of
-customer of different priorities. While waiting in the queue customers change
+customer of different priorities. While waiting in the, queue customers change
 their class to any other class at specific rates. Thus upgrades, downgrades, and
 `skip-grades' (moving to a priority class not immediately above or below the
 current class) are modelled.
@@ -83,7 +93,10 @@ current class) are modelled.
 This is first modelled using simulation, where we describe generalisable logic.
 This was first implemented in version v2.3.0 of the Ciw library in Python
 \cite{palmer19} and is a contribution of this paper.
-Then two Markov chain models are defined for the system, which are used to find
+An important question arises from this, when does a steady state distribution
+exist for such a queueing system?
+To answer this question,
+two Markov chain models are defined, which are used to find
 steady state distributions and expected sojourn times for each customer class.
 These Markov chains give some insights into the behaviour of the systems under
 different combinations of parameters; and numerical experiments give further
@@ -94,8 +107,8 @@ Section~\ref{sec:casestudy} gives a motivating example from a healthcare
 setting demonstrating the need for this type of model.
 Section~\ref{sec:related} highlights some previous and related work.
 Section~\ref{sec:system} defines the system under consideration in detail.
-Section~\ref{sec:simulation} discusses the contribution to the Ciw library and
-the logic required to simulate this system.
+Section~\ref{sec:simulation} discusses simulation logic required and the
+contribution to the Ciw library.
 Section~\ref{sec:makovchains} defines two Markov chain models of the system, one
 useful for considering system-wide statistics such as state probabilities, and
 one useful for considering customers' statistics such as average sojourn time.
@@ -193,6 +206,7 @@ Systems of this kind have been investigated previously:
       a two class delayed accumulating priority M/G/1 queue. Customer
         priorities increase linearly over time, at different rates
         according to class, after an initial fixed delay.
+        % TODO I'd put all the `M/<>/<>` in math mode.
 \end{itemize}
 
 
@@ -206,8 +220,8 @@ Systems of this kind have been investigated previously:
 
 
 
-\section{System Under Consideration}\label{sec:system}
-Consider an M/M/c queue with $K$ classes of customer labelled
+\section{Dynamic class priority \(M/M/c\) queue}\label{sec:system}
+Consider an \(M/M/c\) queue with $K$ classes of customer labelled
 $0, 1, 2, \dots, K-1$. Let:
 
 \begin{itemize}
@@ -219,6 +233,7 @@ $0, 1, 2, \dots, K-1$. Let:
 
 Customers of class $i$ have priority over customers of class $j$ if $i < j$.
 Customers of the same class are served in the order they arrived to that class.
+% TODO Do we need to describe what priority is? Or is this fairly obvious...
 Figure~\ref{fig:twoclass_example} shows an example with two classes of customer.
 
 \begin{figure}
@@ -236,7 +251,7 @@ change to customers of class $j$ directly, then $\theta_{i,j} = 0$. The diagonal
 values $\theta_{i,i}$ are unused as customers cannot change to their own class.
 All elements $\theta_{i,i-1}$ represent the direct upgrade rates; all elements
 $\theta_{i,i+1}$ represent the direct downgrade rates, while all other elements
-can be thought of as `skip-grades`.
+can be thought of as `skip-grades'.
 This is shown in Figure~\ref{fig:skipgrades}.
 
 \begin{figure}
@@ -260,8 +275,11 @@ The next two sections outline and compare a discrete event simulation and
 Markov chain formulations for modelling this setup.
 
 
-
 \section{Simulation Model Logic}\label{sec:simulation}
+
+% TODO I think leading wth ciw here is a mistake. I'd go with a general
+% description of the logic (which is useful for anyone implement this) followed
+% by the ciw discussion.
 The Ciw library \cite{palmer19} is an open-source Python library for
 discrete-event simulation of open queueing networks. A key contribution of this
 work is the adaptation of the library's logic to facilitate the type of
@@ -304,7 +322,7 @@ restricted to Exponential distributions.
 >>> Q = ciw.Simulation(network=N)
 >>> Q.simulate_until_max_time(max_simulation_time=365)
 \end{minted}
-\caption{Example Ciw code to simulate an M/M/1 queue with dynamic priorities.}
+\caption{Example Ciw code to simulate an \(M/M/1\) queue with dynamic priorities.}
 \label{fig:ciwcode}
 \end{figure}
 
@@ -357,12 +375,17 @@ additional \textbf{B}-event and two additional \textbf{C}-event are included:
 
 Note that the particular distributions used to sample class change dates in
 these cases are generic, and any of Ciw's currently pre-programmed distributions
-can be chosen, or custom distributions can also be input. For the systems
+can be chosen, or custom distributions can also be used. For the systems
 described in this paper, we choose Exponential distributions with rates
 determined by the class change matrix $\Theta$. Ciw allows options letting
 pre-empted customers resume, re-start, or re-sample their service time.
 
 
+% TODO I would put the "base" example of the healthcare example here. This
+% can be shown as an example of using the simulation (perhaps with some basic
+% assumption of theta?) that gives some nonsense or some bad thing that leads to
+% the NEED for the MC models?
+% Otherwise I don't think you have a reason for the models (in the narrative).
 
 \section{Markov Chain Models}\label{sec:makovchains}
 The situation described in words in Section~\ref{sec:system} can be described
@@ -677,7 +700,7 @@ Proposition~\ref{thrm:steadystate} gives a naive check for the existence or
 non-existence of steady states, but does not cover all possibilities.
 
 \begin{prop}\label{thrm:steadystate}
-For an M/M/c work conserving queue with $K$ classes of customer, with arrival
+For an \(M/M/c\) work conserving queue with $K$ classes of customer, with arrival
 rate and service rate $\lambda_k$ and  $\mu_k$ for customers of class $k$,
 respectively; then
 \begin{enumerate}
@@ -1017,7 +1040,7 @@ so shorter sojourn time.
 
 \section{Conclusions}
 In this paper a generalised model of dynamically changing priorities within an
-M/M/c queue is presented. The general formulation was given in
+\(M/M/c\) queue is presented. The general formulation was given in
 Section~\ref{sec:system}, while two methodologies for modelling it was given,
 first by simulation, with contributions to the Ciw library, and second by two
 separate Markov chains used in conjunction to find state probabilities and
