@@ -56,8 +56,8 @@ disciplines, fitting system parameters to reflect the queue behaviour. An
 exploration of behaviour under different class change parameters is given for a
 better understanding of the system. 
 
-% TODO I would flip this around.
-% Let me read the paper and see if I agree with myself...
+% TODO I would flip this around: see later suggestions about the ordering of
+% things.
 \end{abstract}
 
 \section{Introduction}
@@ -388,8 +388,8 @@ pre-empted customers resume, re-start, or re-sample their service time.
 % Otherwise I don't think you have a reason for the models (in the narrative).
 
 \section{Markov Chain Models}\label{sec:makovchains}
-The situation described in words in Section~\ref{sec:system} can be described
-precisely as two different Markov chains.
+The situation described in Section~\ref{sec:system} can be modelled
+using two different Markov chains.
 The first, described in Section~\ref{sec:state_formulation}, describes the
 overall changes in state, where a state records the number of customers of each
 class present. This is useful for analysing system-wide statistics such as
@@ -710,6 +710,9 @@ respectively; then
   $\rho_{\min} = \frac{\sum_i \lambda_i}{c \max_i \mu_i} \geq 1$.
 \end{enumerate}
 \end{prop}
+
+% TODO I feel like the term 'work conserving' comes out of nowhere here? Have I
+% missed something?
 
 Note that this result does not assume any particular service discipline such as
 first-in-first-out or prioritised classes, but holds for any work conserving
