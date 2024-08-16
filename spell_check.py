@@ -71,5 +71,9 @@ if __name__ == "__main__":
         "warmup",
         "cooldown",
         "RGB",
+        "parametrise",
+        "KPI",
+        "MAPE",
+        "stochastically"
     }
     main(path=path, known_words=known_words)
