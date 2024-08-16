@@ -74,6 +74,6 @@ if __name__ == "__main__":
         "parametrise",
         "KPI",
         "MAPE",
-        "stochastically"
+        "stochastically",
     }
     main(path=path, known_words=known_words)
