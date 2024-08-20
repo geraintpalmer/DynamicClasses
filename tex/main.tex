@@ -173,7 +173,7 @@ Systems of this kind have been investigated previously:
   \item \cite{vanmieghan95} (1995): Introduces the generalised $c\mu$-rule
     (first conceived in \cite{smith56}), which applies a class- and waiting
       time-dependant cost to each customer. This acts as a scheduling rule,
-      but can also model dynamic priorities amongst customers.
+      but can also model changing priorities amongst customers.
   \item \cite{knessl03} (2003): Similar to \cite{fratini90} but with Markovian
       services and infinite waiting capacities for both customers.
   \item \cite{xie08} (2008): Preemptive n-priority-classes $M/M/c$ with
@@ -332,10 +332,11 @@ In this work we use and adapt the Ciw library \cite{palmer19} to simulation
 customers changing priority class. Ciw is an open-source Python library for
 discrete-event simulation of open queueing networks. A key contribution of this
 work is the adaptation of the library's logic to facilitate the type of
-dynamically changing priority classes described in Section~\ref{sec:system}.
+stochastic priority switching described in Section~\ref{sec:system}.
 This adaptation was first released in version Ciw v2.3.0, with usage
 documentation at
-\url{https://ciw.readthedocs.io/en/latest/Guides/CustomerClasses/change-class-while-queueing.html}.
+\url{https://ciw.readthedocs.io/en/latest/Guides/CustomerClasses/change-class-while-queueing.html}, and works by considering different classes
+of customer and mapping each class to a priority ranking.
 Figure~\ref{fig:ciwcode} shows the Ciw code
 required to simulate the system with two classes of customer, $\lambda_1 = 1$,
 $\lambda_2 = 3$, $\mu_1 = 3$, $\mu_2 = 2$, $c = 1$, $\theta_{12} =1.5$, and
@@ -393,8 +394,8 @@ stochastic priority switching to model the surgical endoscopy waiting list.
 
 According to the observed data referrals roughly follow a Poisson distribution
 with rate 0.463 a day. Service rate data is estimated to be around 0.5
-endoscopy procedures a day. To determine the appropriateness of the dynamic
-priority classes model here, we model the system as a two class system, with
+endoscopy procedures a day. To determine the appropriateness of the stochastic
+priority switching model here, we model the system as a two class system, with
 $\lambda_1 = 0.463$ and $\lambda_2 = 0$, and $\mu_1 = \mu_2 = 0.5$ and $c = 1$,
 that is all referrals are of the most urgent, with customers able to be
 downgraded and then upgraded during their waiting time. We simulate this
@@ -417,7 +418,7 @@ this it can be seen that a combination of downgrades and upgrades is required to
 fit a good distribution of overtakes, and of the parameters tested
 $\theta_{12}=3$, $\theta_{21}=1$ produces the best fit both in terms of
 Wasserstein distance and MAPE. This indicates that, with further parameter
-tuning, these dynamic priority classes models can be used to model unknown
+tuning, these stochastic priority switching models can be used to model unknown
 service disciplines.
 
 \begin{figure}
@@ -692,7 +693,7 @@ different sizes of $b$.
 \end{equation}
 
 To demonstrate the effect of $b$ on $\mathcal{Q}(b)$ under different systems,
-consider the dynamic priorities system with two customer classes,
+consider the stochastic priority switching system with two customer classes,
 $\lambda_1 = \frac{1}{2}$, $\lambda_2 = \frac{1}{2}$, $c = 1$,
 $\mu_1 = \frac{1}{\rho}$, $\mu_2 = \frac{1}{\rho}$, $\theta_{12} = 1$, and
 $\theta_{21} = 1$; where $0 < \rho < 1$ is some given traffic intensity.
@@ -744,9 +745,9 @@ Section~\ref{sec:meansojourncalc}, and given in Equation~\ref{eqn:hitting_measur
 \end{equation}
 
 To demonstrate the effect of $b$ on $\mathcal{P}(b)$ under different system,
-consider the same dynamic priorities system with two customer classes used in
-the previous demonstration. Figure~\ref{fig:hitting_accuracy} shows the effect
-of $b$ on $\mathcal{P}(b)$ for this system, for different values of $\rho$.
+consider the same stochastic priority switching system with two customer classes
+used in the previous demonstration. Figure~\ref{fig:hitting_accuracy} shows the
+effect of $b$ on $\mathcal{P}(b)$ for this system, for different values of $\rho$.
 Again, in all cases as $b$ increases, $\mathcal{P}(b)$ decreases, indicating
 greater accuracy of the bounded system; and similarly as $\rho$ increases the
 boundary $b$ needs to be larger before it can be considered irrelevant.
@@ -823,15 +824,15 @@ are two extreme cases, either:
 \end{enumerate}
 \end{proof}
 
-Proposition~\ref{thrm:steadystate} applies to the dynamic priorities system of
-this paper. If pre-empted customers resume their service upon re-entering
-service, then the system is work conserving. Otherwise, if the pre-empted
-customers restart or resample their service, despite not technically being work
-conserving any more, the systems are equivalent under Exponential service times,
-and so still applies here.
+Proposition~\ref{thrm:steadystate} applies to the stochastic priority switching
+system of this paper. If pre-empted customers resume their service upon
+re-entering service, then the system is work conserving. Otherwise, if the
+pre-empted customers restart or resample their service, despite not technically
+being work conserving any more, the systems are equivalent under Exponential
+service times, and so still applies here.
 
 If $c \min_i \mu_i \leq \sum_i \lambda_i < c \max_i \mu_i$ then more
-investigation is needed. In the case of dynamic priority classes the class
+investigation is needed. In the case of stochastic priority switching, the class
 change matrix $\Theta$ may be significant. For example the service rate of
 customers of one class may be very slow, however if the rate at which customers
 leave that class is sufficiently large then that service rate may not have an
@@ -905,7 +906,7 @@ hypothesis cannot be rejected.
 There is a gap in Proposition~\ref{thrm:steadystate} for systems where
 $c \min_i \mu_i \leq \sum_i \lambda_i < c \max_i \mu_i$. Indeed it is in this
 gap that our previous scenario in Figure~\ref{fig:toy_scenario} falls, and it is
-here where the dynamic priority classes can influence the stationarity of the
+here where stochastic priority switching can influence the stationarity of the
 system. Consider a two class system with $\lambda_1 = 2$, $\lambda_2 = 2$,
 $c = 1$. For the service rates of each customer class, consider two cases:
 
@@ -955,7 +956,7 @@ interplay between service rate, priority class, and class change rates.
 
 \subsection{Effect of $\Theta$ on Customer Experience}\label{sec:behaviour}
 In Section~\ref{sec:modelling} that it is established that some service
-disciplines can be modelled as dynamically changing priorities with a class
+disciplines can be modelled as stochastically changing priorities with a class
 change matrix $\Theta$, and we now have Markov chain models that can be used to
 consider the effect of $\Theta$ on the system behaviour. We now investigate the
 effect of this matrix on customer experience, as this would be important for the
@@ -1075,7 +1076,7 @@ so shorter sojourn time.
 
 
 \section{Conclusions}
-In this paper a generalised model of dynamically changing priorities within an
+In this paper a generalised model of stochastic priority switching within an
 $M/M/c$ queue is presented. The general formulation was given in
 Section~\ref{sec:system}, followed by two methodologies for modelling it,
 first by simulation, with contributions to the Ciw library, and second by two
@@ -1089,7 +1090,7 @@ arriving customer experiencing the boundary.
 
 This work is motivated by modelling a healthcare situation, a surgical endoscopy
 waiting list, where modelling as FIFO was inappropriate. We show that modelling
-as dynamically changing priorities can approximate the queue behaviour somewhat,
+as stochastically changing priorities can approximate the queue behaviour,
 with a sufficient choice of class change rate matrix $\Theta$. We then explore
 the effect of this matrix on customer experience, namely mean number of
 customers of each priority in the system, and mean sojourn time for each
