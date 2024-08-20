@@ -45,6 +45,7 @@ if __name__ == "__main__":
         "kJ",
         "KPIs",
         "pre",
+        "Pre",
         "Dicky",
         "ADF",
         "stationarity",

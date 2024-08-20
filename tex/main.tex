@@ -149,22 +149,31 @@ respectively.
 Systems of this kind have been investigated previously:
 
 \begin{itemize}
-  \item \cite{jackson60} (1960): Non preemptive $M/M/1$ where customers
+  \item \cite{jackson60} (1960): Non pre-emptive $M/M/1$ where customers
       are served in order of the difference between their waiting time
         and urgency number (that is priorities increasing linearly over
         time). Solved by considering event probabilities at clock ticks.
   \item \cite{kleinrock164} (1964): Another formulation giving the same
-      behaviour as \cite{jackson60}, but now for both non preemptive and
-        preemptive priorities, and multiple customer classes. Called `delay
+      behaviour as \cite{jackson60}, but now for both non pre-emptive and
+        pre-emptive priorities, and multiple customer classes. Called `delay
         dependent' or `time dependant' priorities, and recently by
         `accumulating' priorities.
+  \item \cite{adiri71} (1971): Introduces a model where customers are
+      de-prioritised during service if their service time exceeds a given
+        minimum time interval, or quantum of time. Customers are downgraded and
+        made to wait again for service, behind newly arriving and newly
+        downgraded customers.
   \item \cite{holtzman71} (1971): Similar to \cite{jackson60}, but treat each
       urgency number as a separate customer class, and not considering
         clock ticks. Upper and lower bounds on the waiting times, based
         on FIFO and static priorities.
   \item \cite{netterman79} (1979): Now considers the case where
       priorities increase non-linearly but concavely over time.
-  \item \cite{fratini90} (1990): Non preemptive $M/G/1$ queue with two
+  \item \cite{bagchisullivan85} extends the work of
+      \cite{jackson60, kleinrock164, holtzman71} by considering cases where the
+        multiple classes of customer have less restrictive orderings of the
+        linear priority functions.
+  \item \cite{fratini90} (1990): Non pre-emptive $M/G/1$ queue with two
       classes of customers, where priorities switch if the number from
         one class exceeds a given threshold. Lower priority customers
         have a finite waiting capacity, higher have infinite capacity.
@@ -172,12 +181,17 @@ Systems of this kind have been investigated previously:
     (first conceived in \cite{smith56}), which applies a class- and waiting
       time-dependant cost to each customer. This acts as a scheduling rule,
       but can also model changing priorities amongst customers.
+  \item \cite{xhafa01} (2001): Models calls in personal communication systems.
+      It considers system with three priority classes, the lower priority class
+      is lost to the system when servers are busy, while the other two classes
+      experience non-pre-emptive priorities, and exponentially distributed
+      upgrades from the middle priority to the highest priority.
   \item \cite{knessl03} (2003): Similar to \cite{fratini90} but with Markovian
       services and infinite waiting capacities for both customers.
-  \item \cite{xie08} (2008): Preemptive n-priority-classes $M/M/c$ with
+  \item \cite{xie08} (2008): Pre-emptive n-priority-classes $M/M/c$ with
       exponential upgrades. Customers only upgrade to the priority
         immediately higher than themselves. Stability considered.
-  \item \cite{down10} (2010): Preemptive two-priority-classes $M/M/c$ with
+  \item \cite{down10} (2010): Pre-emptive two-priority-classes $M/M/c$ with
       exponential upgrades. Customers cannot upgrade if the number of
         lower priority customers is below a given threshold. Holding
         costs considered.
@@ -189,6 +203,9 @@ Systems of this kind have been investigated previously:
       look at the maximum priority of the waiting customers in a single server
         queue as a stochastic process. This is extended in \cite{sharif14} to
         multi-server queues.
+  \item \cite{kella17} (2017): Derives waiting time distributions for queues
+      with multiple classes of customer and class-dependent priority
+        accumulation rates, where priorities accumulate linearly over time. 
   \item \cite{klimenok20} (2020): Upgrades and downgrades after a random,
       exponentially distributed, amount of time. Models two priority classes
         in a single server, finite buffer system with batch arrivals. Extended
