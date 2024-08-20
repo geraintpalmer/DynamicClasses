@@ -109,7 +109,7 @@ analysis, presenting measures of accuracy for these bounded approximations, and
 discussing the existence or otherwise of systems that can reach steady state.
 An exploration of the system behaviour under different parameters is given.
 
-\subsection{Motivating Case Study}\label{sec:casestudy}
+\subsection{Motivating case study: Surgical endoscopy}\label{sec:casestudy}
 Consider the queueing process for a particular surgical procedure. In many cases
 the service discipline, that is the rules for how patients chosen from the
 waiting list to be scheduled for surgery, are not known to modellers, and may
@@ -124,15 +124,16 @@ discipline was not used. To show this, we assign each patient in the data set
 an arrival rank, the order in which they were referred for an endoscopy, and a
 service rank, the order in which they received their endoscopy. The difference
 in the two ranks corresponds to the net number of patients that they `overtook'
-in the queue: a negative number indicates more customers overtook them, we'll
-say they were `bumped down' the queue; while a positive number indicates that
-they overtook more people, and we'll say they were `bumped up' the queue. During
+in the queue: a negative number indicates more customers overtook them which
+will be referred to as being `bumped down' the queue.
+A positive number indicates that
+they overtook more people, and were `bumped up' the queue. During
 the observation period, 169 patients received an endoscopy, and
 Figure~\ref{fig:motivating_overtakes} shows the distribution of the rank
 differences, and the distribution of waiting times by those who were bumped up
 or down the queue. No patient had a waiting time of zero, indicating that no
-patient was referred to the queue in a prioritised state, hinting that patients
-may have priorities that change over time.
+patient was referred to the queue in a prioritised state, this indicates that patients
+have priorities that change over time.
 The figure also reports $\omega_{\uparrow}$ and $\omega_{\downarrow}$, the
 average waiting time for patients that were bumped up and down the list,
 respectively.
@@ -212,8 +213,8 @@ Systems of this kind have been investigated previously:
 
 
 \section{An $M/M/c$ queue with stochastic priority switching}\label{sec:system}
-In this section, we present the detailed description of our queueing model where
-customers can stochastically which priority classes while waiting.
+In this section, we present the detailed description of a queueing model where
+customers can stochastically switch priority classes while waiting.
 Consider an $M/M/c$ queue with $K$ classes of customer labelled
 $0, 1, 2, \dots, K-1$. Let:
 
@@ -262,9 +263,15 @@ displaced customer rejoins the queue, before all other customers of their own or
 lower priority classes, but behind all other customers of higher priority
 classes. When that displaced customer eventually enters service again, their
 service time can either be resumed, re-started, or re-sampled.
+% TODO I wonder if a diagram would be nice to go with this. (It's clear, but a
+% diagram could be nice.)
 
-The next two sections outline and compare a discrete event simulation and
-Markov chain formulations for modelling this setup.
+The next two sections outline and compare two implementations of this model:
+
+\begin{itemize}
+    \item a discrete event simulation,
+    \item an exact model using Markov chains.
+\end{itemize}
 
 
 
@@ -326,7 +333,8 @@ included:
 
 
 \subsection{Ciw Implementation}
-In this work we use and adapt the Ciw library \cite{palmer19} to simulation
+In this work we use and adapt the Ciw library \cite{palmer19} to simulate
+% TODO Is it adapted? Is it not just "now" a feature of ciw?
 customers changing priority class. Ciw is an open-source Python library for
 discrete-event simulation of open queueing networks. A key contribution of this
 work is the adaptation of the library's logic to facilitate the type of
@@ -345,7 +353,7 @@ customer class labels to priority rankings, and a list of pre-emption options
 for each node; and \mintinline{python}{class_change_time_distributions},
 defining the time distributions used to describe the time it takes to transfer
 from one customer class to another. Note here that the simulation framework is
-general enough to define any probability distribution here, and is not
+general enough to use any probability distribution, and is not
 restricted to Exponential distributions.
 
 \begin{figure}
@@ -379,8 +387,8 @@ Note that the particular distributions used to sample class change dates in
 these cases are generic, and any of Ciw's currently pre-programmed distributions
 can be chosen, or custom distributions can also be used. For the systems
 described in this paper, we choose Exponential distributions with rates
-determined by the class change matrix $\Theta$. Ciw allows options letting
-pre-empted customers resume, re-start, or re-sample their service time.
+determined by the class change matrix $\Theta$. Ciw allows for 
+pre-empted customers to resume, re-start, or re-sample their service time.
 
 \subsection{Modelling Unknown Service Disciplines}\label{sec:modelling}
 The stochastic priority switching model presented in Section~\ref{sec:system}
@@ -457,8 +465,9 @@ allowing a deeper insight into the system behaviour.
 
 
 \section{Markov Chain Models}\label{sec:makovchains}
-The situation described in in Section~\ref{sec:system} can be modelled as two
-different Markov chains.
+The situation described in Section~\ref{sec:system} can be modelled using a pair
+of
+Markov chains.
 The first, described in Section~\ref{sec:state_formulation}, describes the
 overall changes in state, where a state records the number of customers of each
 priority class present. This is useful for analysing system-wide statistics such
@@ -613,7 +622,7 @@ Equation~\ref{eqn:mean_sojourn_class_k}.
 
 \subsection{Bounded Approximation}\label{sec:bound}
 In order to analyse the above Markov chain models numerically, finite
-approximations can be made. Let $b \in \mathbb{N}$, and define the $b$-bounded
+approximations are necessary. Let $b \in \mathbb{N}$ define the $b$-bounded
 version of the infinite queueing system described in Section~\ref{sec:system},
 such that the maximum allowed number of customers of each priority class is $b$,
 and customer losses occur when that number is exceeded. The equivalent
@@ -1073,6 +1082,8 @@ so shorter sojourn time.
 \end{figure}
 
 
+% TODO Come back to the healthcare example.
+
 \section{Conclusions}
 In this paper a generalised model of stochastic priority switching within an
 $M/M/c$ queue is presented. The general formulation was given in
@@ -1109,6 +1120,9 @@ cut-off for priority changes.
 
 All code and computational work used to produce this paper is openly available
 at \url{https://github.com/geraintpalmer/DynamicClasses}.
+% TODO Add an archived version as well.
+% "All code is available at \cite{} and all development of the code took place
+% at \url..."
 
 \bibliographystyle{plain}
 \bibliography{refs}
