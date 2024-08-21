@@ -1185,7 +1185,7 @@ def find_var_sojourn_time(State_Space, transition_matrix, arrival_rates, probs):
     b = np.ones(size_mat - 1)
     time2absorb = np.matmul(Y, b)
     time2absorb_dict = {State_Space[i]: float(t) for i, t in enumerate(time2absorb)}
-    variances = np.matmul(((2 * Y)), time2absorb) - (time2absorb ** 2)
+    variances = np.matmul(((2 * Y)), time2absorb) - (time2absorb**2)
     vars_dict = {State_Space[i]: float(t) for i, t in enumerate(variances)}
 
     normed_arrival_rates = [a / sum(arrival_rates) for a in arrival_rates]
@@ -1195,12 +1195,14 @@ def find_var_sojourn_time(State_Space, transition_matrix, arrival_rates, probs):
         transition_matrix_sojourn=transition_matrix,
         num_classes=len(arrival_rates),
         arrival_rates=arrival_rates,
-        probs=probs
+        probs=probs,
     )[-1]
 
     overall_var = 0.0
     for state in vars_dict.keys():
         if state[-2] == 0:
-            overall_var += ((normed_arrival_rates[state[-1]] * probs[state[:-2]]) * (vars_dict[state] + (time2absorb_dict[state] ** 2)))
+            overall_var += (normed_arrival_rates[state[-1]] * probs[state[:-2]]) * (
+                vars_dict[state] + (time2absorb_dict[state] ** 2)
+            )
 
-    return overall_var - (mean_sojourn_time ** 2)
+    return overall_var - (mean_sojourn_time**2)
