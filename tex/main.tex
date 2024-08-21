@@ -201,16 +201,23 @@ Systems of this kind have been investigated previously:
         themselves.
   \item \cite{stanford14} (2014): Furthers the work of \cite{kleinrock164} to
       look at the maximum priority of the waiting customers in a single server
-        queue as a stochastic process. This is extended in \cite{sharif14} to
-        multi-server queues.
+        queue as a stochastic process termed an accumulating priority queue
+        (APQ). This is extended in \cite{sharif14} to multi-server queues, in
+        \cite{li2016} to account for heterogeneous servers, and in \cite{li2017}
+        to find non-linear accumulation functions that are equivalent to linear
+        ones.
   \item \cite{kella17} (2017): Derives waiting time distributions for queues
       with multiple classes of customer and class-dependent priority
-        accumulation rates, where priorities accumulate linearly over time. 
+        accumulation rates, where priorities accumulate linearly over time.
+  \item \cite{ferrandetal18} (2018): Shows that by using the \cite{kleinrock164}
+      setup in a simulation of a ED in a children's hospital leads to more
+        efficient resource use.
   \item \cite{klimenok20} (2020): Upgrades and downgrades after a random,
       exponentially distributed, amount of time. Models two priority classes
         in a single server, finite buffer system with batch arrivals. Extended
-        in \cite{dudin21} to include unreliable services and impatient
-        customers. 
+        in \cite{leeetal20} to include multiple priority classes but without
+        downgrades, and in \cite{dudin21} to include unreliable services and
+        impatient customers. 
   \item \cite{bilodeau22} (2022): Analytical (truncated) expressions for
       a two class delayed accumulating priority $M/G/1$ queue. Customer
         priorities increase linearly over time, at different rates
