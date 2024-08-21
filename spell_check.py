@@ -22,6 +22,7 @@ if __name__ == "__main__":
     path = pathlib.Path("./tex/main.tex")
     known_words = {
         "TODO",
+        "APQ",
         "Markovian",
         "img",
         "pathreplacing",

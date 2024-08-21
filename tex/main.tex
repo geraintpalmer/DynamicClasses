@@ -126,14 +126,13 @@ service rank, the order in which they received their endoscopy. The difference
 in the two ranks corresponds to the net number of patients that they `overtook'
 in the queue: a negative number indicates more customers overtook them which
 will be referred to as being `bumped down' the queue.
-A positive number indicates that
-they overtook more people, and were `bumped up' the queue. During
-the observation period, 169 patients received an endoscopy, and
-Figure~\ref{fig:motivating_overtakes} shows the distribution of the rank
+A positive number indicates that they overtook more people, and were `bumped up'
+the queue. During the observation period, 169 patients received an endoscopy,
+and Figure~\ref{fig:motivating_overtakes} shows the distribution of the rank
 differences, and the distribution of waiting times by those who were bumped up
 or down the queue. No patient had a waiting time of zero, indicating that no
-patient was referred to the queue in a prioritised state, this indicates that patients
-have priorities that change over time.
+patient was referred to the queue in a prioritised state, this indicates that
+patients have priorities that change over time.
 The figure also reports $\omega_{\uparrow}$ and $\omega_{\downarrow}$, the
 average waiting time for patients that were bumped up and down the list,
 respectively.
@@ -287,8 +286,6 @@ displaced customer rejoins the queue, before all other customers of their own or
 lower priority classes, but behind all other customers of higher priority
 classes. When that displaced customer eventually enters service again, their
 service time can either be resumed, re-started, or re-sampled.
-% TODO I wonder if a diagram would be nice to go with this. (It's clear, but a
-% diagram could be nice.)
 
 The next two sections outline and compare two implementations of this model:
 
@@ -357,14 +354,12 @@ included:
 
 
 \subsection{Ciw Implementation}
-In this work we use and adapt the Ciw library \cite{palmer19} to simulate
-% TODO Is it adapted? Is it not just "now" a feature of ciw?
-customers changing priority class. Ciw is an open-source Python library for
-discrete-event simulation of open queueing networks. A key contribution of this
-work is the adaptation of the library's logic to facilitate the type of
-stochastic priority switching described in Section~\ref{sec:system}.
-This adaptation was first released in version Ciw v2.3.0, with usage
-documentation at
+In this work we use the Ciw library \cite{palmer19} to simulate customers
+changing priority class. Ciw is an open-source Python library for discrete-event
+simulation of open queueing networks. A key contribution of this work is the
+adaptation of the library's logic to facilitate the type of stochastic priority
+switching described in Section~\ref{sec:system}. This adaptation was first
+released in version Ciw v2.3.0, with usage documentation at
 \url{https://ciw.readthedocs.io/en/latest/Guides/CustomerClasses/change-class-while-queueing.html}, and works by considering different classes
 of customer and mapping each class to a priority ranking.
 Figure~\ref{fig:ciwcode} shows the Ciw code
@@ -490,8 +485,7 @@ allowing a deeper insight into the system behaviour.
 
 \section{Markov Chain Models}\label{sec:makovchains}
 The situation described in Section~\ref{sec:system} can be modelled using a pair
-of
-Markov chains.
+of Markov chains.
 The first, described in Section~\ref{sec:state_formulation}, describes the
 overall changes in state, where a state records the number of customers of each
 priority class present. This is useful for analysing system-wide statistics such
