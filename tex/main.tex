@@ -598,12 +598,17 @@ A_{k,n,t} =
 \min\left(c, \sum_{i \leq n} z_{i,t} + 1 + z_{K,t}\right) - \min\left(c, \sum_{i \leq n} z_{i,t} + 1\right) \\
 \end{equation}
 
-Let $a_{\underline{\mathbf{z}}}$ denote the expected time to absorption
-from state $\underline{\mathbf{z}} \in Z$.
-
 
 \subsubsection{Mean sojourn time calculation}\label{sec:meansojourncalc}
-The expected time to absorption can be calculated from each state.
+The expected time to absorption can be calculated from each state
+\cite{stewart09}, by letting $T$ be the transition rate matrix constructed from
+the rates in Equation~\ref{eqn:transitions_sojourn} above without the rows and
+columns associated with the absorbing state $\star$, and by letting
+$Y = -T^{-1}$.
+Let $a_{\underline{\mathbf{z}}}$ denote the expected time to absorption
+from state $\underline{\mathbf{z}} \in Z$, then $a_{\underline{\mathbf{z}}}$ is
+given by elements of the vector $Ye$ where $e$ is a vector or ones.
+
 Customers arrive in all states where $z_K = 0$, and their class can be
 determined by $n$. First define
 $\tilde{Z} = \{\underline{\mathbf{z}} \in Z\setminus\{\star\} \; | \; z_K = m = 0\} \subset Z$
@@ -636,6 +641,31 @@ Equation~\ref{eqn:mean_sojourn_class_k}.
 \Psi_k = \sum_{\underline{\mathbf{z}} \in \tilde{Z}_k} \pi_{f(\underline{\mathbf{z}})} a_{\underline{\mathbf{z}}}
 \end{equation}
 
+
+\subsubsection{Sojourn time variance calculation}\label{sec:varsojourncalc}
+Similarly to the mean sojourn time, the variance in sojourn times can be
+calculated by first calculating the variance in the times to absorption from
+each state. Let $\phi_{\underline{\mathbf{z}}}$ represent the variance in the
+times to absorption from state $\underline{\mathbf{z}} \in Z\setminus\{\star\}$,
+given by elements of the vector $\phi$ given in
+Equation~\ref{eqn:var_absorption} \cite{stewart09}.
+
+\begin{equation}\label{eqn:var_absorption}
+\phi = 2Ye - \text{sq}\{Y\}e
+\end{equation}
+
+where $\text{sq}\{Y\}$ is the matrix $Y$ with each element squared.
+
+In a similar calculation to Equation~\ref{eqn:mean_sojourn}, the appropriate
+aggregation of states to give an overall variance in sojourn times, $\Phi$, is
+given in Equation~\ref{eqn:var_sojourn}. This is derived by considering the
+overall time to absorption as a mixture distribution of times to absorption of
+each arriving state $\underline{\mathbf{z}} \in \tilde{Z}$, with weights
+corresponding to the probabilities of encountering those states upon arrival.
+
+\begin{equation}\label{eqn:var_sojourn}
+\Phi = \left(\sum_{\underline{\mathbf{z}} \in \tilde{Z}} \sum_{k=0}^{K-1} \frac{\lambda_k}{\sum_{i=0}^{K-1} \lambda_i} \pi_{f(\underline{\mathbf{z}})} \left(\phi_{\underline{\mathbf{z}}} + a_{\underline{\mathbf{z}}}^2 \right) \right) - \overline{\Psi}^2
+\end{equation}
 
 
 \subsection{Bounded Approximation}\label{sec:bound}
@@ -1100,7 +1130,54 @@ so shorter sojourn time.
 \end{figure}
 
 
-% TODO Come back to the healthcare example.
+\subsection{Case study insights}
+The above Markov chain models can now be used to investigate the effect of the
+stochastic priority switching on our surgical endoscopy case study. In
+particular, we will consider the variance in the sojourn time of the customers,
+as reducing variability amongst patients is one of the core principles of
+prudent healthcare \cite{prudent15}. First we will compare the sojourn time
+variance $\Phi$, using Equation~\ref{eqn:var_sojourn}, between the scenario that
+does and doesn't use stochastic priority switching, which are given in
+Table~\ref{tbl:phi_with_without}. The variability in the customers' sojourn
+times is much greater when modelling using stochastic priority switching, over
+16 times the variance without priority switching, demonstrating some important
+performance measures are not captures by FIFO alone.
+
+\begin{table}
+\begin{center}
+\begin{tabular}{rccc}
+\toprule
+Scenario & $\theta_{12}$ & $\theta_{21}$ & $\Phi$ \\
+\midrule
+No priority switching & 0 & 0 & 150.8 \\
+Priority switching & 2 & 1 & 2449.4 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\caption{Comparison in the variance in customer sojourn time for models with and
+without stochastic priority switching, for the surgical endoscopy case study of
+Section~\ref{sec:casestudy}.}
+\label{tbl:phi_with_without}
+\end{table}
+
+We previously saw in Figure~\ref{fig:toy_scenario} that small changes to the
+service rates can have large effects on the system. Figure~\ref{fig:phi_vary_mu}
+shows the effect of increasing in the service rate $\mu$ on the customers'
+sojourn time variance $\Phi$, and we see that even just a very slight increase
+to the service rate could drastically reduce the variation in the customers'
+waiting times, this may be due to the initially very high traffic intensity
+($\rho = \sfrac{\lambda}{\mu} = \frac{0.463}{0.5} = 0.926$) causing long waiting
+times and therefore lots of customers switching priorities.
+
+\begin{figure}
+\begin{center}
+  \includegraphics[width=0.65\textwidth]{img/vary_service_rate_effect_variance.pdf}
+\end{center}
+\caption{The effect of small increases in the service rate on $\Phi$, with and
+without priority switching.}
+\label{fig:phi_vary_mu}
+\end{figure}
+
 
 \section{Conclusions}
 In this paper a generalised model of stochastic priority switching within an
@@ -1126,6 +1203,8 @@ waiting list managers, who can influence or tweak the class change matrix, for
 example if prioritised customers have a faster service rate, then the queue is
 managed better when the priority change rate is higher, though at the expense of
 the prioritised customers themselves.
+In the surgical endoscopy case study, we show that the variance in the
+customers' sojourn times are highly sensitive to the service rate.
 
 Although much of the work in this paper concentrated on two classes of customer
 and two prioritisation levels, the formulation is generalised to any number of
