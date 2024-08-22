@@ -1075,6 +1075,57 @@ def build_state_space_and_transition_matrix_state(boundary):
     return state_space, transition_matrix
 
 
+def test_variance_in_sojourn_times():
+    state_space, transmat = models.build_state_space_and_transition_matrix_sojourn_mc(
+        num_classes=2,
+        num_servers=2,
+        arrival_rates=[1, 2],
+        service_rates=[2, 3],
+        thetas=[[None, 4], [1, None]],
+        bound=8,
+    )
+    probs = models.get_state_probabilities(
+        num_classes=2,
+        num_servers=2,
+        arrival_rates=[1, 2],
+        service_rates=[2, 3],
+        thetas=[[None, 4], [1, None]],
+        bound=8,
+    )
+    v = models.find_var_sojourn_time(
+        State_Space=state_space,
+        transition_matrix=transmat,
+        arrival_rates=[1, 2],
+        probs=probs,
+    )
+    assert round(v, 5) == 1.05707
+
+    # Test decreasing \mu increases variance:
+    state_space, transmat = models.build_state_space_and_transition_matrix_sojourn_mc(
+        num_classes=2,
+        num_servers=2,
+        arrival_rates=[1, 2],
+        service_rates=[1.5, 2.5],
+        thetas=[[None, 4], [1, None]],
+        bound=8,
+    )
+    probs = models.get_state_probabilities(
+        num_classes=2,
+        num_servers=2,
+        arrival_rates=[1, 2],
+        service_rates=[1.5, 2.5],
+        thetas=[[None, 4], [1, None]],
+        bound=8,
+    )
+    v = models.find_var_sojourn_time(
+        State_Space=state_space,
+        transition_matrix=transmat,
+        arrival_rates=[1, 2],
+        probs=probs,
+    )
+    assert round(v, 5) == 11.44698
+
+
 def test_get_relative_prob_at_boundary():
     boundary = 4
     state_space_S, transition_matrix_S = build_state_space_and_transition_matrix_state(
