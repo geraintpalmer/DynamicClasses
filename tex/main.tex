@@ -115,6 +115,12 @@ the service discipline, that is the rules for how patients chosen from the
 waiting list to be scheduled for surgery, are not known to modellers, and may
 even be impossible to know as managers may be reluctant to disclose the
 information for political or other reasons.
+There have been efforts to understand such unknown service disciplines, for
+example in\cite{ding19}, which shows that in Canada that decision makers often
+use their own discretion in deciding which patients to be seen, rather than
+FIFO within each triage category. They attempt to fits prioritisation rules to
+this discretionary behaviour. Here we will do the same, utilising a stochastic
+priority switching configuration to emulate the observed service disciplines.
 We consider and investigate the waiting list of a surgical
 endoscopy procedure carried out in the Cardiff and Value University Health Board
 (CAVUHB) over the period 1st January to 31st December 2021.
@@ -146,92 +152,80 @@ respectively.
 \end{figure}
 
 \subsection{Related Work}\label{sec:related}
-Systems of this kind have been investigated previously:
+Queue where customers' priority changes as they wait or progress through the
+system have been studies previously. One of the first papers to consider such a
+system was \cite{jackson60}, which considers a customer's waiting time and their
+urgency number when deciding which customer to be served next from the queue;
+the difference between the waiting time and urgency number determines the
+customer's priority, which increases linearly over time. This is analysed by
+considering event probabilities at clock ticks. This is re-analysed and extended
+in \cite{kleinrock164}, a fundamental paper on dynamic priorities, also called
+`delay dependent', `time dependent' and `accumulating' priorities. Here both
+pre-emptive and non-pre-emptive priorities are considered. \cite{ferrandetal18}
+applies this to a simulation of an emergency department in a children's
+hospital, and shows that these accumulating priorities lead to more efficient
+resource use.
 
-\begin{itemize}
-  \item \cite{jackson60} (1960): Non pre-emptive $M/M/1$ where customers
-      are served in order of the difference between their waiting time
-        and urgency number (that is priorities increasing linearly over
-        time). Solved by considering event probabilities at clock ticks.
-  \item \cite{kleinrock164} (1964): Another formulation giving the same
-      behaviour as \cite{jackson60}, but now for both non pre-emptive and
-        pre-emptive priorities, and multiple customer classes. Called `delay
-        dependent' or `time dependant' priorities, and recently by
-        `accumulating' priorities.
-  \item \cite{adiri71} (1971): Introduces a model where customers are
-      de-prioritised during service if their service time exceeds a given
-        minimum time interval, or quantum of time. Customers are downgraded and
-        made to wait again for service, behind newly arriving and newly
-        downgraded customers.
-  \item \cite{holtzman71} (1971): Similar to \cite{jackson60}, but treat each
-      urgency number as a separate customer class, and not considering
-        clock ticks. Upper and lower bounds on the waiting times, based
-        on FIFO and static priorities.
-  \item \cite{netterman79} (1979): Now considers the case where
-      priorities increase non-linearly but concavely over time.
-  \item \cite{bagchisullivan85} extends the work of
-      \cite{jackson60, kleinrock164, holtzman71} by considering cases where the
-        multiple classes of customer have less restrictive orderings of the
-        linear priority functions.
-  \item \cite{fratini90} (1990): Non pre-emptive $M/G/1$ queue with two
-      classes of customers, where priorities switch if the number from
-        one class exceeds a given threshold. Lower priority customers
-        have a finite waiting capacity, higher have infinite capacity.
-  \item \cite{vanmieghan95} (1995): Introduces the generalised $c\mu$-rule
-    (first conceived in \cite{smith56}), which applies a class- and waiting
-      time-dependant cost to each customer. This acts as a scheduling rule,
-      but can also model changing priorities amongst customers.
-  \item \cite{xhafa01} (2001): Models calls in personal communication systems.
-      It considers system with three priority classes, the lower priority class
-      is lost to the system when servers are busy, while the other two classes
-      experience non-pre-emptive priorities, and exponentially distributed
-      upgrades from the middle priority to the highest priority.
-  \item \cite{knessl03} (2003): Similar to \cite{fratini90} but with Markovian
-      services and infinite waiting capacities for both customers.
-  \item \cite{xie08} (2008): Pre-emptive n-priority-classes $M/M/c$ with
-      exponential upgrades. Customers only upgrade to the priority
-        immediately higher than themselves. Stability considered.
-  \item \cite{down10} (2010): Pre-emptive two-priority-classes $M/M/c$ with
-      exponential upgrades. Customers cannot upgrade if the number of
-        lower priority customers is below a given threshold. Holding
-        costs considered.
-  \item \cite{he12} (2012): Extension of \cite{down10}, allows batch
-      arrivals, multiple classes, phase-type upgrades and services.
-        Customers only upgrade to the priority immediately higher than
-        themselves.
-  \item \cite{stanford14} (2014): Furthers the work of \cite{kleinrock164} to
-      look at the maximum priority of the waiting customers in a single server
-        queue as a stochastic process termed an accumulating priority queue
-        (APQ). This is extended in \cite{sharif14} to multi-server queues, in
-        \cite{li2016} to account for heterogeneous servers, and in \cite{li2017}
-        to find non-linear accumulation functions that are equivalent to linear
-        ones.
-  \item \cite{kella17} (2017): Derives waiting time distributions for queues
-      with multiple classes of customer and class-dependent priority
-        accumulation rates, where priorities accumulate linearly over time.
-  \item \cite{ferrandetal18} (2018): Shows that by using the \cite{kleinrock164}
-      setup in a simulation of a ED in a children's hospital leads to more
-        efficient resource use.
-  \item \cite{klimenok20} (2020): Upgrades and downgrades after a random,
-      exponentially distributed, amount of time. Models two priority classes
-        in a single server, finite buffer system with batch arrivals. Extended
-        in \cite{leeetal20} to include multiple priority classes but without
-        downgrades, and in \cite{dudin21} to include unreliable services and
-        impatient customers. 
-  \item \cite{bilodeau22} (2022): Analytical (truncated) expressions for
-      a two class delayed accumulating priority $M/G/1$ queue. Customer
-        priorities increase linearly over time, at different rates
-        according to class, after an initial fixed delay.
-\end{itemize}
+In \cite{holtzman71} the original model by \cite{jackson60} is extended by
+treating different urgency numbers as separate customer classes, with certain
+restrictions on the ordering of parameters on the linear priority functions.
+Bounds on the customers' waiting times are found. Later, \cite{bagchisullivan85}
+extends the work of all of the above by considering cases where the multiple
+classes of customer have less restrictive orderings of the linear priority
+functions. \cite{stanford14} furthers the work of \cite{kleinrock164} to look at
+the maximum priority of the waiting customers in a single server queue, that is
+the next customer to be served, as a stochastic process termed an accumulating
+priority queue (APQ). This is extended in \cite{sharif14} to multi-server
+queues, and in \cite{li2016} to account for heterogeneous servers, and in
+\cite{kella17} where waiting time distributions are derived. In
+\cite{bilodeau22} truncated analytical expressions are given for a two class
+delayed accumulating priority queue with general service time distributions,
+where customers experience an initial fixed delay before service.
 
+Non-linear, concave accumulating priority functions are considered in
+\cite{netterman79} in place of the linearly accumulating priorities considered
+before. While in \cite{li2017} equivalences between some families on non-linear
+accumulation functions and linearly increasing ones are given.
 
-\begin{itemize}
-  \item \cite{ding19} (2019): Evidence that in Canada that decision makers
-      often use their own discretion in deciding which patients to be seen,
-        rather than FIFO within each triage category. Fits prioritisation rules
-        to this discretionary behaviour.
-\end{itemize}
+Another way in which modellers have considered dynamically changing classes is
+by static priorities within a customer class, but dynamically switching class.
+This is the model considered in this paper. In  \cite{fratini90} a
+non-pre-emptive $M/G/1$ closed loss queue with two classes of customers is
+considered, where priorities switch if the number from one class exceeds a given
+threshold. Similarly \cite{knessl03} extends this to infinite waiting capacities
+for both customers in the case of Markovian services.
 
+Stochastic class switching has also been studied. In \cite{xhafa01} calls in
+personal communication systems are modelled by considering a system with three
+priority classes, the lower priority class is lost to the system when servers
+are busy, while the other two classes experience non-pre-emptive priorities, and
+exponentially distributed upgrades from the middle priority to the highest
+priority. That is the time for a customer to upgrade is exponentially
+distributed. In \cite{down10} a pre-emptive $M/M/c$ priority queue with
+exponential upgrades for two classes of customer is considered with holding
+costs, with some state dependent restrictions on the upgrades. In \cite{xie08}
+the pre-emptive $M/M/c$ priority queue with exponential upgrades is studied for
+an arbitrary amount of customer classes; however customers can only upgrade to
+the priority immediately higher than themselves. \cite{he12} extends this to
+allow batch arrivals and phase-type upgrades, but again, customers only upgrade
+to the priority immediately higher than themselves. Exponential downgrades are
+modelled in \cite{klimenok20} alongside upgrades, but limited to single server
+system with finite queueing capacity. This is extended in \cite{leeetal20} to
+include multiple priority classes but without downgrades, and in \cite{dudin21}
+to include unreliable services and impatient customers. We contribute to the
+literature by generalising these models to include upgrades and downgrades to
+any other priority class, introducing both a simulation and Markov chain models
+to describe these behaviours.
+
+Other configurations of dynamically changing priority classes have also been
+considered. For example \cite{adiri71} introduces a model where customers are
+de-prioritised during their service if their service time exceeds a given
+minimum time interval, or quantum of time. Customers are downgraded and made to
+wait again for service, behind newly arriving and newly downgraded customers.
+\cite{vanmieghan95} introduces the generalised $c\mu$-rule, first conceived in
+\cite{smith56}, which applies a cost to each customer which is dependent on both
+their class and  their waiting time. This cost then acts as a scheduling rule,
+but can also model changing priorities amongst customers.
 
 
 
@@ -1166,8 +1160,8 @@ shows the effect of increasing in the service rate $\mu$ on the customers'
 sojourn time variance $\Phi$, and we see that even just a very slight increase
 to the service rate could drastically reduce the variation in the customers'
 waiting times, this may be due to the initially very high traffic intensity
-($\rho = \sfrac{\lambda}{\mu} = \frac{0.463}{0.5} = 0.926$) causing long waiting
-times and therefore lots of customers switching priorities.
+($\rho = \sfrac{\lambda}{\mu} = \sfrac{0.463}{0.5} = 0.926$) causing long
+waiting times and therefore lots of customers switching priorities.
 
 \begin{figure}
 \begin{center}
