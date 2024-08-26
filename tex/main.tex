@@ -342,7 +342,7 @@ included:
   service, or if a lower priority customer is upgraded to a higher priority a
   customer in service, then the lower priority customer in service is
   pre-empted. They stop service and are placed at the head of the queue. This
-  happens immediately after and arrival or after an upgrade, and so is a
+  happens immediately after an arrival or after an upgrade, and so is a
   \textbf{C}-event.
 \end{itemize}
 
@@ -408,7 +408,7 @@ The stochastic priority switching model presented in Section~\ref{sec:system}
 may be used to model situations where FIFO is not appropriate, but specific
 service disciplines may not be known. Recall now the motivating example
 discussed in Section~\ref{sec:casestudy}, where it was established that FIFO was
-not appropriate but service discipline unknown. Here we attempt to use
+not appropriate and the service discipline was unknown. Here we attempt to use
 stochastic priority switching to model the surgical endoscopy waiting list.
 
 According to the observed data referrals roughly follow a Poisson distribution
@@ -815,7 +815,7 @@ priority classes.
 
 \subsection{Existence of Stationary Distributions}\label{sec:stationary}
 In all cases, the $b$-bounded system will only be an approximation of the
-infinite system of that infinite system is stationary, that is it reaches a
+infinite system if that infinite system is stationary, that is it reaches a
 steady-state and the queue does not grow indefinitely.
 Proposition~\ref{thrm:steadystate} gives a naive check for the existence or
 non-existence of steady states for work conserving queues, but does not cover
