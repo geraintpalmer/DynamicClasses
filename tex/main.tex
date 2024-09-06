@@ -172,7 +172,8 @@ restrictions on the ordering of parameters on the linear priority functions.
 Bounds on the customers' waiting times are found. Later, \cite{bagchisullivan85}
 extends the work of all of the above by considering cases where the multiple
 classes of customer have less restrictive orderings of the linear priority
-functions. \cite{stanford14} furthers the work of \cite{kleinrock164} to look at
+functions, and \cite{sharma94} derives its expected steady state waiting times.
+\cite{stanford14} furthers the work of \cite{kleinrock164} to look at
 the maximum priority of the waiting customers in a single server queue, that is
 the next customer to be served, as a stochastic process termed an accumulating
 priority queue (APQ). This is extended in \cite{sharif14} to multi-server
@@ -195,7 +196,12 @@ considered, where priorities switch if the number from one class exceeds a given
 threshold. Similarly \cite{knessl03} extends this to infinite waiting capacities
 for both customers in the case of Markovian services.
 
-Stochastic class switching has also been studied. In \cite{xhafa01} calls in
+Stochastic class switching has also been studied. The logic for simulating a
+finite population queue with randomly increasing priority mnumbers is described
+in \cite{panayiotopoulos80}, where times between priority increases are randomly
+generated; while \cite{grindlay65} simulation experiments are run where for
+series of queues in tandem where a customer's urgency number adapts according to
+the amount of time already spent in the system. In \cite{xhafa01} calls in
 personal communication systems are modelled by considering a system with three
 priority classes, the lower priority class is lost to the system when servers
 are busy, while the other two classes experience non-pre-emptive priorities, and
