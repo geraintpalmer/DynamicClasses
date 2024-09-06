@@ -12,3 +12,4 @@ slides/*
 *.blg
 *env/
 */_minted-main/*
+*/_minted-main-anon/*

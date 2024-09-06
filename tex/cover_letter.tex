@@ -1,0 +1,31 @@
+\documentclass{letter}
+\usepackage{hyperref}
+\usepackage{fullpage}
+
+\signature{Dr Geraint Palmer}
+\begin{document}
+
+\begin{letter}{}
+\opening{Dear editors,}
+
+My name is Dr Geraint Palmer, lecturer at the School of Mathematics at Cardiff University. I am writing on behalf on of a team of authors as we wish to submit a research article entitled \textit{``Queues Under Stochastic Priority Switching''} for consideration in the Journal of the Operational Research Society.
+
+In this paper we consider a general queueing system with and arbitrary number of multiple classes of customer with different priority levels, where customers stochastically switch priorities while waiting. This kind of system can arise in many real world scenarios such as healthcare systems where patients deteriorate over time while on a waiting list. The work follows a strong tradition of studying queues with dynamically changing priorities, which is outlined in the paper.
+
+A key part of the paper is demonstrating the use of such a system for modelling queues with unknown service or priority disciplines. Using activities from a surgical endoscopy waiting list in a Welsh health board, we fit parameters that emulate the observed behaviour using the distribution of number of overtakes.
+
+In this paper, we:
+
+\begin{itemize}
+  \item describe simulation logic to simulate such a system, and contribute to the open source Python library Ciw, to allow simulation of such systems out of the box;
+  \item build a pair of Markov chain models of the system with Poisson arrivals and Exponential services - these are used to calculate summary statistics such as average wait, average queue length, average sojourn time, and variance in sojourn times;
+  \item use the above to explore the effects of system parameters on KPIs;
+  \item we apply the stochastic priority switching setup to model unknown service disciplines for a surgical endoscopy waiting list.
+\end{itemize}
+
+Thank you for your consideration of this article.
+
+\closing{Yours Faithfully,}
+
+\end{letter}
+\end{document}
