@@ -333,7 +333,7 @@ Any other customer, server, or system behaviour to be captured by the simulation
 corresponds to increasing the range of \textbf{B}- and \textbf{C}-events that
 can happen during the simulation run. For example if servers are subject to a
 work schedule, then extra \textbf{B}-events include a server going off and on
-duty, and extra \textbf{C}-events would include include a customer beginning
+duty, and extra \textbf{C}-events would include a customer beginning
 service after another customer has left the server.
 
 In the case of customers randomly changing priority classes while waiting, one
@@ -604,21 +604,26 @@ A_{k,n,t} =
 \min\left(c, \sum_{i \leq n} z_{i,t} + 1 + z_{K,t}\right) - \min\left(c, \sum_{i \leq n} z_{i,t} + 1\right) \\
 \end{equation}
 
+\textcolor{red}{\subsubsection{Sojourn time CDF}}
+\textcolor{red}{The sojourn time cumulative distribution function (CDF) is a
+phase-type distribution formed by this absorbing Markov chain, which can be
+found using standard methods \cite{stewart09}.
+Let $X$ be the random variable representing the sojourn time of any customer,
+and let $X_k$ represent the sojourn time of a customer who enters the system as
+a customer of class $k$. Then the CDFs we are interested in are
+$\mathbb{P}(X < x)$, and $\mathbb{P}(X_k < x)$ for each $k$.}
 
-\subsubsection{Mean sojourn time calculation}\label{sec:meansojourncalc}
-The expected time to absorption can be calculated from each state
-\cite{stewart09}, by letting $T$ be the transition rate matrix constructed from
-the rates in Equation~\ref{eqn:transitions_sojourn} above without the rows and
-columns associated with the absorbing state $\star$, and by letting
-$Y = -T^{-1}$.
-Let $a_{\underline{\mathbf{z}}}$ denote the expected time to absorption
-from state $\underline{\mathbf{z}} \in Z$, then $a_{\underline{\mathbf{z}}}$ is
-given by elements of the vector $Ye$ where $e$ is a vector or ones.
-
+Let $T$ be the transition rate matrix constructed from the rates in
+Equation~\ref{eqn:transitions_sojourn} above without the rows and columns
+associated with the absorbing state $\star$.
 Customers arrive in all states where $z_K = 0$, and their class can be
-determined by $n$. First define
+determined by $n$.
+Therefore define
 $\tilde{Z} = \{\underline{\mathbf{z}} \in Z\setminus\{\star\} \; | \; z_K = m = 0\} \subset Z$
-as the set of all states where the newly arriving customer can arrive.
+as the set of all states where the newly arriving customer can arrive, and
+define $\tilde{Z}_k = \{\underline{\mathbf{z}} \in \tilde{Z} \; | \; z_{K-1} = n = k\} \subset Z$
+as the states where newly arriving customers of class $k$ arrive.
+
 Let $f: \tilde{Z} \rightarrow S$ be a map between states in $\tilde{Z}$ and $S$,
 given in Equation~\ref{eqn:map_state}.
 
@@ -630,18 +635,45 @@ Note that $f$ is a surjective map, but not injective. In fact, for every element
 $\underline{\mathbf{s}} \in S$ exactly $K$ states in $\tilde{Z}$ map to it.
 These correspond to states at which each of the $K$ classes of customer can
 arrive. In each of these states, the probability of a customer from class $k$
-arriving is $\frac{\lambda_k}{\sum_{i=0}^{K-1} \lambda_i}$. Therefore, we can
-combine this to get the overall mean sojourn time in
-Equation~\ref{eqn:mean_sojourn}:
+arriving is $\frac{\lambda_k}{\sum_{i=0}^{K-1} \lambda_i}$.
+
+\textcolor{red}{Now the overall sojourn time CDF is given by
+Equation~\ref{eqn:sojourn_time_cdf}, and the sojourn time CDF for customers of
+class $k$ is given by Equation~\ref{eqn:sojourn_time_cdf_k}; where $e^{M}$
+represents the matrix exponential of a matrix $M$, and $\left[ M \right]_{zs}$
+represents an entry of the matrix $M$ with row corresponding to state $z$ and
+column corresponding to state $s$.}
+
+\textcolor{red}{
+\begin{equation}\label{eqn:sojourn_time_cdf}
+\mathbb{P}(X \leq x) = 1 - \sum_{\underline{\mathbf{z}} \in \tilde{Z}} \sum_{s \in Z\setminus\{\star\}} \sum_{k=0}^{K-1} \frac{\lambda_k}{\sum_{i=0}^{K-1} \lambda_i} \pi_{f(\underline{\mathbf{z}})} \left[ e^{Tx} \right]_{zs}
+\end{equation}
+}
+
+\textcolor{red}{
+\begin{equation}\label{eqn:sojourn_time_cdf_k}
+\mathbb{P}(X_k \leq x) = 1 - \sum_{\underline{\mathbf{z}} \in \tilde{Z}_k} \sum_{s \in Z\setminus\{\star\}} \pi_{f(\underline{\mathbf{z}})} \left[ e^{Tx} \right]_{zs}
+\end{equation}
+}
+
+
+\subsubsection{Mean sojourn time calculation}\label{sec:meansojourncalc}
+\textcolor{red}{Matrix exponentials can be computationally expensive to
+evaluate, and for a complete CDF Equation~\ref{eqn:sojourn_time_cdf} would need
+to be evaluated many times for each value of $x$. However, matrix methods can
+give us summary statistics. \cite{stewart09}.}
+
+Let $a_{\underline{\mathbf{z}}}$ denote the expected time to absorption
+from state $\underline{\mathbf{z}} \in Z$, and $Y = -T^{-1}$, then
+$a_{\underline{\mathbf{z}}}$ is
+given by elements of the vector $Ye$ where $e$ is a vector or ones.
+Similar to the CDFs then, we can get the overall mean sojourn time by
+Equation~\ref{eqn:mean_sojourn} and the mean sojourn time for customers arriving
+as class $k$ by Equation~\ref{eqn:mean_sojourn_class_k}.
 
 \begin{equation}\label{eqn:mean_sojourn}
 \overline{\Psi} = \sum_{\underline{\mathbf{z}} \in \tilde{Z}} \sum_{k=0}^{K-1} \frac{\lambda_k}{\sum_{i=0}^{K-1} \lambda_i} \pi_{f(\underline{\mathbf{z}})} a_{\underline{\mathbf{z}}}
 \end{equation}
-
-Defining $\tilde{Z}_k = \{\underline{\mathbf{z}} \in \tilde{Z} \; | \; z_{K-1} = n = k\} \subset Z$
-as the states that customers of class $k$ arrive to, the mean sojourn times for
-customers who arrive as a given customer class $k$ is given by
-Equation~\ref{eqn:mean_sojourn_class_k}.
 
 \begin{equation}\label{eqn:mean_sojourn_class_k}
 \Psi_k = \sum_{\underline{\mathbf{z}} \in \tilde{Z}_k} \pi_{f(\underline{\mathbf{z}})} a_{\underline{\mathbf{z}}}
@@ -730,7 +762,7 @@ This is an inefficient way of determining the accuracy of the bounded
 approximation. It would be more efficient to choose a $b$ and be able to
 immediately measure if the accuracy is sufficient. We propose two measures, one
 for the ergodic Markov chains of Section~\ref{sec:state_formulation}, and one
-for the absorbing Markov chains of Section~\ref{sec:sojourn_formulation}).
+for the absorbing Markov chains of Section~\ref{sec:sojourn_formulation}.
 
 
 \subsubsection{Accuracy measure for the ergodic Markov chain}\label{sec:ergodic_accuracy}
@@ -1146,8 +1178,8 @@ variance $\Phi$, using Equation~\ref{eqn:var_sojourn}, between the scenario that
 does and doesn't use stochastic priority switching, which are given in
 Table~\ref{tbl:phi_with_without}. The variability in the customers' sojourn
 times is much greater when modelling using stochastic priority switching, over
-16 times the variance without priority switching, demonstrating some important
-performance measures are not captures by FIFO alone.
+16 times the variance without priority switching, demonstrating that some
+important performance measures are not captured by FIFO alone.
 
 \begin{table}
 \begin{center}

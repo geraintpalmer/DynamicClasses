@@ -4,6 +4,7 @@ import ciw
 import matplotlib.pyplot as plt
 import traces
 from statsmodels.tsa.stattools import adfuller
+import scipy
 
 plt.style.use("seaborn-v0_8-whitegrid")
 
@@ -703,6 +704,29 @@ def get_mean_sojourn_times(
     ) / sum(arrival_rates)
 
     return mean_sojourn_times_by_class + [overall_sojourn_time]
+
+
+def get_sojourn_time_cdf(
+    state_space_sojourn, transition_matrix_sojourn, num_classes, arrival_rates, probs, t
+):
+    """
+    Get the probability of the sojourn time being less than or equal to t.
+    Returns the overall cdf, then cdf by each class.
+    """
+    A = np.matmul(
+        scipy.linalg.expm(transition_matrix_sojourn[:-1,:-1] * t),
+        np.ones((transition_matrix_sojourn[:-1,:-1].shape[0], 1))
+    )
+    p_overall = 0
+    p_classes = [0 for _ in range(num_classes)]
+    for i, s in enumerate(state_space_sojourn[:-1]):
+        if s[-2] == 0:
+            m = arrival_rates[s[-1]] / sum(arrival_rates)
+            p_overall += (probs[s[:-2]] * m * A[i])[0]
+            for c in range(num_classes):
+                if s[-1] == c:
+                    p_classes[c] += (probs[s[:-2]] * A[i])[0]
+    return p_classes + [p_overall]
 
 
 def get_average_num_of_customers_from_state_probs(state_probs, num_classes):

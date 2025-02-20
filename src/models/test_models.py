@@ -128,6 +128,56 @@ def test_get_mean_sojourn_times():
     for time_1, time_2 in zip(calculated_sojourn_times, expected_sojourn_times):
         assert np.round(time_1, 5) == np.round(time_2, 5)
 
+def test_get_sojourn_time_cdf():
+    """
+    Tests that the mean sojourn times are calculated correctly.
+    """
+    num_classes = 2
+    num_servers = 2
+    arrival_rates = [5, 7]
+    service_rates = [6, 4]
+    thetas = [
+        [None, 2],
+        [4, None],
+    ]
+    bound = 8
+
+    state_probs = models.get_state_probabilities(
+        num_classes=num_classes,
+        num_servers=num_servers,
+        arrival_rates=arrival_rates,
+        service_rates=service_rates,
+        thetas=thetas,
+        bound=bound,
+    )
+    (
+        state_space,
+        transition_matrix,
+    ) = models.build_state_space_and_transition_matrix_sojourn_mc(
+        num_classes=num_classes,
+        num_servers=num_servers,
+        arrival_rates=arrival_rates,
+        service_rates=service_rates,
+        thetas=thetas,
+        bound=bound,
+    )
+    p_less_than_02 = models.get_sojourn_time_cdf(
+        state_space,
+        transition_matrix,
+        num_classes,
+        arrival_rates,
+        state_probs,
+        0.2
+    )
+    expected_p_less_than_02 = [
+        0.7120743586866705,
+        0.8797517908501329,
+        0.8098861941153568
+    ]
+
+    for p_1, p_2 in zip(p_less_than_02, expected_p_less_than_02):
+        assert np.round(p_1, 5) == np.round(p_2, 5)
+
 
 def test_simulation_builds_and_terminates():
     """
