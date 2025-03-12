@@ -33,14 +33,26 @@ This document will address the specific concerns raised.
 ``Motivation: The authors use the healthcare system as a motivating example, illustrating that a patient’s priority can upgrade, downgrade, or skip-grade. For medical urgency, priority upgrades are easy to understand. However, what is the meaning and context of `skip-grades'? What is the precise definition of priority? The authors also state that medical intervention can improve a patient's outcome and that the patient’s priority can downgrade. This implies that the patient receives the service (treatment) and therefore is no longer waiting in the queue.''
 \end{quote}
 
-\textcolor{red}{To address...}
+\textcolor{red}{Thank you very much for the comments. We have:
+\begin{itemize}
+  \item added an introductory paragraph precisely defining priorities at the beginning of the paper.
+  \item cleared the sentences describing downgrades in a medical intervention: the downgrading occurs not because of a medical intervention, but because another patient is referred who would gain more benefit from the intervention, precisely because they have not been waiting long, as the intervention is more effective if administered early.
+  \item removed references to `skip-grades' in the motivation section as it is confusing so early on. This is still discussed in the Section 2 when defining the problem, as skip-grades - that is upgrades or downgrades by more than one ordinal jump - are a novel consideration of this paper.
+\end{itemize}
+}
 
 \item Reviewer 1 wrote:
 \begin{quote}\it
 ``The authors use two separate Markov chains to find state probabilities and sojourn times. Can the authors attempt to analyze the model theoretically and provide corresponding theoretical results? If not, perhaps they could explain the difficulty of the problems. In addition, the authors should explain Equation (1) and Equation (5) more clearly to readers. To use Markov chains, the authors present bounded approximations. Can the authors explicitly analyze this bounded approximation method? For example, could they theoretically determine the value of $b$ and prove the system's stability?''
 \end{quote}
 
-\textcolor{red}{To address...}
+\textcolor{red}{Thank you very much for the comments. We have:
+\begin{itemize}
+  \item changed the labelling of Equations (1) and (5) so that each case is referencable, then sentences have been added explaining what the transition in each case refers to. We hope this explains these equations more clearly to the readers.
+  \item added some further analysis about the Markov chains, explicitly noting that the sojourn time CDF is a general phase-type distribution, and giving the exact equation for the CDF. Commentary on this is also given, explaining that taking a matrix exponential is computationally expensive, and that general phase-type distributions do not have easily found inverses. This is partly because the equation involves a dot-product which is not invertible. Therefore, matrix methods are used to find some summary statistics, and in some cases running simulations is required.
+  \item Section 4.3 explicitly analyses the bounded approximation method by developing two accuracy measures, one for the ergodic Markov chain, and another for the absorbing Markov chain. These measures help decide if the value of $b$ chosen is a good one. The numerical results presented in this section demonstrate how these accuracy measures work. Section 4.4 then proves the system's stability under certain conditions, and experimentally determines the system's stability under other conditions.
+\end{itemize}
+}
 
 
 \item Reviewer 1 wrote:
@@ -48,14 +60,14 @@ This document will address the specific concerns raised.
 ``Most of the results in this paper are obtained from the numerical studies. However, the author does not explain the source of the parameters in detail, that is, why they were chosen. Also, I was confused for prioritised customers have a faster service rate. The authors provide a motivating case study in section 1.1, ideally the parameters should come from this case study.''
 \end{quote}
 
-\textcolor{red}{To address...}
+\textcolor{red}{The source of the parameters used in Sections 3.1 and 4.6 are given by the healthcare data described in Section 3.1. The parameters used in Section 4.5 are arbitrary, though chosen to reflect specific scenarios: when prioritised customers have a faster service rate than unprioritised customers, and when prioritised customers have a slower service rate than unprioritised customers. We have now added an extra scenario reflecting the case then both sets of customers have the same service rate, which might better reflect some realities. As a set, these three scenarios cover all dynamics between prioritised and unprioritised customers - faster, equal, and slower services - and the the numerical analysis here is used to give insight into such systems.}
 
 \item Reviewer 1 wrote:
 \begin{quote}\it
 ``Page 1, line 26: ``There are a number of situations in which a customer's priority in a queue might change during their time queueing...'' should be ``There are several situations in which a customer's priority in a queue might change while they wait...''''
 \end{quote}
 
-\textcolor{red}{To address...}
+\textcolor{red}{Thank you, this has been fixed.}
 
 \item Reviewer 1 wrote:
 \begin{quote}\it
@@ -66,31 +78,42 @@ This document will address the specific concerns raised.
 
 \item Reviewer 1 wrote:
 \begin{quote}\it
-``Page 6, line 42: ``According to the observed data referrals roughly follow a Poisson dis- tribution with rate 0.463 a day. Service rate data is estimated to be around 0.5 endoscopy procedures a day.'' What it the meaning of 0.463 and 0.5, why not integers? Also, the authors assume that all referrals are of the most urgent, with customers able to be downgraded and then upgraded during their waiting time may not be realistic.''
+``Page 6, line 42: ``According to the observed data referrals roughly follow a Poisson distribution with rate 0.463 a day. Service rate data is estimated to be around 0.5 endoscopy procedures a day.'' What it the meaning of 0.463 and 0.5, why not integers?''
 \end{quote}
 
-\textcolor{red}{To address...}
+\textcolor{red}{The numbers 0.463 and 0.5 per day have come from observed data, and this is mentioned in the text. We have clarified the text to explain what these numbers mean practically.}
+
+\item Reviewer 1 wrote:
+\begin{quote}\it
+``Also, the authors assume that all referrals are of the most urgent, with customers able to be downgraded and then upgraded during their waiting time may not be realistic.''
+\end{quote}
+
+\textcolor{red}{Thank you, for this comment. At the beginning of Section 3.1 we have clarified the premise of the modelling, that is that sequences of stochastic upgrades and downgrades of customers within the queue can model the same effect as the unknown service discipline. Therefore the realism here is not as important as the effects it is modelling.}
+
+
+\textcolor{red}{A good point is made that we assume that all referrals arrive as the most urgent. Another way to model this would be to model all new referrals as the least prioritised customers, and wait for them to get upgraded before being downgraded. This is now mentioned as an alternative option in the same section.}
+
 
 \item Reviewer 1 wrote:
 \begin{quote}\it
 ``Page 11, line 50: ``Section 4.2)'' should be ``Section 4.2''.''
 \end{quote}
 
-\textcolor{red}{To address...}
+\textcolor{red}{Thank you, this has been fixed.}
 
 \item Reviewer 1 wrote:
 \begin{quote}\it
 ``Page 12, Figure 8: what is the meaning of ``Class 0'', ``Class 1'' and ``Combined''.''
 \end{quote}
 
-\textcolor{red}{To address...}
+\textcolor{red}{The legend of these plots have now been fixed to say "Class 1" and "Class 2", to reflect the numbering used in Section 2. We have relabelled "Combined" to "All customers" to better reflect that this is the summary statistic for all customer. We have added an explanation in the legend to point out which Equations were used to produce the plot.}
 
 \item Reviewer 1 wrote:
 \begin{quote}\it
 ``Page 19, line 36: ``...demonstrating some important performance..'' should be ``...demonstrating that some important performance..''.''
 \end{quote}
 
-\textcolor{red}{To address...}
+\textcolor{red}{Thank you, this has been fixed.}
 
 \end{itemize}
 
@@ -104,28 +127,35 @@ This document will address the specific concerns raised.
 ``The article is studying an interesting topic -- stochastic priority is not well explored in the literature, despite its wide applications (e.g., healthcare). The insights of the paper well complements the existing literature on dynamic priority (or accumulating priority queue).''
 \end{quote}
 
-\textcolor{red}{To address...}
+\textcolor{red}{Thank you for the kind comment.}
 
 \item Reviewer 2 wrote:
 \begin{quote}\it
 ``I find Section 4.6, the study of the impact of stochastic priority on variance of sojourn time, particularly interesting. But the current exploration along this direction is rather limited -- the paper only studied one problem instances with two priority classes. Can the authors provide more comparisons between stochastic priority and non-stochastic priority under various parameters (e.g., other $\theta_{ij}$, and more priority classes) as robustness test? Also, in addition to variance of waiting time, maybe the 95\% percentile waiting time is more accessible to readers?''
 \end{quote}
 
-\textcolor{red}{To address...}
+\textcolor{red}{Thank you for the encouraging comments. We have:
+\begin{itemize}
+  \item added another plot to Figure 18, demonstrating the 95th percentile in sojourn time. This was created by running the simulation, as this measure was not easily found analytically. This emphasises the importance of the simulation and of having two separate methods of analysing the system.
+  \item run more experiments related to the variance in the sojourn times. This includes an extra scenario to consider in Section 4.5 (where both service rates are equal), and plotting the effect of $\Theta$ on the overall sojourn time variance. Extra analysis is given on the variance plots.
+\end{itemize}
+}
 
 \item Reviewer 2 wrote:
 \begin{quote}\it
 ``The simulation in Section 3 is not very interesting. Can these materials regarding setup of the simulation be deferred to appendix? The simulation setup is quite straightforward.''
 \end{quote}
 
-\textcolor{red}{To address...}
+\textcolor{red}{Thank you for the comment, though we disagree that the simulation is not interesting. The logic and adaptation of the Ciw library in order to simulation the priority switching is a contribution of the paper, and we have not seen other out-of-the-box software that treats priority switching in this manner. In addition, it is clear now in the paper that the simulation is not only required to validate the Markov models, but required in order to find some summary statistics that are unobtainable from the Markov models, such as percentiles. therefore we think that the simulation warrants a section of its own.}
+
+\textcolor{red}{However we do agree that some details on the logic and implementation or can be moved to the appendix to focus the paper more on the other interesting aspects of the model. Therefore we have deferred the description of the even-scheduling approach to an appendix. This helps with the flow and focus of the paper.}
 
 \item Reviewer 2 wrote:
 \begin{quote}\it
 ``In conclusion, the paper is studying an interesting topic, providing a good complement to the existing literature. The case study and the insight is interesting and intriguing. I thus recommend a minor revision.''
 \end{quote}
 
-\textcolor{red}{To address...}
+\textcolor{red}{Again thank you very much for the kind and encouraging comments.}
 
 \end{itemize}
 

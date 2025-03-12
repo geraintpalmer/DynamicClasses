@@ -25,6 +25,7 @@
 \usetikzlibrary{patterns,snakes}
 \usetikzlibrary{decorations.text}
 \usetikzlibrary{arrows.meta}
+\usepackage{cases}
 
 \definecolor{codebg}{RGB}{255, 255, 230}
 \setminted[python]{
@@ -65,9 +66,16 @@ better understanding of the system.
 \end{abstract}
 
 \section{Introduction}
-There are a number of situations in which a customer's priority in a queue might
-change during their time queueing, or equivalently where their priority depends
-on the amount of time they have already spent in the queue.
+\textcolor{red}{In queueing systems, `priority' usually denotes some measure of
+a customers' urgency. Here we precisely define a customers' priority by an
+ordinal measure, with lower priority customers only being served once all higher
+priority customers in the system have been served. These ordinal priority
+measures are usually integers, and are usually attributed to whole classes of
+customers \cite{stewart09}.}
+
+There are a \textcolor{red}{several} situations in which a customer's priority
+in a queue might change \textcolor{red}{while they wait}, or equivalently where
+their priority depends on the amount of time they have already spent in the queue.
 Classic examples arise in healthcare systems, for example when a patient's
 medical urgency increases the longer they spend waiting due to health
 degeneration \cite{williams20, garbuzetal06, delongetal08}. Another example
@@ -76,17 +84,16 @@ and waiting times \cite{powersetal23}.
 These are both examples where a patient's priority has the chance to upgrade
 over time while in the queue.
 However there also might be situations in which a patient's priority can
-downgrade over time: consider a medical intervention that can improve a
-patient's outcome if caught early, if a patient has been waiting a long time
+downgrade over time: consider \textcolor{red}{waiting for some} medical intervention that can improve a
+patient's outcome \textcolor{red}{only} if caught early: if a patient has been waiting a long time
 already then they might be passed over for a newly referred patient who will
 gain more benefit from the intervention. In this case a patient's priority is
 downgraded the longer they wait \cite{dalessandro17}.
 
 In this paper a single $M/M/c$ queue is modelled, with multiple classes of
 customer of different priorities. While waiting in the queue, customers change
-their class to any other class at specific rates. Thus upgrades, downgrades, and
-`skip-grades' (moving to a priority class not immediately above or below the
-current class) are modelled.
+their class to any other class at specific rates. Thus upgrades and downgrades
+are modelled.
 
 This is first modelled using simulation, where we describe generalisable logic.
 This was first implemented in version v2.3.0 of the Ciw library in Python
@@ -122,7 +129,7 @@ waiting list to be scheduled for surgery, are not known to modellers, and may
 even be impossible to know as managers may be reluctant to disclose the
 information for political or other reasons.
 There have been efforts to understand such unknown service disciplines, for
-example in\cite{ding19}, which shows that in Canada that decision makers often
+example in \cite{ding19}, which shows that in Canada that decision makers often
 use their own discretion in deciding which patients to be seen, rather than
 FIFO within each triage category. They attempt to fits prioritisation rules to
 this discretionary behaviour. Here we will do the same, utilising a stochastic
@@ -273,7 +280,9 @@ change to customers of class $j$ directly, then $\theta_{i,j} = 0$. The diagonal
 values $\theta_{i,i}$ are unused as customers cannot change to their own class.
 All elements $\theta_{i,i-1}$ represent the direct upgrade rates; all elements
 $\theta_{i,i+1}$ represent the direct downgrade rates, while all other elements
-can be thought of as `skip-grades'.
+can be thought of as `skip-grades' \textcolor{red}{(moving to a priority class
+not immediately above or below the current class), not commonly considered in
+the literature.}
 This is shown in Figure~\ref{fig:skipgrades}.
 
 \begin{figure}
@@ -303,101 +312,54 @@ The next two sections outline and compare two implementations of this model:
 
 
 \section{Simulation Model Logic}\label{sec:simulation}
-Discrete event simulation is a common way of modelling queueing systems,
-especially those with non-standard customer behaviours as the development time
-for capturing new or complex behaviours is a lot quicker than Markov modelling
-\cite{standfield14}.
+\textcolor{red}{Discrete event simulation is a common way of modelling queueing
+systems, especially those with non-standard customer behaviours as the
+development time for capturing new or complex behaviours is a lot quicker than
+Markov modelling \cite{standfield14}. 
 One standard way of implementing discrete event simulation is through the event
-scheduling approach \cite{robinson14}. This is a variant of the three-phase
-approach, with an \textbf{A}-phase which advances the clock to the next
-scheduled event, a \textbf{B}-phase where scheduled events are carried out, and
-a \textbf{C}-phase where conditional events are carried out.
-Figure~\ref{fig:eventscheduling} shows a flow diagram of the logic of the event
-scheduling approach.
-
-\begin{figure}
-    \centering
-    \includestandalone[width=\textwidth]{img/eventschedulingapproach}
-    \caption{Flow diagram of the event scheduling approach, adapted from
-    \cite{palmer18}.}
-    \label{fig:eventscheduling}
-\end{figure}
-
-The primary scheduled, or \textbf{B}-events that occur in queueing simulations
-are customers arriving to a queue, and customers finishing service.
-The conditional, or \textbf{C}-events are those that happen immediately after,
-and because of, these \textbf{B}-events. The primary ones are customers
-beginning service, and customers leaving the queue.
-
-Any other customer, server, or system behaviour to be captured by the simulation
-corresponds to increasing the range of \textbf{B}- and \textbf{C}-events that
-can happen during the simulation run. For example if servers are subject to a
-work schedule, then extra \textbf{B}-events include a server going off and on
-duty, and extra \textbf{C}-events would include a customer beginning
-service after another customer has left the server.
-
-In the case of customers randomly changing priority classes while waiting, one
-additional \textbf{B}-event and two additional \textbf{C}-event need to be
-included:
-
-\begin{itemize}
-  \item Upon arrival to the queue customers are assigned a date in which they
-  will change customer class, determined by randomly sampling from a
-  distribution. As such each customer's event of changing customer class is
-  scheduled for the future, and are therefore \textbf{B}-events. If those
-  customers begin service (which might not be scheduled yet) before that event
-  has occurred, then their changing customer class event is cancelled.
-  \item Upon changing class, they immediately schedule another changing class
-  event for the future, again sampling a date from a given distribution. This
-  happens immediately after the above, and so is a \textbf{C}-event.
-  \item If a newly arriving customer is of a higher priority than a customer in
-  service, or if a lower priority customer is upgraded to a higher priority a
-  customer in service, then the lower priority customer in service is
-  pre-empted. They stop service and are placed at the head of the queue. This
-  happens immediately after an arrival or after an upgrade, and so is a
-  \textbf{C}-event.
-\end{itemize}
-
-
-\subsection{Ciw Implementation}
+scheduling approach \cite{robinson14}, a variant of the three-phase approach.
 In this work we use the Ciw library \cite{palmer19} to simulate customers
-changing priority class. Ciw is an open-source Python library for discrete-event
-simulation of open queueing networks. A key contribution of this work is the
-adaptation of the library's logic to facilitate the type of stochastic priority
-switching described in Section~\ref{sec:system}. This adaptation was first
-released in version Ciw v2.3.0, with usage documentation at
-\url{https://ciw.readthedocs.io/en/latest/Guides/CustomerClasses/change-class-while-queueing.html}, and works by considering different classes
-of customer and mapping each class to a priority ranking.
-Figure~\ref{fig:ciwcode} shows the Ciw code
-required to simulate the system with two classes of customer, $\lambda_1 = 1$,
+changing priority class.
+Ciw is an open-source Python library for discrete-event simulation of open
+queueing networks, which itself is built using the event scheduling approach.
+A key contribution of this work is the adaptation of the library's logic to
+facilitate the type of stochastic priority switching described in
+Section~\ref{sec:system}.
+This adaptation was first released in version Ciw v2.3.0, with usage
+documentation at \url{https://ciw.readthedocs.io/en/latest/Guides/CustomerClasses/change-class-while-queueing.html},
+and works by considering different classes of customer and mapping each class to
+a priority ranking, and re-sampling these rankings over time.
+Appendix~\ref{apx:simulation_logic} gives an overview of the event scheduling approach and details the adaptations required for priority switching logic.}
+
+\textcolor{red}{Figure~\ref{fig:ciwcode} shows example Ciw code required to
+simulate the system with two classes of customer, $\lambda_1 = 1$,
 $\lambda_2 = 3$, $\mu_1 = 3$, $\mu_2 = 2$, $c = 1$, $\theta_{12} =1.5$, and
-$\theta_{21} = 0.5$, for 365 time units. Here the key parameters are
-\mintinline{python}{priority_classes}, which takes a tuple containing a Python
-dictionary that maps
-customer class labels to priority rankings, and a list of pre-emption options
-for each node; and \mintinline{python}{class_change_time_distributions},
-defining the time distributions used to describe the time it takes to transfer
-from one customer class to another. Note here that the simulation framework is
-general enough to use any probability distribution, and is not
-restricted to Exponential distributions.
+$\theta_{21} = 0.5$, for 365 time units.
+Note that the particular distributions used to sample class change dates in
+these cases are generic, and any of Ciw's currently pre-programmed distributions
+can be chosen, or custom distributions can also be used. For the systems
+described in this paper, we choose Exponential distributions with rates
+determined by the class change matrix $\Theta$. Ciw allows for 
+pre-empted customers to resume, re-start, or re-sample their service time.}
+
 
 \begin{figure}
 \begin{minted}{python}
 >>> import ciw
 >>> N = ciw.create_network(
 ...     arrival_distributions={
-...         'C0': [ciw.dists.Exponential(rate=1)],
-...         'C1': [ciw.dists.Exponential(rate=3)]
+...         'C1': [ciw.dists.Exponential(rate=1)],
+...         'C2': [ciw.dists.Exponential(rate=3)]
 ...     },
 ...     service_distributions={
-...         'C0': [ciw.dists.Exponential(rate=3)],
-...         'C1': [ciw.dists.Exponential(rate=2)],
+...         'C1': [ciw.dists.Exponential(rate=3)],
+...         'C2': [ciw.dists.Exponential(rate=2)],
 ...     },
 ...     number_of_servers=[1],
-...     priority_classes=({'C0': 0, 'C1': 1}, ["resample"]),
+...     priority_classes=({'C1': 0, 'C2': 1}, ["resample"]),
 ...     class_change_time_distributions={
-...         'C0': {'C1': ciw.dists.Exponential(rate=1.5)},
-...         'C1': {'C0': ciw.dists.Exponential(rate=0.5)}
+...         'C1': {'C2': ciw.dists.Exponential(rate=1.5)},
+...         'C2': {'C1': ciw.dists.Exponential(rate=0.5)}
 ...     }
 ... )
 >>> Q = ciw.Simulation(network=N)
@@ -408,32 +370,37 @@ switching.}
 \label{fig:ciwcode}
 \end{figure}
 
-Note that the particular distributions used to sample class change dates in
-these cases are generic, and any of Ciw's currently pre-programmed distributions
-can be chosen, or custom distributions can also be used. For the systems
-described in this paper, we choose Exponential distributions with rates
-determined by the class change matrix $\Theta$. Ciw allows for 
-pre-empted customers to resume, re-start, or re-sample their service time.
 
 \subsection{Modelling Unknown Service Disciplines}\label{sec:modelling}
 The stochastic priority switching model presented in Section~\ref{sec:system}
 may be used to model situations where FIFO is not appropriate, but specific
-service disciplines may not be known. Recall now the motivating example
-discussed in Section~\ref{sec:casestudy}, where it was established that FIFO was
-not appropriate and the service discipline was unknown. Here we attempt to use
-stochastic priority switching to model the surgical endoscopy waiting list.
+service disciplines may not be known.
+\textcolor{red}{The premise here is that sequences of stochastic upgrades and
+downgrades of customers within the queue can model the same effect as the
+unknown service discipline.}
+Recall now the motivating example discussed in Section~\ref{sec:casestudy},
+where it was established that FIFO was not appropriate and the service
+discipline was unknown. Here we attempt to use stochastic priority switching to
+model the surgical endoscopy waiting list.
 
 According to the observed data referrals roughly follow a Poisson distribution
-with rate 0.463 a day. Service rate data is estimated to be around 0.5
-endoscopy procedures a day. To determine the appropriateness of the stochastic
+with rate \textcolor{red}{$\lambda = 0.463$, that is an average of 0.463
+referrals per day, or one referral every 2.16 days.} Service rate data is
+estimated to be around 0.5 a day, \textcolor{red}{that is around one endoscopy
+procedure every other day}.
+To determine the appropriateness of the stochastic
 priority switching model here, we model the system as a two class system, with
 $\lambda_1 = 0.463$ and $\lambda_2 = 0$, and $\mu_1 = \mu_2 = 0.5$ and $c = 1$,
 that is all referrals are of the most urgent, with customers able to be
-downgraded and then upgraded during their waiting time. We simulate this
-system under different parameters of $\theta_{12}$ and $\theta_{21}$. For each
-parameter set we observe one year of referrals, over 5 trials. One KPI of
-interest is the amalgamated distribution of rank differences, or overtakes,
-over the trials; and we compare that with the
+downgraded and then upgraded during their waiting time.
+\textcolor{red}{(Note that an alternative model might be $\lambda_1 = 0$ and
+$\lambda_2 = 0.463$, that is all new referrals are not the most prioritised 
+customers.)}
+
+We simulate this system under different parameters of $\theta_{12}$ and
+$\theta_{21}$. For each parameter set we observe one year of referrals, over 5
+trials. One KPI of interest is the amalgamated distribution of rank differences,
+or overtakes, over the trials; and we compare that with the
 distribution of the original system with indeterminate service discipline. The
 Wasserstein distance \cite{mostafaei11} between the modelled and actual
 distributions is calculated to measure the models' accuracies in approximating
@@ -512,22 +479,24 @@ the number of customers of class $k$ present at time step $t$. Let $S$ denote
 set of all states $\underline{\mathbf{s}}_t$. 
 
 The rates of change between $\underline{\mathbf{s}}_t$ and
-$\underline{\mathbf{s}}_{t+1}$ are given by Equation~\ref{eqn:transitions},
+$\underline{\mathbf{s}}_{t+1}$ are given by Equation~\ref{eqn:transitions_arrivals}-\ref{eqn:transitions_other},
 where $\underline{\mathbf{\delta}} = \underline{\mathbf{s}}_{t+1} - \underline{\mathbf{s}}_t$,
 
-\begin{equation}\label{eqn:transitions}
-q_{\underline{\mathbf{s}}_t, \underline{\mathbf{s}}_{t+1}} = 
-\begin{cases}
-\lambda_k & \text{if } \delta_k = 1 \text{ and } \delta_i = 0 \; \forall \; i \neq k, \\
-B_{k,t} \mu_k & \text{if } \delta_k = 1 \text{ and } \delta_i = 0 \; \forall \; i \neq k \text{ and } \sum_{i < k} s_{i,t} < c, \\
-(s_{k,t} - B_{k,t}) \theta_{k,\ell} & \text{if } \delta_{k} = -1 \text{ and } \delta_{\ell} = 1 \text{ and } \delta_i = 0 \; \forall \; i \neq k, \ell, \\
-0 & \text{otherwise,}
-\end{cases}
-\end{equation}
+\begin{subnumcases}{q_{\underline{\mathbf{s}}_t, \underline{\mathbf{s}}_{t+1}} =}
+\lambda_k & if $\delta_k = 1$  and $\delta_i = 0 \; \forall \; i \neq k$, \label{eqn:transitions_arrivals} \\
+B_{k,t} \mu_k & $\text{if } \delta_k = 1 \text{ and } \delta_i = 0 \; \forall \; i \neq k \text{ and } \sum_{i < k} s_{i,t} < c$, \label{eqn:transitions_services} \\
+(s_{k,t} - B_{k,t}) \theta_{k,\ell} & if $\delta_{k} = -1$ and $\delta_{\ell} = 1$ and $\delta_i = 0 \; \forall \; i \neq k, \ell$, \label{eqn:transitions_switching} \\
+0 & \text{otherwise,} \label{eqn:transitions_other}
+\end{subnumcases}
 
 and $B_{k,t}$, representing the number of customers of class $k$ currently in
 service at time step $t$, is given by Equation~\ref{eqn:inservice}, where $c$
 is the number of servers.
+\textcolor{red}{Here case~\ref{eqn:transitions_arrivals} denotes transitions
+representing customers arriving to the system,
+case~\ref{eqn:transitions_services} denotes transitions representing customers
+finishing services, and case~\ref{eqn:transitions_switching} denotes transitions
+representing customers switching priorities.}
 
 \begin{equation}\label{eqn:inservice}
 B_{k,t} =\min\left(c - \min\left(c, \sum_{i < k} s_{i,t}\right), s_{k,t}\right)
@@ -566,30 +535,34 @@ Let $Z$ denote set of all states $\underline{\mathbf{z}}_t$ and $\star$.
 
 
 Then the rates of change between $\underline{\mathbf{z}}_t$ and
-$\underline{\mathbf{z}}_{t+1}$ are given by Equation~\ref{eqn:transitions_sojourn},
+$\underline{\mathbf{z}}_{t+1}$ are given by
+Equations~\ref{eqn:transitions_sojourn_myservice}-\ref{eqn:transitions_sojourn_otherwise},
 where $\underline{\mathbf{\delta}} = \underline{\mathbf{z}}_{t+1} - \underline{\mathbf{z}}_t$,
 
-\begin{equation}\label{eqn:transitions_sojourn}
-\resizebox{\textwidth}{!}{%
-$q_{\underline{\mathbf{z}}_t, \underline{\mathbf{z}}_{t+1}} = 
-\begin{cases}
-\mu_n & \text{if } z_{t+1} = \star \text{ and } \sum_{k \leq n} z_{k, t} < c, \\
-\lambda_n & \text{if } \delta_K = 1 \text{ and } \delta_i = 0 \; \forall \; i \neq K, \\
-\lambda_k & \text{if } \delta_k = 1 \text{ and } \delta_i = 0 \; \forall \; i \neq k \text{ and } k \neq n,\\
-A_{k,n,t} \mu_k & \text{if } \delta_k = -1 \text{ and } \delta_i = 0 \; \forall \; i \neq k \text{ and } k < K,\\
-\tilde{A}_{n,t} \mu_n & \text{if } \delta_K = -1 \text{ and } \delta_i = 0 \; \forall \; i \neq K,\\
-(z_{k,t} - A_{k,n,t}) \theta_{k,\ell} & \text{if } \delta_{k} = -1 \text{ and } \delta_{\ell} = 1 \text{ and } \delta_i = 0 \; \forall \; i \neq k, \ell \text{ and } k < K \text{ and } \ell \neq n, K, K+1, \\
-(z_{K,t} - \tilde{A}_{n,t}) \theta_{n,k} & \text{if } \delta_K = -1 \text{ and } \delta_{k} = 1 \text{ and } \delta_i = 0 \; \forall \; i \neq k, n \text{ and } k < K, \\
-(z_{k,t} - A_{k,n,t}) \theta_{k,n} & \text{if } \delta_k = -1 \text{ and } \delta_K = 1 \text{ and } \delta_i = 0 \; \forall \; i \neq k, K, \\
-\theta_{n, k} & \text{if } \delta_n = z_{K,t} \text{ and } \delta_K = -z_{K,t} \text{ and } \delta_{K+1} = n - k \text{ and } \delta_i = 0 \text{ otherwise, and } \sum_{k \leq n} z_{k, t} < c, \\
-0 & \text{otherwise,}
-\end{cases}$%
-}
-\end{equation}
+\resizebox{\textwidth}{!}{\parbox{1.15\linewidth}{%
+\begin{subnumcases}{q_{\underline{\mathbf{z}}_t, \underline{\mathbf{z}}_{t+1}} = }
+\mu_n & if $z_{t+1} = \star$ and $\sum_{k \leq n} z_{k, t} < c$, \label{eqn:transitions_sojourn_myservice} \\
+\lambda_n & if $\delta_K = 1$ and $\delta_i = 0 \; \forall \; i \neq K$, \label{eqn:transitions_sojourn_arrival_myclass} \\
+\lambda_k & if $\delta_k = 1$ and $\delta_i = 0 \; \forall \; i \neq k$ and $k \neq n$, \label{eqn:transitions_sojourn_arrival_otherclass}\\
+A_{k,n,t} \mu_k & if $\delta_k = -1$ and $\delta_i = 0 \; \forall \; i \neq k$ and $k < K$, \label{eqn:transitions_sojourn_service_otherclass}\\
+\tilde{A}_{n,t} \mu_n & if $\delta_K = -1$ and $\delta_i = 0 \; \forall \; i \neq K$ \label{eqn:transitions_sojourn_service_myclass},\\
+(z_{k,t} - A_{k,n,t}) \theta_{k,\ell} & if $\delta_{k} = -1$ and $\delta_{\ell} = 1$ and $\delta_i = 0 \; \forall \; i \neq k, \ell$ and $k < K$ and $\ell \neq n, K, K+1$, \label{eqn:transitions_sojourn_switch_otherother}\\
+(z_{K,t} - \tilde{A}_{n,t}) \theta_{n,k} & if $\delta_K = -1$ and $\delta_{k} = 1$ and $\delta_i = 0 \; \forall \; i \neq k, n$ and $k < K$, \label{eqn:transitions_sojourn_switch_myother}\\
+(z_{k,t} - A_{k,n,t}) \theta_{k,n} & if $\delta_k = -1$ and $\delta_K = 1$ and $\delta_i = 0 \; \forall \; i \neq k, K$, \label{eqn:transitions_sojourn_switch_othermy} \\
+\theta_{n, k} & if $\delta_n = z_{K,t}$ and $\delta_K = -z_{K,t}$ and $\delta_{K+1} = n - k$ and $\delta_i = 0$ otherwise, and $\sum_{k \leq n} z_{k, t} < c$, \label{eqn:transitions_sojourn_switch_me} \\
+0 & otherwise, \label{eqn:transitions_sojourn_otherwise}
+\end{subnumcases}%
+}}
 
 and $A_{k,n,t}$ and $\tilde{A}_{n, t}$, representing the number of customers of
 class $k$ currently in service, are given by Equations~\ref{eqn:inservice_adapt}
 and~\ref{eqn:inservice_adapt_tilde} respectively.
+\textcolor{red}{Here cases correspond to arrivals, services, and priority switching, all in relation to the customer currently under consideration. This customer's class in $n$, which is subject to change.
+Cases~\ref{eqn:transitions_sojourn_myservice}, and~\ref{eqn:transitions_sojourn_switch_me} correspond to transitions that affect the customer under consideration, finishing service and switching priority respectively.
+Cases~\ref{eqn:transitions_sojourn_arrival_myclass} and~\ref{eqn:transitions_sojourn_arrival_otherclass} correspond to arrivals of other customers, of the same and different class to the considered individual, respectively.
+Cases~\ref{eqn:transitions_sojourn_service_myclass} and~\ref{eqn:transitions_sojourn_service_otherclass} correspond to services of other customers, of the same and different class to the considered individual, respectively.
+Cases~\ref{eqn:transitions_sojourn_switch_othermy}, \ref{eqn:transitions_sojourn_switch_myother}, and~\ref{eqn:transitions_sojourn_switch_otherother} all correspond to customers switching priorities, to $n$, from $n$, and from two classes neither of which are $n$, respectively.}
+
 
 \begin{equation}\label{eqn:inservice_adapt}
 A_{k,n,t} =
@@ -614,7 +587,7 @@ a customer of class $k$. Then the CDFs we are interested in are
 $\mathbb{P}(X < x)$, and $\mathbb{P}(X_k < x)$ for each $k$.}
 
 Let $T$ be the transition rate matrix constructed from the rates in
-Equation~\ref{eqn:transitions_sojourn} above without the rows and columns
+Section~\ref{sec:sojourn_formulation} above without the rows and columns
 associated with the absorbing state $\star$.
 Customers arrive in all states where $z_K = 0$, and their class can be
 determined by $n$.
@@ -660,7 +633,8 @@ column corresponding to state $s$.}
 \subsubsection{Mean sojourn time calculation}\label{sec:meansojourncalc}
 \textcolor{red}{Matrix exponentials can be computationally expensive to
 evaluate, and for a complete CDF Equation~\ref{eqn:sojourn_time_cdf} would need
-to be evaluated many times for each value of $x$. However, matrix methods can
+to be evaluated many times for each value of $x$. Additionally, these CDF
+equations have no known easily computable inverse. However, matrix methods can
 give us summary statistics. \cite{stewart09}.}
 
 Let $a_{\underline{\mathbf{z}}}$ denote the expected time to absorption
@@ -744,8 +718,11 @@ time units) as $b$ increases.
   \begin{center}
     \includegraphics[width=0.6\textwidth]{img/queue_size_bound_approaches.pdf}
     \caption{Demonstrating that as $b$ increases, the expected number of
-    customers of each class approaches that found using a long run simulation.}
-    \label{fig:kpi_approaches_numcusts}
+    customers of each class approaches that found using a long run simulation.
+    \textcolor{red}{The number of class 1 and class 2 customers are found using
+    Equation~\ref{eqn:mean_custs_k}, and the overall number of customers found
+    using Equation~\ref{eqn:mean_custs_overall}.}
+    \label{fig:kpi_approaches_numcusts}}
   \end{center}
 \end{figure}
 
@@ -753,8 +730,11 @@ time units) as $b$ increases.
   \begin{center}
     \includegraphics[width=0.6\textwidth]{img/sojourn_time_bound_approaches.pdf}
     \caption{Demonstrating that as $b$ increases, the expected sojourn time of
-    customers of each class approaches that found using a long run simulation.}
-    \label{fig:kpi_approaches_sojourn}
+    customers of each class approaches that found using a long run simulation.
+    \textcolor{red}{The sojourn time for class 1 and class 2 customers are found
+    using Equation~\ref{eqn:mean_sojourn_class_k}, and sojourn time for the
+    overall number of customers is found using Equation~\ref{eqn:mean_sojourn}.}
+    \label{fig:kpi_approaches_sojourn}}
   \end{center}
 \end{figure}
 
@@ -813,7 +793,7 @@ hitting probabilities of a set of states $J$ from state $i$, that is, what is
 the probability of ever reaching any state in $J$ when starting from state $i$.
 These are defined recursively by Equation~\ref{eqn:hitting_probs}
 \cite{privault13}, where $q_{i,k}$ is the transition rate from state $i$ to
-state $j$ defined in Equation~\ref{eqn:transitions_sojourn}.
+state $j$ defined in Section~\ref{sec:sojourn_formulation}.
 
 \begin{equation}\label{eqn:hitting_probs}
 h_{i,J} = \begin{cases}
@@ -1051,21 +1031,24 @@ interplay between service rate, priority class, and class change rates.
 In Section~\ref{sec:modelling} that it is established that some service
 disciplines can be modelled as stochastically changing priorities with a class
 change matrix $\Theta$, and we now have Markov chain models that can be used to
-consider the effect of $\Theta$ on the system behaviour. We now investigate the
-effect of this matrix on customer experience, as this would be important for the
-modelling process, and also for controllers of the system who might be able to
-influence the rates and improve customer experience or system outcomes.
+consider the effect of $\Theta$ on the system behaviour.
+We now investigate the effect of this matrix on customer experience, as this
+would be important for the modelling process, and also for controllers of the
+system who might be able to influence the rates and improve customer experience
+or system outcomes.
 
-We first define two scenarios that we will use to investigate the effect of
-$\Theta$, defined in Table~\ref{tbl:scenarios}. Both scenarios involve two
-classes of customer, in Scenario A prioritised customers have a slower service
-rate than unprioritised customer, while in Scenario B prioritised customers have
-a faster service rate than prioritised customers. The Markov chain models of
-Section~\ref{sec:makovchains} are built with these parameters, and all values
-of $\theta_{12}$ and $\theta_{21}$ ranging from 0 to 3, in steps of 0.2, with a
-bound of 16 (all producing accuracy measures
-$\mathcal{Q}(16), \mathcal{P}(16) < 0.012$),
-and customer experience statistic are found and compared.
+We first define \textcolor{red}{three} scenarios that we will use to investigate
+the effect of $\Theta$, defined in Table~\ref{tbl:scenarios}.
+\textcolor{red}{Each} scenario involves two classes of customer: in Scenario A
+prioritised customers have a slower service rate than unprioritised customer,
+\textcolor{red}{in Scenario B both customer classes have the same service rate,}
+while in Scenario C prioritised customers have a faster service rate than
+prioritised customers.
+The Markov chain models of Section~\ref{sec:makovchains} are built with these
+parameters, and all values of $\theta_{12}$ and $\theta_{21}$ ranging from 0 to
+3, in steps of 0.2, with a bound of 16 (all producing accuracy measures
+$\mathcal{Q}(16), \mathcal{P}(16) < 0.012$), and customer experience statistic
+are found and compared.
 
 \begin{table}
 \begin{center}
@@ -1074,7 +1057,8 @@ and customer experience statistic are found and compared.
 Scenario & $\lambda_1$ & $\lambda_2$ & $c$ & $\mu_1$ & $\mu_2$ \\
 \midrule
 A & 1 & 1 & 1& $\sfrac{5}{2}$ & $\sfrac{7}{2}$\\ 
-B & 1 & 1 & 1& $\sfrac{7}{2}$ & $\sfrac{5}{2}$\\
+\textcolor{red}{B} & \textcolor{red}{1} & \textcolor{red}{1} & \textcolor{red}{1} & \textcolor{red}{$3$} & \textcolor{red}{$3$}\\
+C & 1 & 1 & 1& $\sfrac{7}{2}$ & $\sfrac{5}{2}$\\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -1082,39 +1066,52 @@ B & 1 & 1 & 1& $\sfrac{7}{2}$ & $\sfrac{5}{2}$\\
 \label{tbl:scenarios}
 \end{table}
 
-Figures~\ref{fig:meancusts_A} and~\ref{fig:meancusts_B} give $L_1$ and $L_2$,
-the steady-state average number of customers of each class, for all pairs of
-$\theta_{12}$ and $\theta_{21}$, under Scenarios A and B respectively. In
-general it can be seen that as $\theta_{12}$ increases in comparison to
+Figures~\ref{fig:meancusts_A}, \textcolor{red}{\ref{fig:meancusts_B},}
+and~\ref{fig:meancusts_C} give $L_1$ and $L_2$, the steady-state average number
+of customers of each class, for all pairs of $\theta_{12}$ and $\theta_{21}$,
+under Scenarios A, \textcolor{red}{B,} and C respectively.
+In general it can be seen that as $\theta_{12}$ increases in comparison to
 $\theta_{21}$ then we expect less customers of class 1 and more of class 2, and
 the opposite is true as $\theta_{21}$ increases in comparison to $\theta_{12}$.
 At first it seems that when $\theta_{12} \approx \theta_{21}$ the magnitude of
 the rate does not have a big effect of the number of customers of each class
 present, however further investigation shows this not to be the case.
 Figure~\ref{fig:theta_magnitude} shows the mean number of class 1 and class 2
-customers when $\theta_{12} = \theta_{21} = \tilde{\theta}$, under Scenarios A
-and B, as the magnitude $\tilde{\theta}$ changes. In Scenario A, where
-prioritised customers have a slower service rate, increasing the priority change
-rate increases the prioritised customers present, and decreases the number of
-unprioritised customers. In Scenario B the opposite trend is true. Looking at
-the effect of $\tilde{\theta}$ on the overall number of customers present, in
-Figure~\ref{fig:theta_magnitude_overall} we see that a higher rate of priority
-changes increases the number of customers in Scenario A, but decreases the
-number of customers in Scenario B. This may be because as the rate of priority
-changes increases, each customer is more likely to be served as a prioritised
-customer, and in Scenario B prioritised customers are processed quicker.
+customers when $\theta_{12} = \theta_{21} = \tilde{\theta}$, under Scenarios A,
+\textcolor{red}{B,} and C, as the magnitude $\tilde{\theta}$ changes.
+In Scenario A, where prioritised customers have a slower service rate,
+increasing the priority change rate increases the prioritised customers present,
+and decreases the number of unprioritised customers.
+\textcolor{red}{In Scenario B the same effect can be seen, but the size of this
+effect is smaller.}
+In Scenario C the opposite trend is true.
+Looking at the effect of $\tilde{\theta}$ on the overall number of customers
+present, in Figure~\ref{fig:theta_magnitude_overall} we see that a higher rate
+of priority changes increases the number of customers in Scenario A, but
+decreases the number of customers in Scenario C, \textcolor{red}{while in
+Scenario B where all customers have equal service rates, increasing the rate of
+priority change does not have an effect of the overall number of customers
+present.}
+This may be because as the rate of priority changes increases, each customer is
+more likely to be served as a prioritised customer, and in Scenario C
+prioritised customers are processed quicker.
 
 \begin{figure}
   \begin{center}
-  \begin{subfigure}[b]{0.49\textwidth}
-    \includegraphics[width=\textwidth]{img/vary_thetas_meancusts_scen1.pdf}
-    \caption{Scenario A.}
+  \begin{subfigure}[b]{0.65\textwidth}
+    \includegraphics[width=\textwidth]{img/vary_thetas_meancusts_scenA.pdf}
+    \caption{Scenario A ($\mu_1 < \mu_2$)}
     \label{fig:meancusts_A}
   \end{subfigure}
-  \begin{subfigure}[b]{0.49\textwidth}
-    \includegraphics[width=\textwidth]{img/vary_thetas_meancusts_scen2.pdf}
-    \caption{Scenario B.}
+  \begin{subfigure}[b]{0.65\textwidth}
+    \includegraphics[width=\textwidth]{img/vary_thetas_meancusts_scenB.pdf}
+    \caption{Scenario B ($\mu_1 = \mu_2$)}
     \label{fig:meancusts_B}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.65\textwidth}
+    \includegraphics[width=\textwidth]{img/vary_thetas_meancusts_scenC.pdf}
+    \caption{Scenario C ($\mu_1 > \mu_2$)}
+    \label{fig:meancusts_C}
   \end{subfigure}
   \caption{Average number of customers of each class, as $\Theta$ changes.}
   \end{center}
@@ -1122,7 +1119,7 @@ customer, and in Scenario B prioritised customers are processed quicker.
 
 \begin{figure}
   \begin{center}
-    \includegraphics[width=0.7\textwidth]{img/mean_custs_equal_theta.pdf}
+    \includegraphics[width=0.85\textwidth]{img/mean_custs_equal_theta.pdf}
   \end{center}
   \caption{Average number of customers of each class, as $\tilde{\theta}$
   changes.}
@@ -1131,39 +1128,89 @@ customer, and in Scenario B prioritised customers are processed quicker.
 
 \begin{figure}
   \begin{center}
-    \includegraphics[width=0.7\textwidth]{img/mean_custs_equal_theta_overall.pdf}
+    \includegraphics[width=0.85\textwidth]{img/mean_custs_equal_theta_overall.pdf}
   \end{center}
   \caption{Average number of customers overall as $\tilde{\theta}$ changes.}
   \label{fig:theta_magnitude_overall}
 \end{figure}
 
-Figures~\ref{fig:sojourn_A} and~\ref{fig:sojourn_B} give $\Psi_1$ and $\Psi_2$,
-the steady-state average sojourn time of customers beginning in each class, for
-all pairs of $\theta_{12}$ and $\theta_{21}$, under Scenarios A and B
-respectively. The mean sojourn time for class 1 customers are hardly effected by
-the size of $\theta_{12}$, but is more effected by the size of $\theta_{21}$,
-likely due to an increased number of class 1 customers present when they join
-the queue. The effect of $\theta_{21}$ on the mean sojourn time of class 2
-customers depends on the scenario: in Scenario A the higher $\theta_{21}$, the
-more likely a class 2 customer is to be served as a class 1 customer, that with
-the slower service rate, and so a longer sojourn time; while in Scenario B they
-are more likely to be served as a class 1 customer with higher service rate, and
-so shorter sojourn time.
+Figures~\ref{fig:sojourn_A}, \textcolor{red}{\ref{fig:sojourn_C},}
+and~\ref{fig:sojourn_B} give $\Psi_1$ and $\Psi_2$, the steady-state average
+sojourn time of customers beginning in each class, for all pairs of
+$\theta_{12}$ and $\theta_{21}$, under Scenarios A, \textcolor{red}{B,} and C
+respectively.
+The mean sojourn time for class 1 customers are hardly effected by the size of
+$\theta_{12}$, but is more effected by the size of $\theta_{21}$, likely due to
+an increased number of class 1 customers present when they join the queue.
+The effect of $\theta_{21}$ on the mean sojourn time of class 2 customers
+depends on the scenario: in Scenario A the higher $\theta_{21}$, the more likely
+a class 2 customer is to be served as a class 1 customer, that with the slower
+service rate, and so a longer sojourn time; while in Scenario C they are more
+likely to be served as a class 1 customer with higher service rate, and so
+shorter sojourn time.
+\textcolor{red}{In Scenario B it seems that $\theta_{21}$ does not affect the
+sojourn time of class 2 customers.}
 
 \begin{figure}
   \begin{center}
-  \begin{subfigure}[b]{0.49\textwidth}
-    \includegraphics[width=\textwidth]{img/vary_thetas_sojourn_scen1.pdf}
-    \caption{Scenario A.}
+  \begin{subfigure}[b]{0.65\textwidth}
+    \includegraphics[width=\textwidth]{img/vary_thetas_sojourn_scenA.pdf}
+    \caption{Scenario A ($\mu_1 < \mu_2$)}
     \label{fig:sojourn_A}
   \end{subfigure}
-  \begin{subfigure}[b]{0.49\textwidth}
-    \includegraphics[width=\textwidth]{img/vary_thetas_sojourn_scen2.pdf}
-    \caption{Scenario B.}
+  \begin{subfigure}[b]{0.65\textwidth}
+    \includegraphics[width=\textwidth]{img/vary_thetas_sojourn_scenB.pdf}
+    \caption{Scenario B ($\mu_1 = \mu_2$)}
     \label{fig:sojourn_B}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.65\textwidth}
+    \includegraphics[width=\textwidth]{img/vary_thetas_sojourn_scenC.pdf}
+    \caption{Scenario C ($\mu_1 > \mu_2$)}
+    \label{fig:sojourn_C}
   \end{subfigure}
   \caption{Average sojourn time for customers beginning in each class, as
   $\Theta$ changes.}
+  \end{center}
+\end{figure}
+
+\textcolor{red}{The variance in the sojourn times can also be found.
+Figure~\ref{fig:effect_theta_variance} shows the affect of the priority
+switching rates on the overall variance of the sojourn time $\Phi$.
+In all scenarios the sojourn time variance decreases as $\theta_{21}$ increases.
+This is expected, as a very high value of $\theta_{21}$ would correspond to all
+customers being of high priority, or equivalently there being no priority, and
+introducing priority into a system increases its variance.
+However, in Scenarios A and B, for very small values of $\theta_{21}$ the
+opposite effect is seen.
+Increasing $\theta_{12}$ generally increases the sojourn time variance.
+This general increase in variance is due to moving people out of the prioritised
+class increases their variance, as the unprioritised class's sojourn times rely
+on the behaviour of different customer classes, whereas the prioritised
+customers' sojourn times only rely on the prioritised queue.
+This effect is not as pronounced in Scenario C, where the prioritised customers
+have a higher service rate, as the prioritised queue is reducing faster, and so
+has less effect on the sojourn time of the unprioritised customers.}
+
+\begin{figure}
+  \begin{center}
+  \begin{subfigure}[b]{0.3\textwidth}
+    \includegraphics[width=\textwidth]{img/vary_thetas_variance_scenA.pdf}
+    \caption{Scenario A ($\mu_1 < \mu_2$)}
+    \label{fig:var_A}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.3\textwidth}
+    \includegraphics[width=\textwidth]{img/vary_thetas_variance_scenB.pdf}
+    \caption{Scenario B ($\mu_1 = \mu_2$)}
+    \label{fig:var_B}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.3\textwidth}
+    \includegraphics[width=\textwidth]{img/vary_thetas_variance_scenC.pdf}
+    \caption{Scenario C ($\mu_1 > \mu_2$)}
+    \label{fig:var_C}
+  \end{subfigure}
+  \caption{Variance in sojourn time for customers beginning in each class, as
+  $\Theta$ changes.}
+  \label{fig:effect_theta_variance}
   \end{center}
 \end{figure}
 
@@ -1206,14 +1253,35 @@ to the service rate could drastically reduce the variation in the customers'
 waiting times, this may be due to the initially very high traffic intensity
 ($\rho = \sfrac{\lambda}{\mu} = \sfrac{0.463}{0.5} = 0.926$) causing long
 waiting times and therefore lots of customers switching priorities.
+\textcolor{red}{We can also consider percentiles of the sojourn time, which may
+be a more interpretable measure of variability than $\Phi$.
+As the sojourn time distribution of Equations~\ref{eqn:sojourn_time_cdf}
+and~\ref{eqn:sojourn_time_cdf_k} do not have an easily found inverse, this is
+difficult to analyse analytically, but can be considered using the simulation
+described in Section~\ref{sec:simulation}.
+Figure~\ref{fig:vary_mu_95} gives the 95th percentile of the sojourn time, with
+and without priority switching, as the service rate increases.
+We see that under priority switching the sojourn times always have a longer
+tail, but the gap shortens as the traffic intensity decreases.}
 
 \begin{figure}
+\begin{subfigure}{\textwidth}
 \begin{center}
   \includegraphics[width=0.65\textwidth]{img/vary_service_rate_effect_variance.pdf}
 \end{center}
-\caption{The effect of small increases in the service rate on $\Phi$, with and
-without priority switching.}
+\caption{Effect of $\Phi$.}
 \label{fig:phi_vary_mu}
+\end{subfigure}
+\begin{subfigure}{\textwidth}
+\begin{center}
+  \includegraphics[width=0.65\textwidth]{img/vary_service_rate_effect_95th.pdf}
+\end{center}
+\caption{Effect of the 95th percentile of the sojourn time.}
+\label{fig:vary_mu_95}
+\end{subfigure}
+\caption{The effect of small increases in the service rate, with and
+without priority switching.}
+\label{fig:vary_mu}
 \end{figure}
 
 
@@ -1270,11 +1338,80 @@ No funding was received.
 \newpage
 \appendix
 
+\section{Simulation Details}\label{apx:simulation_logic}
+\textcolor{red}{Here we detail the logic of the simulation model discussed in
+Section~\ref{sec:simulation}, implemented in the Ciw library.
+It utilised an event scheduling approach, with three phases: an
+\textbf{A}-phase which advances the clock to the next scheduled event, a
+\textbf{B}-phase where scheduled events are carried out, and a \textbf{C}-phase
+where conditional events are carried out.
+Figure~\ref{fig:eventscheduling} shows a flow diagram of the logic of the event
+scheduling approach.}
+
+\begin{figure}
+    \centering
+    \includestandalone[width=0.65\textwidth]{img/eventschedulingapproach}
+    \caption{Flow diagram of the event scheduling approach, adapted from
+    \cite{palmer18}.}
+    \label{fig:eventscheduling}
+\end{figure}
+
+\textcolor{red}{The primary scheduled, or \textbf{B}-events that occur in
+queueing simulations are customers arriving to a queue, and customers finishing
+service.
+The conditional, or \textbf{C}-events are those that happen immediately after,
+and because of, these \textbf{B}-events. The primary ones are customers
+beginning service, and customers leaving the queue.}
+
+\textcolor{red}{Any other customer, server, or system behaviour to be captured
+by the simulation corresponds to increasing the range of \textbf{B}- and
+\textbf{C}-events that can happen during the simulation run.
+For example if servers are subject to a work schedule, then extra
+\textbf{B}-events include a server going off and on duty, and extra
+\textbf{C}-events would include a customer beginning service after another
+customer has left the server.}
+
+\textcolor{red}{In the case of customers randomly changing priority classes
+while waiting, one additional \textbf{B}-event and two additional
+\textbf{C}-event need to be included:}
+
+\textcolor{red}{%
+\begin{itemize}
+  \item Upon arrival to the queue customers are assigned a date in which they
+  will change customer class, determined by randomly sampling from a
+  distribution. As such each customer's event of changing customer class is
+  scheduled for the future, and are therefore \textbf{B}-events. If those
+  customers begin service (which might not be scheduled yet) before that event
+  has occurred, then their changing customer class event is cancelled.
+  \item Upon changing class, they immediately schedule another changing class
+  event for the future, again sampling a date from a given distribution. This
+  happens immediately after the above, and so is a \textbf{C}-event.
+  \item If a newly arriving customer is of a higher priority than a customer in
+  service, or if a lower priority customer is upgraded to a higher priority a
+  customer in service, then the lower priority customer in service is
+  pre-empted. They stop service and are placed at the head of the queue. This
+  happens immediately after an arrival or after an upgrade, and so is a
+  \textbf{C}-event.
+\end{itemize}%
+}
+
+
+\textcolor{red}{For the Ciw code shown in Figure~\ref{fig:ciwcode}, the key
+parameters are \mintinline{python}{priority_classes}, which takes a tuple
+containing a Python dictionary that maps customer class labels to priority
+rankings, and a list of pre-emption options for each node; and
+\mintinline{python}{class_change_time_distributions}, defining the time
+distributions used to describe the time it takes to transfer from one
+customer class to another.
+Note here that the simulation framework is general enough to use any
+probability distribution, and is not restricted to Exponential distributions.}
+
+
 \section{Further Experiments}\label{apx:more_priority_classes}
 
 \begin{figure}[h!]
   \begin{center}
-  \begin{subfigure}[b]{\textwidth}
+  \begin{subfigure}[b]{0.85\textwidth}
     \includegraphics[width=\textwidth]{img/appendix_2class.pdf}
     \caption{
         $K = 2$
@@ -1286,7 +1423,7 @@ No funding was received.
     }
   \end{subfigure}
   \vspace{3mm}
-  \begin{subfigure}[b]{\textwidth}
+  \begin{subfigure}[b]{0.85\textwidth}
     \includegraphics[width=\textwidth]{img/appendix_3class.pdf}
     \caption{
         $K = 3$
@@ -1298,7 +1435,7 @@ No funding was received.
     }
   \end{subfigure}
   \vspace{3mm}
-  \begin{subfigure}[b]{\textwidth}
+  \begin{subfigure}[b]{0.85\textwidth}
     \includegraphics[width=\textwidth]{img/appendix_4class.pdf}
     \caption{
         $K = 4$
