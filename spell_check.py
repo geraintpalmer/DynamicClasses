@@ -78,5 +78,13 @@ if __name__ == "__main__":
         "KPI",
         "MAPE",
         "stochastically",
+        "Tx",
+        "CDF",
+        "CDFs",
+        "th",
+        "zs",
+        "interpretable",
+        "computable",
+        "exponentials",
     }
     main(path=path, known_words=known_words)
