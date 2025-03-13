@@ -128,6 +128,7 @@ def test_get_mean_sojourn_times():
     for time_1, time_2 in zip(calculated_sojourn_times, expected_sojourn_times):
         assert np.round(time_1, 5) == np.round(time_2, 5)
 
+
 def test_get_sojourn_time_cdf():
     """
     Tests that the mean sojourn times are calculated correctly.
@@ -162,17 +163,12 @@ def test_get_sojourn_time_cdf():
         bound=bound,
     )
     p_less_than_02 = models.get_sojourn_time_cdf(
-        state_space,
-        transition_matrix,
-        num_classes,
-        arrival_rates,
-        state_probs,
-        0.2
+        state_space, transition_matrix, num_classes, arrival_rates, state_probs, 0.2
     )
     expected_p_less_than_02 = [
         0.7120743586866705,
         0.8797517908501329,
-        0.8098861941153568
+        0.8098861941153568,
     ]
 
     for p_1, p_2 in zip(p_less_than_02, expected_p_less_than_02):

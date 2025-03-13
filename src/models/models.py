@@ -714,8 +714,8 @@ def get_sojourn_time_cdf(
     Returns the overall cdf, then cdf by each class.
     """
     A = np.matmul(
-        scipy.linalg.expm(transition_matrix_sojourn[:-1,:-1] * t),
-        np.ones((transition_matrix_sojourn[:-1,:-1].shape[0], 1))
+        scipy.linalg.expm(transition_matrix_sojourn[:-1, :-1] * t),
+        np.ones((transition_matrix_sojourn[:-1, :-1].shape[0], 1)),
     )
     p_overall = 0
     p_classes = [0 for _ in range(num_classes)]
