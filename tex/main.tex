@@ -66,14 +66,9 @@ better understanding of the system.
 \end{abstract}
 
 \section{Introduction}
-\textcolor{red}{In queueing systems, `priority' usually denotes some measure of
-a customers' urgency. Here we precisely define a customers' priority by an
-ordinal measure, with lower priority customers only being served once all higher
-priority customers in the system have been served. These ordinal priority
-measures are usually integers, and are usually attributed to whole classes of
-customers \cite{stewart09}.}
 
-There are a \textcolor{red}{several} situations in which a customer's priority
+
+There are a \textcolor{red}{several} situations in which a customer's level of urgency
 in a queue might change \textcolor{red}{while they wait}, or equivalently where
 their priority depends on the amount of time they have already spent in the queue.
 Classic examples arise in healthcare systems, for example when a patient's
@@ -83,12 +78,19 @@ would be a prioritisation scheme that attempts a trade-off between medical need
 and waiting times \cite{powersetal23}.
 These are both examples where a patient's priority has the chance to upgrade
 over time while in the queue.
-However there also might be situations in which a patient's priority can
+\textcolor{red}{Here we precisely define a customers' priority as an
+ordinal measure, with lower priority customers only being served once all higher
+priority customers in the system have been served. These ordinal priority
+measures are usually integers, and are usually attributed to whole classes of
+customers \cite{stewart09}.}
+
+There also might be situations in which a patient's priority can
 downgrade over time: consider \textcolor{red}{waiting for some} medical intervention that can improve a
 patient's outcome \textcolor{red}{only} if caught early: if a patient has been waiting a long time
 already then they might be passed over for a newly referred patient who will
 gain more benefit from the intervention. In this case a patient's priority is
 downgraded the longer they wait \cite{dalessandro17}.
+
 
 In this paper a single $M/M/c$ queue is modelled, with multiple classes of
 customer of different priorities. While waiting in the queue, customers change

@@ -35,9 +35,9 @@ This document will address the specific concerns raised.
 
 \textcolor{red}{Thank you very much for the comments. We have:
 \begin{itemize}
-  \item added an introductory paragraph precisely defining priorities at the beginning of the paper.
-  \item cleared the sentences describing downgrades in a medical intervention: the downgrading occurs not because of a medical intervention, but because another patient is referred who would gain more benefit from the intervention, precisely because they have not been waiting long, as the intervention is more effective if administered early.
-  \item removed references to `skip-grades' in the motivation section as it is confusing so early on. This is still discussed in the Section 2 when defining the problem, as skip-grades - that is upgrades or downgrades by more than one ordinal jump - are a novel consideration of this paper.
+  \item added text to the introductory paragraph precisely defining priorities.
+  \item clarified the sentences describing downgrades in a medical intervention: the downgrading occurs not because of a medical intervention.
+  \item removed references to `skip-grades' in the motivation section. This is still discussed in the Section 2 when defining the problem, as skip-grades - that is upgrades or downgrades by more than one ordinal jump - are a novel consideration of this paper.
 \end{itemize}
 }
 
@@ -46,10 +46,10 @@ This document will address the specific concerns raised.
 ``The authors use two separate Markov chains to find state probabilities and sojourn times. Can the authors attempt to analyze the model theoretically and provide corresponding theoretical results? If not, perhaps they could explain the difficulty of the problems. In addition, the authors should explain Equation (1) and Equation (5) more clearly to readers. To use Markov chains, the authors present bounded approximations. Can the authors explicitly analyze this bounded approximation method? For example, could they theoretically determine the value of $b$ and prove the system's stability?''
 \end{quote}
 
-\textcolor{red}{Thank you very much for the comments. We have:
+\textcolor{red}{Thank you very much for the comments which led us to explore analytical formulae that are now in the paper. We have:
 \begin{itemize}
   \item changed the labelling of Equations (1) and (5) so that each case is referencable, then sentences have been added explaining what the transition in each case refers to. We hope this explains these equations more clearly to the readers.
-  \item added some further analysis about the Markov chains, explicitly noting that the sojourn time CDF is a general phase-type distribution, and giving the exact equation for the CDF. Commentary on this is also given, explaining that taking a matrix exponential is computationally expensive, and that general phase-type distributions do not have easily found inverses. This is partly because the equation involves a dot-product which is not invertible. Therefore, matrix methods are used to find some summary statistics, and in some cases running simulations is required.
+  \item added some further analysis about the Markov chains, explicitly noting that the sojourn time CDF is a general phase-type distribution, and giving the exact equation for the CDF. Commentary on this is also given, explaining that taking a matrix exponential is computationally expensive, and that general phase-type distributions do not have easily found inverses. 
   \item Section 4.3 explicitly analyses the bounded approximation method by developing two accuracy measures, one for the ergodic Markov chain, and another for the absorbing Markov chain. These measures help decide if the value of $b$ chosen is a good one. The numerical results presented in this section demonstrate how these accuracy measures work. Section 4.4 then proves the system's stability under certain conditions, and experimentally determines the system's stability under other conditions.
 \end{itemize}
 }
@@ -60,7 +60,7 @@ This document will address the specific concerns raised.
 ``Most of the results in this paper are obtained from the numerical studies. However, the author does not explain the source of the parameters in detail, that is, why they were chosen. Also, I was confused for prioritised customers have a faster service rate. The authors provide a motivating case study in section 1.1, ideally the parameters should come from this case study.''
 \end{quote}
 
-\textcolor{red}{The source of the parameters used in Sections 3.1 and 4.6 are given by the healthcare data described in Section 3.1. The parameters used in Section 4.5 are arbitrary, though chosen to reflect specific scenarios: when prioritised customers have a faster service rate than unprioritised customers, and when prioritised customers have a slower service rate than unprioritised customers. We have now added an extra scenario reflecting the case then both sets of customers have the same service rate, which might better reflect some realities. As a set, these three scenarios cover all dynamics between prioritised and unprioritised customers - faster, equal, and slower services - and the the numerical analysis here is used to give insight into such systems.}
+\textcolor{red}{The source of the parameters used in Sections 3.1 and 4.6 are given by the healthcare data described in Section 3.1. The parameters used in Section 4.5 are chosen to reflect specific scenarios: when prioritised customers have a faster service rate than unprioritised customers, and when prioritised customers have a slower service rate than unprioritised customers. We have now added an extra scenario reflecting the case then both sets of customers have the same service rate, which might better reflect some realities. As a set, these three scenarios cover all dynamics between prioritised and unprioritised customers - faster, equal, and slower services - and the the numerical analysis here is used to give insight into such systems.}
 
 \item Reviewer 1 wrote:
 \begin{quote}\it
@@ -146,9 +146,9 @@ This document will address the specific concerns raised.
 ``The simulation in Section 3 is not very interesting. Can these materials regarding setup of the simulation be deferred to appendix? The simulation setup is quite straightforward.''
 \end{quote}
 
-\textcolor{red}{Thank you for the comment, though we disagree that the simulation is not interesting. The logic and adaptation of the Ciw library in order to simulation the priority switching is a contribution of the paper, and we have not seen other out-of-the-box software that treats priority switching in this manner. In addition, it is clear now in the paper that the simulation is not only required to validate the Markov models, but required in order to find some summary statistics that are unobtainable from the Markov models, such as percentiles. therefore we think that the simulation warrants a section of its own.}
+\textcolor{red}{The logic and adaptation of the Ciw library in order to simulation the priority switching is a contribution of the paper, and we have not seen other out-of-the-box software that treats priority switching in this manner. In addition, it is clear now in the paper that the simulation is not only required to validate the Markov models, but required in order to find some summary statistics that are unobtainable from the Markov models, such as percentiles. therefore we think that the simulation warrants a section of its own. This is an important section that ensures reproducibility of the work presented whilst it might not be of interest to all readers it might be vital to some.}
 
-\textcolor{red}{However we do agree that some details on the logic and implementation or can be moved to the appendix to focus the paper more on the other interesting aspects of the model. Therefore we have deferred the description of the even-scheduling approach to an appendix. This helps with the flow and focus of the paper.}
+\textcolor{red}{We do agree that some details on the logic and implementation or can be moved to the appendix to focus the paper more on the other interesting aspects of the model. Therefore we have deferred the description of the even-scheduling approach to an appendix. This helps with the flow and focus of the paper and we appreciate the reviewer raising this to our attention.}
 
 \item Reviewer 2 wrote:
 \begin{quote}\it
